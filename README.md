@@ -1,2 +1,1 @@
-# patronato
-Sistema de gestion de patronatos
+# Sistema Integral de Gestión Digital del Patronato
