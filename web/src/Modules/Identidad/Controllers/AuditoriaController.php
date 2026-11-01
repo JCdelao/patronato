@@ -13,12 +13,12 @@ use Patronato\Modules\Identidad\Models\Auditoria;
 class AuditoriaController extends Controller
 {
     /**
-     * Las fechas de los filtros se entienden en hora de Honduras; la base guarda UTC.
+     * Zona horaria de los filtros de fecha
      */
     private const ZONA_LOCAL = 'America/Tegucigalpa';
 
     /**
-     * Muestra la bitácora de auditoría del residencial, solo para consulta (HU-08).
+     * Muestra la bitácora de auditoría
      */
     public function index(Request $request): Response
     {

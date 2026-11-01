@@ -89,7 +89,7 @@ test('the log can be filtered', function (array $filtros, array $esperadas) {
 ]);
 
 test('date filters use the local day, not the UTC day', function () {
-    // 20 de marzo a las 10 p. m. en Honduras son las 4 a. m. del 21 en UTC.
+    // 20 de marzo a las 10 p. m. en Honduras son las 4 a. m. del 21 en UTC
     ($this->registro)(['accion' => 'noche', 'created_at' => '2026-03-21 04:00:00']);
 
     $this->actingAs($this->fiscal)->get(route('auditoria.index', ['hasta' => '2026-03-20']))

@@ -17,7 +17,7 @@ use Patronato\Modules\Plataforma\Services\ResidencialService;
 class ResidencialController extends Controller
 {
     /**
-     * Muestra los residenciales registrados en la plataforma.
+     * Muestra los residenciales registrados en la plataforma
      */
     public function index(Request $request, AuditoriaService $auditoria): Response
     {
@@ -50,7 +50,7 @@ class ResidencialController extends Controller
     }
 
     /**
-     * Muestra el formulario para registrar un residencial.
+     * Muestra el formulario para registrar un residencial
      */
     public function create(): Response
     {
@@ -58,7 +58,7 @@ class ResidencialController extends Controller
     }
 
     /**
-     * Registra el residencial y muestra una sola vez la contraseña temporal.
+     * Registra un residencial
      */
     public function store(RegistrarResidencialRequest $request, ResidencialService $residenciales): RedirectResponse
     {
@@ -67,7 +67,7 @@ class ResidencialController extends Controller
 
         $registro = $residenciales->registrar($datos, $request->file('logo'));
 
-        // Va cifrada porque la sesión se guarda en la base de datos hasta la siguiente petición.
+        // Guarda la contraseña temporal cifrada en la sesión
         $request->session()->flash('credenciales', Crypt::encrypt([
             'residencial' => $registro['residencial']->nombre,
             'correo' => $registro['administrador']->email,
@@ -80,7 +80,7 @@ class ResidencialController extends Controller
     }
 
     /**
-     * Suspende un residencial: sus usuarios dejan de poder entrar.
+     * Suspende un residencial
      */
     public function suspender(Request $request, ResidencialService $residenciales, Residencial $residencial): RedirectResponse
     {
@@ -88,7 +88,7 @@ class ResidencialController extends Controller
     }
 
     /**
-     * Reactiva un residencial: sus usuarios recuperan el acceso con sus datos intactos.
+     * Reactiva un residencial
      */
     public function reactivar(Request $request, ResidencialService $residenciales, Residencial $residencial): RedirectResponse
     {

@@ -9,7 +9,7 @@ use Patronato\Modules\Padron\Models\ViviendaResidente;
 class ResidenteService
 {
     /**
-     * Registra un residente en una vivienda (HU-11).
+     * Registra un residente en una vivienda
      *
      * @param  array{vivienda_id: int|string, tipo: string, nombres: string, apellidos: string, identidad?: string|null, telefono?: string|null, correo?: string|null}  $datos
      */
@@ -28,7 +28,7 @@ class ResidenteService
     }
 
     /**
-     * Actualiza un residente; si cambia de vivienda se conserva el vínculo anterior como historial.
+     * Actualiza un residente
      *
      * @param  array{vivienda_id: int|string, tipo: string, nombres: string, apellidos: string, identidad?: string|null, telefono?: string|null, correo?: string|null}  $datos
      */
@@ -61,7 +61,7 @@ class ResidenteService
     }
 
     /**
-     * Asocia una cuenta de usuario al residente indicado, o la libera si no se indica ninguno (HU-06).
+     * Asocia o libera la cuenta de un residente
      */
     public function vincularCuenta(int $usuarioId, ?int $residenteId): void
     {
@@ -73,7 +73,7 @@ class ResidenteService
     }
 
     /**
-     * Residentes activos que pueden recibir una cuenta, con la vivienda donde viven.
+     * Residentes activos que pueden recibir una cuenta
      *
      * @return array<int, array{id: int, nombre: string, vivienda: string|null, user_id: int|null}>
      */
@@ -95,7 +95,7 @@ class ResidenteService
     }
 
     /**
-     * Da de baja a un residente conservando su historial (HU-11).
+     * Da de baja a un residente
      */
     public function darDeBaja(Residente $residente): void
     {
@@ -157,7 +157,7 @@ class ResidenteService
     }
 
     /**
-     * Mantiene un responsable de pago por vivienda habitada: si falta, lo es el residente más antiguo.
+     * Asegura un responsable de pago en cada vivienda habitada
      */
     private function asegurarResponsable(int $viviendaId): void
     {

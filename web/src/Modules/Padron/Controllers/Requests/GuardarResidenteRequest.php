@@ -9,7 +9,7 @@ use Illuminate\Validation\Rule;
 class GuardarResidenteRequest extends FormRequest
 {
     /**
-     * Get the validation rules that apply to the request.
+     * Reglas de validación
      *
      * @return array<string, ValidationRule|array<mixed>|string>
      */
@@ -38,7 +38,7 @@ class GuardarResidenteRequest extends FormRequest
     }
 
     /**
-     * Get the validation messages that apply to the request.
+     * Mensajes de validación
      *
      * @return array<string, string>
      */

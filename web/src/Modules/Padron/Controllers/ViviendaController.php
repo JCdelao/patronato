@@ -19,7 +19,7 @@ use Patronato\Modules\Padron\Services\ViviendaService;
 class ViviendaController extends Controller
 {
     /**
-     * Muestra el padrón de viviendas activas o inactivas del residencial.
+     * Muestra el padrón de viviendas activas o inactivas del residencial
      */
     public function index(Request $request, TarifaService $tarifas): Response
     {
@@ -80,7 +80,7 @@ class ViviendaController extends Controller
     }
 
     /**
-     * Registra una vivienda.
+     * Registra una vivienda
      */
     public function store(GuardarViviendaRequest $request, ViviendaService $viviendas): RedirectResponse
     {
@@ -95,7 +95,7 @@ class ViviendaController extends Controller
     }
 
     /**
-     * Actualiza una vivienda del residencial.
+     * Actualiza una vivienda del residencial
      */
     public function update(GuardarViviendaRequest $request, ViviendaService $viviendas, Vivienda $vivienda): RedirectResponse
     {
@@ -112,7 +112,7 @@ class ViviendaController extends Controller
     }
 
     /**
-     * Elimina una vivienda o la deja inactiva si ya tiene historial.
+     * Elimina una vivienda o la deja inactiva
      */
     public function destroy(ViviendaService $viviendas, Vivienda $vivienda): RedirectResponse
     {
@@ -135,7 +135,7 @@ class ViviendaController extends Controller
     }
 
     /**
-     * Vuelve a activar una vivienda inactiva.
+     * Reactiva una vivienda
      */
     public function reactivar(ViviendaService $viviendas, Vivienda $vivienda): RedirectResponse
     {

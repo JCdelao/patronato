@@ -97,7 +97,7 @@ Artisan::command('db:probar', function () {
 
         return 0;
     } catch (Throwable $e) {
-        // En Windows, PostgreSQL puede enviar el error en Windows-1252.
+        // En Windows, PostgreSQL puede enviar el error en Windows-1252
         $mensaje = mb_check_encoding($e->getMessage(), 'UTF-8')
             ? $e->getMessage()
             : mb_convert_encoding($e->getMessage(), 'UTF-8', 'Windows-1252');

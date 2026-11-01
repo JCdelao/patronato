@@ -11,13 +11,11 @@ class DatabaseSeeder extends Seeder
     use WithoutModelEvents;
 
     /**
-     * Seed the application's database.
+     * Carga los datos iniciales
      */
     public function run(): void
     {
         $this->call(RolesSeeder::class);
-
-        // User::factory(10)->create();
 
         User::factory()->create([
             'name' => 'Test User',

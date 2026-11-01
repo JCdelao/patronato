@@ -15,7 +15,7 @@ use Patronato\Modules\Identidad\Services\PermisoService;
 class PermisoController extends Controller
 {
     /**
-     * Muestra la matriz de permisos del residencial.
+     * Muestra la matriz de permisos del residencial
      */
     public function index(Request $request, CuentaService $cuentas, PermisoService $permisos): Response
     {
@@ -34,7 +34,7 @@ class PermisoController extends Controller
     }
 
     /**
-     * Guarda los permisos de un rol.
+     * Guarda los permisos de un rol
      */
     public function update(Request $request, PermisoService $permisos, CuentaService $cuentas, Rol $rol): RedirectResponse
     {

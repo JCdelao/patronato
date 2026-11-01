@@ -12,7 +12,7 @@ use Patronato\Modules\Padron\Services\ResidenteService;
 class ResidenteController extends Controller
 {
     /**
-     * Registra un residente en una vivienda.
+     * Registra un residente en una vivienda
      */
     public function store(GuardarResidenteRequest $request, ResidenteService $residentes): RedirectResponse
     {
@@ -27,7 +27,7 @@ class ResidenteController extends Controller
     }
 
     /**
-     * Actualiza un residente del residencial.
+     * Actualiza un residente del residencial
      */
     public function update(GuardarResidenteRequest $request, ResidenteService $residentes, Residente $residente): RedirectResponse
     {
@@ -44,7 +44,7 @@ class ResidenteController extends Controller
     }
 
     /**
-     * Da de baja a un residente; su historial se conserva.
+     * Da de baja a un residente
      */
     public function destroy(ResidenteService $residentes, Residente $residente): RedirectResponse
     {

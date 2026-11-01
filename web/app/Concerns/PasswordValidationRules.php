@@ -8,7 +8,7 @@ use Illuminate\Validation\Rules\Password;
 trait PasswordValidationRules
 {
     /**
-     * Get the validation rules used to validate passwords.
+     * Reglas de validación de la contraseña
      *
      * @return array<int, Password|ValidationRule|array<mixed>|string>
      */
@@ -18,7 +18,7 @@ trait PasswordValidationRules
     }
 
     /**
-     * Get the validation rules used to validate the current password.
+     * Reglas de validación de la contraseña actual
      *
      * @return array<int, Password|ValidationRule|array<mixed>|string>
      */

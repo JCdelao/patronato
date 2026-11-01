@@ -13,7 +13,7 @@ class CerrarSesionInactiva
     public function __construct(private ConfiguracionService $configuracion) {}
 
     /**
-     * Cierra la sesión tras el tiempo de inactividad configurado (HU-04).
+     * Cierra la sesión tras el tiempo de inactividad configurado
      *
      * @param  Closure(Request): (Response)  $next
      */

@@ -8,7 +8,7 @@ use Illuminate\Support\Str;
 class BloqueoLoginService
 {
     /**
-     * Minutos que le faltan al bloqueo de la cuenta, o null si no está bloqueada (HU-04).
+     * Minutos que faltan para desbloquear la cuenta
      */
     public function minutosRestantes(string $correo): ?int
     {
@@ -23,7 +23,7 @@ class BloqueoLoginService
     }
 
     /**
-     * Cuenta un intento fallido; se cuenta aunque el correo no exista para no revelar qué cuentas hay.
+     * Cuenta un intento fallido
      */
     public function registrarFallo(string $correo, int $maxIntentos, int $minutosBloqueo): void
     {

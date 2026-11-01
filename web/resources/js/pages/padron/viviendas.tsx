@@ -66,7 +66,7 @@ export default function Viviendas({
 
     const cerrar = () => setDialogo(null);
 
-    // Tras guardar se vuelven a pedir los datos para que la pantalla refleje la base.
+    // Recarga los datos tras guardar
     const alGuardar = () => {
         cerrar();
         router.reload({ only: ['viviendas', 'opcionesViviendas'] });

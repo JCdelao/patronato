@@ -27,7 +27,7 @@ use Patronato\Modules\Plataforma\Services\ConfiguracionService;
 class FortifyServiceProvider extends ServiceProvider
 {
     /**
-     * Register any application services.
+     * Registra los servicios
      */
     public function register(): void
     {
@@ -37,7 +37,7 @@ class FortifyServiceProvider extends ServiceProvider
     }
 
     /**
-     * Bootstrap any application services.
+     * Inicializa los servicios
      */
     public function boot(): void
     {
@@ -47,7 +47,7 @@ class FortifyServiceProvider extends ServiceProvider
     }
 
     /**
-     * Configure Fortify actions.
+     * Configura las acciones de Fortify
      */
     private function configureActions(): void
     {
@@ -78,7 +78,7 @@ class FortifyServiceProvider extends ServiceProvider
 
             $bloqueos->limpiar($correo);
 
-            // Solo se avisa con la contraseña correcta, para no revelar datos de la cuenta (HU-03).
+            // Avisa solo si la contraseña es correcta
             $motivo = $user->motivoSinAcceso();
 
             if ($motivo !== null) {
@@ -90,7 +90,7 @@ class FortifyServiceProvider extends ServiceProvider
     }
 
     /**
-     * Configure Fortify views.
+     * Configura las vistas de Fortify
      */
     private function configureViews(): void
     {
@@ -123,7 +123,7 @@ class FortifyServiceProvider extends ServiceProvider
     }
 
     /**
-     * Configure rate limiting.
+     * Configura los límites de intentos
      */
     private function configureRateLimiting(): void
     {
@@ -134,7 +134,7 @@ class FortifyServiceProvider extends ServiceProvider
         RateLimiter::for('login', function (Request $request) {
             $throttleKey = Str::transliterate(Str::lower($request->input(Fortify::username())).'|'.$request->ip());
 
-            // Freno general: el bloqueo de cuenta por intentos fallidos lo aplica BloqueoLoginService (HU-04).
+            // Límite general de intentos
             return Limit::perMinute(30)->by($throttleKey);
         });
 

@@ -8,9 +8,7 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Run the migrations.
-     *
-     * Va antes de finanzas porque cargos, pagos y ajustes referencian el lote.
+     * Aplica la migración
      */
     public function up(): void
     {
@@ -42,7 +40,7 @@ return new class extends Migration
         });
 
         if (DB::getDriverName() === 'pgsql') {
-            // La importación definitiva necesita a tesorero y fiscal (HU-60).
+            // La importación definitiva necesita a tesorero y fiscal
             DB::statement(<<<'SQL'
                 ALTER TABLE lotes_migracion ADD CONSTRAINT lotes_definitiva_aprobada_check
                 CHECK (tipo <> 'definitiva' OR estado NOT IN ('aprobado', 'importado')
@@ -54,7 +52,7 @@ return new class extends Migration
     }
 
     /**
-     * Reverse the migrations.
+     * Revierte la migración
      */
     public function down(): void
     {

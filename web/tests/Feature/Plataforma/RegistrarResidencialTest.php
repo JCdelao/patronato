@@ -156,7 +156,6 @@ test('nothing is kept when the registration fails', function () {
             'logo' => UploadedFile::fake()->create('logo.png', 100, 'image/png'),
         ]);
     } catch (Throwable) {
-        //
     }
 
     expect(Residencial::query()->count())->toBe(0)

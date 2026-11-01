@@ -18,7 +18,7 @@ use Patronato\Modules\Plataforma\Services\ConfiguracionService;
 class CuentaController extends Controller
 {
     /**
-     * Muestra las cuentas del residencial.
+     * Muestra las cuentas del residencial
      */
     public function index(Request $request, CuentaService $cuentas, ResidenteService $residentes, ConfiguracionService $configuracion): Response
     {
@@ -59,7 +59,7 @@ class CuentaController extends Controller
     }
 
     /**
-     * Crea una cuenta y muestra una sola vez su contraseña temporal.
+     * Crea una cuenta
      */
     public function store(GuardarCuentaRequest $request, CuentaService $cuentas): RedirectResponse
     {
@@ -68,7 +68,7 @@ class CuentaController extends Controller
 
         $cuenta = $cuentas->crear($request->user(), $datos);
 
-        // Va cifrada porque la sesión se guarda en la base de datos hasta la siguiente petición.
+        // Guarda la contraseña temporal cifrada en la sesión
         $request->session()->flash('credenciales', Crypt::encrypt([
             'correo' => $cuenta['usuario']->email,
             'password_temporal' => $cuenta['password_temporal'],
@@ -80,7 +80,7 @@ class CuentaController extends Controller
     }
 
     /**
-     * Actualiza una cuenta del residencial.
+     * Actualiza una cuenta del residencial
      */
     public function update(GuardarCuentaRequest $request, CuentaService $cuentas, User $cuenta): RedirectResponse
     {
@@ -97,7 +97,7 @@ class CuentaController extends Controller
     }
 
     /**
-     * Impide que la cuenta inicie sesión; sus registros históricos se conservan.
+     * Desactiva una cuenta
      */
     public function desactivar(Request $request, CuentaService $cuentas, User $cuenta): RedirectResponse
     {
@@ -111,7 +111,7 @@ class CuentaController extends Controller
     }
 
     /**
-     * Devuelve el acceso a una cuenta desactivada.
+     * Reactiva una cuenta
      */
     public function activar(Request $request, CuentaService $cuentas, User $cuenta): RedirectResponse
     {
@@ -125,7 +125,7 @@ class CuentaController extends Controller
     }
 
     /**
-     * Guarda los parámetros de acceso del residencial (HU-04).
+     * Guarda los parámetros de acceso del residencial
      */
     public function parametros(Request $request, ConfiguracionService $configuracion): RedirectResponse
     {
@@ -144,8 +144,7 @@ class CuentaController extends Controller
     }
 
     /**
-     * La cuenta propia y las de administrador técnico no se administran aquí,
-     * para que el residencial no se quede sin quien lo administre.
+     * Indica si la cuenta se puede administrar
      */
     private function esEditable(User $actor, User $cuenta): bool
     {

@@ -29,7 +29,7 @@ const getStoredAppearance = (): Appearance => {
     return (localStorage.getItem('appearance') as Appearance) || 'system';
 };
 
-// La identidad visual es clara: el modo oscuro solo aplica si se elige a propósito.
+// El modo oscuro solo aplica si se elige
 const isDarkMode = (appearance: Appearance): boolean => {
     return appearance === 'dark';
 };
@@ -76,7 +76,7 @@ export function initializeTheme(): void {
     currentAppearance = getStoredAppearance();
     applyTheme(currentAppearance);
 
-    // Set up system theme change listener
+    // Escucha los cambios de tema del sistema
     mediaQuery()?.addEventListener('change', handleSystemThemeChange);
 }
 
@@ -94,10 +94,10 @@ export function useAppearance(): UseAppearanceReturn {
     const updateAppearance = (mode: Appearance): void => {
         currentAppearance = mode;
 
-        // Store in localStorage for client-side persistence...
+        // Guarda en localStorage
         localStorage.setItem('appearance', mode);
 
-        // Store in cookie for SSR...
+        // Guarda en la cookie
         setCookie('appearance', mode);
 
         applyTheme(mode);

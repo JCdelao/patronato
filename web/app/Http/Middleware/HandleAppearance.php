@@ -10,7 +10,7 @@ use Symfony\Component\HttpFoundation\Response;
 class HandleAppearance
 {
     /**
-     * Handle an incoming request.
+     * Comparte la apariencia elegida
      *
      * @param  Closure(Request): (Response)  $next
      */

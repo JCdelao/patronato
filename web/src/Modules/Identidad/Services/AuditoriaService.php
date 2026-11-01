@@ -9,7 +9,7 @@ use Patronato\Modules\Identidad\Models\Auditoria;
 class AuditoriaService
 {
     /**
-     * Agrega un registro a la bitácora de auditoría.
+     * Agrega un registro a la bitácora de auditoría
      *
      * @param  array{residencial_id?: int|null, valor_anterior?: array<string, mixed>, valor_nuevo?: array<string, mixed>, motivo?: string}  $datos
      */
@@ -30,7 +30,7 @@ class AuditoriaService
     }
 
     /**
-     * Deja constancia de un intento de abrir un registro de otro residencial (HU-02).
+     * Audita un intento de abrir un registro de otro residencial
      */
     public function registrarAccesoDenegado(User $usuario, Model $modelo): void
     {
@@ -40,7 +40,7 @@ class AuditoriaService
     }
 
     /**
-     * Devuelve el registro más reciente de una acción para cada entidad, indexado por su id.
+     * Devuelve el registro más reciente de una acción para cada entidad
      *
      * @param  array<int, int>  $ids
      * @return array<int, Auditoria>

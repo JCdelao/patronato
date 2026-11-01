@@ -10,7 +10,7 @@ class RespaldoFallido extends Notification
     public function __construct(public string $error) {}
 
     /**
-     * Get the notification's delivery channels.
+     * Canales de envío
      *
      * @return array<int, string>
      */
@@ -20,7 +20,7 @@ class RespaldoFallido extends Notification
     }
 
     /**
-     * Get the mail representation of the notification.
+     * Contenido del correo
      */
     public function toMail(object $notifiable): MailMessage
     {

@@ -38,7 +38,7 @@ class Auditoria extends Model
     public $timestamps = false;
 
     /**
-     * La bitácora solo admite registros nuevos (HU-08). En PostgreSQL además lo impiden los triggers.
+     * La bitácora solo admite registros nuevos
      */
     protected static function booted(): void
     {
@@ -51,7 +51,7 @@ class Auditoria extends Model
     }
 
     /**
-     * Get the attributes that should be cast.
+     * Conversiones de tipo de los atributos
      *
      * @return array<string, string>
      */

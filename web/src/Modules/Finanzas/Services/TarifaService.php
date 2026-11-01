@@ -10,7 +10,7 @@ class TarifaService
     private const CONCEPTO_CUOTA = 'Cuota mensual';
 
     /**
-     * Devuelve la cuota vigente de cada vivienda, indexada por su id.
+     * Devuelve la cuota vigente de cada vivienda
      *
      * @param  array<int, int>  $viviendaIds
      * @return array<int, string>
@@ -28,8 +28,7 @@ class TarifaService
     }
 
     /**
-     * Define la cuota de una vivienda. Un cambio crea una nueva vigencia y
-     * conserva la anterior para que los cargos ya generados no se alteren (HU-15).
+     * Define la cuota de una vivienda
      */
     public function asignarCuota(int $residencialId, int $viviendaId, float $monto, int $usuarioId): void
     {
@@ -68,7 +67,7 @@ class TarifaService
     }
 
     /**
-     * Elimina las tarifas de una vivienda que se va a borrar.
+     * Elimina las tarifas de una vivienda que se va a borrar
      */
     public function eliminarDeVivienda(int $viviendaId): void
     {

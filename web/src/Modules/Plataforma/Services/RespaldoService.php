@@ -15,9 +15,9 @@ use RuntimeException;
 class RespaldoService
 {
     /**
-     * Genera un respaldo de toda la base y elimina los más antiguos (HU-09).
+     * Genera un respaldo de toda la base y elimina los más antiguos
      *
-     * @throws RuntimeException si el respaldo no se pudo generar
+     * @throws RuntimeException
      */
     public function crear(): string
     {
@@ -39,9 +39,9 @@ class RespaldoService
     }
 
     /**
-     * Restaura un respaldo en la base indicada, reemplazando su contenido.
+     * Restaura un respaldo en la base indicada
      *
-     * @throws RuntimeException si el archivo no existe o la restauración falla
+     * @throws RuntimeException
      */
     public function restaurar(string $nombre, string $base): void
     {
@@ -76,7 +76,7 @@ class RespaldoService
     }
 
     /**
-     * Avisa a quienes administran el sistema que el respaldo falló (HU-09).
+     * Avisa que el respaldo falló
      */
     public function notificarFallo(string $error): void
     {
@@ -96,7 +96,7 @@ class RespaldoService
         $conexion = DB::connection('pgsql');
         $carpeta = rtrim((string) config('respaldos.bin'), '\\/');
 
-        // La contraseña va en el entorno para que no aparezca en la lista de procesos.
+        // Pasa la contraseña por el entorno
         return Process::timeout(1800)
             ->env(['PGPASSWORD' => (string) $conexion->getConfig('password')])
             ->run([

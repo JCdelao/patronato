@@ -8,10 +8,7 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Run the migrations.
-     *
-     * Las claves foráneas compuestas (residencial_id, x_id) impiden que un registro
-     * apunte a datos de otro residencial (HU-02).
+     * Aplica la migración
      */
     public function up(): void
     {
@@ -60,7 +57,7 @@ return new class extends Migration
             $table->foreign(['residencial_id', 'residente_id'])->references(['residencial_id', 'id'])->on('residentes');
         });
 
-        // Como máximo un responsable de pago vigente por vivienda; la aplicación exige que exista uno (HU-11).
+        // Como máximo un responsable de pago vigente por vivienda
         DB::statement('CREATE UNIQUE INDEX vivienda_un_responsable_unique ON vivienda_residentes (vivienda_id) WHERE es_responsable_pago AND fecha_fin IS NULL');
         DB::statement('CREATE UNIQUE INDEX vivienda_residente_vigente_unique ON vivienda_residentes (vivienda_id, residente_id) WHERE fecha_fin IS NULL');
 
@@ -127,7 +124,7 @@ return new class extends Migration
     }
 
     /**
-     * Reverse the migrations.
+     * Revierte la migración
      */
     public function down(): void
     {

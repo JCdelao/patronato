@@ -31,7 +31,7 @@ class ViviendaResidente extends Model
     protected $table = 'vivienda_residentes';
 
     /**
-     * Get the attributes that should be cast.
+     * Conversiones de tipo de los atributos
      *
      * @return array<string, string>
      */

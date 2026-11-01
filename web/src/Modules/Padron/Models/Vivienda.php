@@ -26,7 +26,7 @@ class Vivienda extends Model
     protected $table = 'viviendas';
 
     /**
-     * Get the attributes that should be cast.
+     * Conversiones de tipo de los atributos
      *
      * @return array<string, string>
      */
@@ -38,7 +38,7 @@ class Vivienda extends Model
     }
 
     /**
-     * Los residentes que viven actualmente en la vivienda.
+     * Los residentes que viven actualmente en la vivienda
      *
      * @return HasMany<ViviendaResidente, $this>
      */

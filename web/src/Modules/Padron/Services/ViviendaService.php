@@ -13,7 +13,7 @@ class ViviendaService
     public function __construct(private TarifaService $tarifas) {}
 
     /**
-     * Registra una vivienda con su cuota mensual (HU-10).
+     * Registra una vivienda con su cuota mensual
      *
      * @param  array{codigo: string, tipo: string, direccion: string, cuota: float|int|string}  $datos
      */
@@ -34,7 +34,7 @@ class ViviendaService
     }
 
     /**
-     * Actualiza los datos y la cuota de una vivienda.
+     * Actualiza los datos y la cuota de una vivienda
      *
      * @param  array{codigo: string, tipo: string, direccion: string, cuota: float|int|string}  $datos
      */
@@ -52,7 +52,7 @@ class ViviendaService
     }
 
     /**
-     * Vuelve a activar una vivienda; conserva sus datos y su cuota.
+     * Reactiva una vivienda
      */
     public function reactivar(Vivienda $vivienda): void
     {
@@ -60,11 +60,9 @@ class ViviendaService
     }
 
     /**
-     * Borra la vivienda o, si ya tiene historial, la marca como inactiva (HU-10).
+     * Borra una vivienda o la deja inactiva
      *
-     * @return bool true si se borró; false si quedó inactiva
-     *
-     * @throws ValidationException si todavía tiene residentes
+     * @throws ValidationException
      */
     public function eliminar(Vivienda $vivienda): bool
     {
@@ -82,7 +80,7 @@ class ViviendaService
 
             return true;
         } catch (QueryException) {
-            // Otra tabla la referencia (pagos, cargos, historial): se conserva como inactiva.
+            // Si otra tabla la referencia, queda inactiva
             $vivienda->exists = true;
             $vivienda->update(['activa' => false]);
 

@@ -9,11 +9,7 @@ use Illuminate\Support\Facades\Auth;
 use Patronato\Modules\Identidad\Services\AuditoriaService;
 
 /**
- * Aísla un modelo por residencial (HU-02): sus consultas solo ven los registros
- * del residencial del usuario, y abrir uno ajeno por URL se deniega y se audita.
- *
- * Sin usuario autenticado (comandos y trabajos en cola) no se filtra: ahí el
- * residencial debe indicarse de forma explícita.
+ * Aísla un modelo por residencial
  */
 trait PerteneceAResidencial
 {
@@ -35,7 +31,7 @@ trait PerteneceAResidencial
     }
 
     /**
-     * Retrieve the model for a bound value.
+     * Busca el modelo de la URL y deniega el de otro residencial
      *
      * @param  mixed  $value
      * @param  string|null  $field

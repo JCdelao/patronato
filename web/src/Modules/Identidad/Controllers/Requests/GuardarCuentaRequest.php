@@ -13,7 +13,7 @@ use Patronato\Modules\Identidad\Models\Rol;
 class GuardarCuentaRequest extends FormRequest
 {
     /**
-     * Get the validation rules that apply to the request.
+     * Reglas de validación
      *
      * @return array<string, ValidationRule|array<mixed>|string>
      */
@@ -42,7 +42,7 @@ class GuardarCuentaRequest extends FormRequest
     }
 
     /**
-     * Get the validation messages that apply to the request.
+     * Mensajes de validación
      *
      * @return array<string, string>
      */
@@ -58,7 +58,7 @@ class GuardarCuentaRequest extends FormRequest
     }
 
     /**
-     * Prepare the data for validation.
+     * Prepara los datos antes de validar
      */
     protected function prepareForValidation(): void
     {

@@ -1,0 +1,136 @@
+# Se activa en la Entrega 2: ver docs/pipeline-ci-cd.md
+name: CI/CD
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: web
+
+jobs:
+  verificar:
+    name: Calidad, pruebas y compilación
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Preparar PHP
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # v2
+        with:
+          php-version: '8.4'
+          extensions: pdo_pgsql, pdo_sqlite
+          tools: composer:v2
+          coverage: none
+
+      - name: Preparar Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+
+      - name: Instalar dependencias
+        run: |
+          composer install --no-interaction --prefer-dist --no-progress
+          npm ci --no-audit --no-fund
+
+      - name: Configurar la aplicación
+        run: |
+          cp .env.example .env
+          php artisan key:generate --no-interaction
+
+      # Genera las rutas que usa TypeScript
+      - name: Compilar el frontend
+        run: npm run build
+
+      - name: Revisar estilo de PHP
+        run: vendor/bin/pint --test
+
+      - name: Análisis estático de PHP
+        run: vendor/bin/phpstan analyse --no-progress --memory-limit=1G
+
+      - name: Revisar formato y lint del frontend
+        run: npm run check
+
+      - name: Revisar tipos de TypeScript
+        run: npm run types:check
+
+      - name: Ejecutar las pruebas
+        run: php artisan test
+
+      - name: Guardar el frontend compilado
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend
+          path: web/public/build
+          retention-days: 7
+
+  # Comprueba las migraciones en PostgreSQL
+  migraciones:
+    name: Migraciones en PostgreSQL
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_DB: patronato
+          POSTGRES_USER: patronato_app
+          POSTGRES_PASSWORD: solo_para_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U patronato_app -d patronato"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DB_CONNECTION: pgsql
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
+      DB_DATABASE: patronato
+      DB_USERNAME: patronato_app
+      DB_PASSWORD: solo_para_ci
+
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Preparar PHP
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # v2
+        with:
+          php-version: '8.4'
+          extensions: pdo_pgsql
+          tools: composer:v2
+          coverage: none
+
+      - name: Instalar dependencias
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Configurar la aplicación
+        run: |
+          cp .env.example .env
+          php artisan key:generate --no-interaction
+
+      - name: Aplicar las migraciones
+        run: php artisan migrate --force --no-interaction
+
+  # Apagado hasta definir el servidor de producción
+  desplegar:
+    name: Despliegue a producción
+    needs: [verificar, migraciones]
+    if: ${{ false }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Publicar en el servidor
+        run: echo "Pendiente de definir el servidor de producción"

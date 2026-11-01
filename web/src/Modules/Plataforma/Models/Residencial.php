@@ -31,7 +31,7 @@ class Residencial extends Model
     protected $table = 'residenciales';
 
     /**
-     * Cada residencial nuevo arranca con la matriz de permisos predeterminada (HU-07).
+     * Asigna los permisos iniciales al crear un residencial
      */
     protected static function booted(): void
     {

@@ -9,7 +9,7 @@ use Patronato\Modules\Identidad\Models\Rol;
 class PermisoService
 {
     /**
-     * Módulos y acciones que se pueden permitir (HU-07).
+     * Módulos y acciones que se pueden permitir
      */
     public const MODULOS = [
         'padron' => ['etiqueta' => 'Viviendas y residentes', 'acciones' => ['ver', 'registrar', 'anular']],
@@ -21,7 +21,7 @@ class PermisoService
     ];
 
     /**
-     * Propuesta inicial de cada residencial; la decisión final es de la Junta Directiva.
+     * Permisos iniciales de cada residencial
      */
     public const PREDETERMINADOS = [
         Rol::PRESIDENTE => ['padron.ver', 'padron.registrar', 'padron.anular', 'auditoria.ver'],
@@ -55,7 +55,7 @@ class PermisoService
             return false;
         }
 
-        // El administrador técnico configura el residencial, así que no depende de la matriz.
+        // El administrador técnico no depende de la matriz
         if ($usuario->rol?->codigo === Rol::ADMIN_TECNICO) {
             return in_array("{$modulo}.{$accion}", $this->catalogo(), true);
         }
@@ -114,7 +114,7 @@ class PermisoService
     }
 
     /**
-     * Reemplaza los permisos de un rol y deja constancia del cambio (HU-07).
+     * Reemplaza los permisos de un rol
      *
      * @param  array<int, string>  $permisos
      */

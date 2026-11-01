@@ -8,9 +8,7 @@ use Illuminate\Support\Facades\DB;
 class RolesSeeder extends Seeder
 {
     /**
-     * Carga los roles del sistema. Se puede ejecutar más de una vez.
-     *
-     * La matriz de permisos (rol_permisos) no se carga aquí: la define la Junta Directiva (HU-07).
+     * Carga los roles del sistema
      */
     public function run(): void
     {

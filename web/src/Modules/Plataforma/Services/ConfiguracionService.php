@@ -13,7 +13,7 @@ class ConfiguracionService
     ];
 
     /**
-     * Parámetros de acceso de un residencial; sin residencial se usan los valores por defecto (HU-04).
+     * Parámetros de acceso de un residencial
      *
      * @return array{max_intentos_login: int, minutos_bloqueo_login: int, minutos_inactividad_sesion: int}
      */

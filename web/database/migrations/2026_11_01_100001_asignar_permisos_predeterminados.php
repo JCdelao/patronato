@@ -7,7 +7,7 @@ use Patronato\Modules\Identidad\Services\PermisoService;
 return new class extends Migration
 {
     /**
-     * Da la matriz inicial a los residenciales que ya existían antes de la HU-07.
+     * Asigna los permisos iniciales a los residenciales existentes
      */
     public function up(): void
     {
@@ -19,7 +19,7 @@ return new class extends Migration
     }
 
     /**
-     * Reverse the migrations.
+     * Revierte la migración
      */
     public function down(): void
     {

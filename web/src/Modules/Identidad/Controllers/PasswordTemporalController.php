@@ -15,7 +15,7 @@ class PasswordTemporalController extends Controller
     use PasswordValidationRules;
 
     /**
-     * Muestra el formulario para reemplazar la contraseña temporal.
+     * Muestra el formulario para reemplazar la contraseña temporal
      */
     public function edit(Request $request): Response|RedirectResponse
     {
@@ -29,7 +29,7 @@ class PasswordTemporalController extends Controller
     }
 
     /**
-     * Reemplaza la contraseña temporal por la que elige el usuario.
+     * Reemplaza la contraseña temporal por la que elige el usuario
      */
     public function update(Request $request): RedirectResponse
     {

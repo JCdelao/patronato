@@ -12,7 +12,7 @@ use Symfony\Component\HttpFoundation\Response;
 class RespuestaInicioSesion implements LoginResponse, TwoFactorLoginResponse
 {
     /**
-     * Lleva al usuario a la pantalla de inicio de su rol (HU-04).
+     * Lleva al usuario a la pantalla de inicio de su rol
      *
      * @param  Request  $request
      */

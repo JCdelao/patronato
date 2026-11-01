@@ -10,7 +10,7 @@ use Illuminate\Validation\Rules\Unique;
 trait ProfileValidationRules
 {
     /**
-     * Get the validation rules used to validate user profiles.
+     * Reglas de validación del perfil
      *
      * @return array<string, array<int, Unique|ValidationRule|array<mixed>|string>>
      */
@@ -23,7 +23,7 @@ trait ProfileValidationRules
     }
 
     /**
-     * Get the validation rules used to validate user names.
+     * Reglas de validación del nombre
      *
      * @return array<int, Unique|ValidationRule|array<mixed>|string>
      */
@@ -33,7 +33,7 @@ trait ProfileValidationRules
     }
 
     /**
-     * Get the validation rules used to validate user emails.
+     * Reglas de validación del correo
      *
      * @return array<int, Unique|ValidationRule|array<mixed>|string>
      */

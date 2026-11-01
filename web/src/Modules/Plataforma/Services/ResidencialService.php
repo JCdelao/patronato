@@ -19,8 +19,7 @@ class ResidencialService
     ) {}
 
     /**
-     * Cambia el estado del residencial y deja constancia del usuario y el motivo (HU-03).
-     * Sus datos no se tocan: solo cambia si sus usuarios pueden entrar.
+     * Cambia el estado de un residencial
      */
     public function cambiarEstado(Residencial $residencial, string $estado, string $motivo, User $usuario): void
     {
@@ -39,7 +38,7 @@ class ResidencialService
     }
 
     /**
-     * Registra un residencial junto con su configuración y su administrador técnico (HU-01).
+     * Registra un residencial junto con su configuración y su administrador técnico
      *
      * @param  array{nombre: string, direccion?: string|null, telefono?: string|null, correo?: string|null, admin_nombre: string, admin_correo: string}  $datos
      * @return array{residencial: Residencial, administrador: User, password_temporal: string}

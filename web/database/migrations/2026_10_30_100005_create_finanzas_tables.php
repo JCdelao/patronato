@@ -8,13 +8,11 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Run the migrations.
-     *
-     * Lo financiero no se borra: se anula con motivo y queda en auditoria.
+     * Aplica la migración
      */
     public function up(): void
     {
-        // La modalidad vigente de un período es la de mayor vigente_desde <= período (HU-14).
+        // La modalidad vigente de un período es la de mayor vigente_desde <= período
         Schema::create('modalidades_cobro', function (Blueprint $table) {
             $table->id();
             $table->foreignId('residencial_id')->constrained('residenciales');
@@ -25,8 +23,7 @@ return new class extends Migration
             $table->unique(['residencial_id', 'vigente_desde']);
         });
 
-        // En modalidad unificada solo se cobra el concepto con es_cuota_unificada;
-        // las tarifas de los demás son el desglose informativo.
+        // En modalidad unificada solo se cobra el concepto con es_cuota_unificada
         Schema::create('conceptos_cobro', function (Blueprint $table) {
             $table->id();
             $table->foreignId('residencial_id')->constrained('residenciales');
@@ -39,8 +36,8 @@ return new class extends Migration
             $table->unique(['residencial_id', 'id']);
         });
 
-        // Sin tipo_vivienda ni vivienda_id, la tarifa aplica a todas.
-        // La tarifa especial (vivienda_id) prevalece sobre la del tipo (HU-16).
+        // Sin tipo_vivienda ni vivienda_id, la tarifa aplica a todas
+        // La tarifa especial (vivienda_id) prevalece sobre la del tipo
         Schema::create('tarifas', function (Blueprint $table) {
             $table->id();
             $table->foreignId('residencial_id');
@@ -58,7 +55,7 @@ return new class extends Migration
             $table->unique(['concepto_id', 'tipo_vivienda', 'vivienda_id', 'vigente_desde'], 'tarifas_vigencia_unique')->nullsNotDistinct();
         });
 
-        // El UNIQUE evita duplicar cargos si el proceso mensual se repite (HU-17).
+        // El UNIQUE evita duplicar cargos si el proceso mensual se repite
         Schema::create('cargos', function (Blueprint $table) {
             $table->id();
             $table->foreignId('residencial_id');
@@ -96,7 +93,7 @@ return new class extends Migration
 
         DB::statement("CREATE UNIQUE INDEX cajas_una_abierta_por_cobrador_unique ON cajas (cobrador_id) WHERE estado = 'abierta'");
 
-        // Solo el estado 'confirmado' reduce el saldo de la vivienda (HU-24 a HU-27).
+        // Solo el estado 'confirmado' reduce el saldo de la vivienda
         Schema::create('pagos', function (Blueprint $table) {
             $table->id();
             $table->foreignId('residencial_id');
@@ -106,7 +103,7 @@ return new class extends Migration
             $table->enum('origen', ['sistema', 'portal', 'migracion'])->default('sistema');
             $table->decimal('monto', 12, 2);
             $table->date('fecha_pago');
-            // La aplicación asigna el consecutivo; string admite los recibos migrados.
+            // La aplicación asigna el consecutivo
             $table->string('numero_recibo', 30)->nullable();
             $table->foreignId('caja_id')->nullable()->index();
             $table->foreignId('registrado_por')->nullable()->constrained('users');
@@ -132,10 +129,10 @@ return new class extends Migration
             $table->index(['residencial_id', 'fecha_pago']);
         });
 
-        // Una transferencia rechazada o anulada puede volver a registrarse (HU-24).
+        // Una transferencia rechazada o anulada puede volver a registrarse
         DB::statement("CREATE UNIQUE INDEX pagos_referencia_banco_unique ON pagos (residencial_id, lower(banco), numero_referencia) WHERE numero_referencia IS NOT NULL AND estado NOT IN ('rechazado', 'anulado')");
 
-        // Qué parte de cada pago cubre cada cargo. Lo no aplicado es saldo a favor (HU-28).
+        // Qué parte de cada pago cubre cada cargo
         Schema::create('pago_aplicaciones', function (Blueprint $table) {
             $table->id();
             $table->foreignId('residencial_id');
@@ -148,7 +145,7 @@ return new class extends Migration
             $table->unique(['pago_id', 'cargo_id']);
         });
 
-        // monto negativo reduce la deuda; positivo la aumenta (HU-29).
+        // monto negativo reduce la deuda; positivo la aumenta
         Schema::create('ajustes', function (Blueprint $table) {
             $table->id();
             $table->foreignId('residencial_id');
@@ -164,7 +161,7 @@ return new class extends Migration
             $table->foreign(['residencial_id', 'lote_migracion_id'])->references(['residencial_id', 'id'])->on('lotes_migracion');
         });
 
-        // Saldo = cargos - pagos confirmados + ajustes; negativo significa saldo a favor (HU-27).
+        // Saldo = cargos - pagos confirmados + ajustes
         DB::statement(<<<'SQL'
             CREATE VIEW v_saldos_vivienda AS
             SELECT
@@ -221,7 +218,7 @@ return new class extends Migration
             $table->index(['residencial_id', 'fecha']);
         });
 
-        // pago_id se llena en los ingresos automáticos por cuotas confirmadas (HU-32).
+        // pago_id se llena en los ingresos automáticos por cuotas confirmadas
         Schema::create('ingresos', function (Blueprint $table) {
             $table->id();
             $table->foreignId('residencial_id');
@@ -271,7 +268,7 @@ return new class extends Migration
                         CHECK (estado = 'abierta'
                                OR (cerrada_en IS NOT NULL AND cerrada_por IS NOT NULL
                                    AND total_registrado IS NOT NULL AND monto_entregado IS NOT NULL)),
-                    -- Toda diferencia en el cierre debe justificarse (HU-21).
+                    -- Toda diferencia en el cierre debe justificarse.
                     ADD CONSTRAINT cajas_diferencia_justificada_check
                         CHECK (estado = 'abierta' OR monto_entregado = total_registrado OR justificacion IS NOT NULL);
 
@@ -284,7 +281,7 @@ return new class extends Migration
                     ADD CONSTRAINT pagos_anulacion_datos_check
                         CHECK (estado <> 'anulado' OR (anulado_por IS NOT NULL AND anulado_en IS NOT NULL
                                                        AND motivo_anulacion IS NOT NULL)),
-                    -- Quien aprueba una anulación debe ser otro directivo (HU-23).
+                    -- Quien aprueba una anulación debe ser otro directivo.
                     ADD CONSTRAINT pagos_aprobador_distinto_check
                         CHECK (anulacion_aprobada_por IS NULL OR anulacion_aprobada_por <> anulado_por);
 
@@ -309,7 +306,7 @@ return new class extends Migration
     }
 
     /**
-     * Reverse the migrations.
+     * Revierte la migración
      */
     public function down(): void
     {

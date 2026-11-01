@@ -14,7 +14,7 @@ class CreateNewUser implements CreatesNewUsers
     use PasswordValidationRules, ProfileValidationRules;
 
     /**
-     * Validate and create a newly registered user.
+     * Valida y crea un usuario registrado
      *
      * @param  array<string, string>  $input
      */
@@ -22,7 +22,7 @@ class CreateNewUser implements CreatesNewUsers
     {
         Validator::make($input, [
             ...$this->profileRules(),
-            // El formulario de registro pide la contraseña una sola vez.
+            // Pide la contraseña una sola vez
             'password' => ['required', 'string', Password::default()],
         ])->validate();
 

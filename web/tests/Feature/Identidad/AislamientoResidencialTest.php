@@ -62,7 +62,7 @@ test('every model with a residencial column is isolated', function () {
 
     expect($modelos)->not->toBeEmpty();
 
-    // La bitácora guarda intentos de cualquier residencial y se protege por permisos (HU-08).
+    // La bitácora se protege por permisos
     $sinAislar = $modelos
         ->reject(fn (string $clase) => $clase === Auditoria::class)
         ->reject(fn (string $clase) => in_array(PerteneceAResidencial::class, class_uses_recursive($clase), true));

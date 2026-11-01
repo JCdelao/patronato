@@ -49,7 +49,7 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     use HasFactory, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable;
 
     /**
-     * Get the attributes that should be cast.
+     * Conversiones de tipo de los atributos
      *
      * @return array<string, string>
      */
@@ -81,7 +81,7 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     }
 
     /**
-     * Determine if the user belongs to a suspended residencial (HU-03).
+     * Indica si el residencial del usuario está suspendido
      */
     public function residencialSuspendido(): bool
     {
@@ -89,7 +89,7 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     }
 
     /**
-     * The reason the user cannot use the system, if any (HU-03, HU-06).
+     * Motivo por el que el usuario no puede entrar
      */
     public function motivoSinAcceso(): ?string
     {
@@ -101,7 +101,7 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     }
 
     /**
-     * Get the route name of the user's home screen, according to their role (HU-04).
+     * Ruta de inicio según el rol
      */
     public function rutaInicio(): string
     {
@@ -113,7 +113,7 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     }
 
     /**
-     * Determine if the user can manage the accounts of their residencial (HU-06).
+     * Indica si el usuario administra las cuentas
      */
     public function puedeAdministrarUsuarios(): bool
     {
@@ -121,7 +121,7 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     }
 
     /**
-     * Determine if the user administers the whole platform.
+     * Indica si el usuario administra la plataforma
      */
     public function esAdminPlataforma(): bool
     {
@@ -129,7 +129,7 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     }
 
     /**
-     * Determine if the user's role allows an action in a module (HU-07).
+     * Indica si el rol permite una acción en un módulo
      */
     public function puede(string $modulo, string $accion): bool
     {

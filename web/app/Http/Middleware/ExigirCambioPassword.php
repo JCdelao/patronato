@@ -9,7 +9,7 @@ use Symfony\Component\HttpFoundation\Response;
 class ExigirCambioPassword
 {
     /**
-     * Impide usar el sistema hasta reemplazar la contraseña temporal (HU-01).
+     * Impide usar el sistema hasta reemplazar la contraseña temporal
      *
      * @param  Closure(Request): (Response)  $next
      */

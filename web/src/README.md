@@ -19,4 +19,4 @@ es `Patronato\Modules\Finanzas\Services\PagoService`.
 
 - Un módulo usa a otro a través de sus `Services`, no de sus `Models` ni `Controllers`.
 - Lo que usan varios módulos va en `Shared/`.
-- Toda consulta se filtra por `residencial_id` (HU-02).
+- Toda consulta se filtra por `residencial_id`.

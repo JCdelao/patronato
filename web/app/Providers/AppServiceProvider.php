@@ -14,15 +14,12 @@ use Illuminate\Validation\Rules\Password;
 class AppServiceProvider extends ServiceProvider
 {
     /**
-     * Register any application services.
+     * Registra los servicios
      */
-    public function register(): void
-    {
-        //
-    }
+    public function register(): void {}
 
     /**
-     * Bootstrap any application services.
+     * Inicializa los servicios
      */
     public function boot(): void
     {
@@ -33,14 +30,14 @@ class AppServiceProvider extends ServiceProvider
             ? Response::allow()
             : Response::deny('Acceso denegado'));
 
-        // Uso en rutas: can:permiso,'modulo','accion' (con comillas, o Laravel los busca como parámetros).
+        // Uso en rutas: can:permiso,'modulo','accion'
         Gate::define('permiso', fn (User $user, string $modulo, string $accion): Response => $user->puede($modulo, $accion)
             ? Response::allow()
             : Response::deny('Acceso denegado'));
     }
 
     /**
-     * Configure default behaviors for production-ready applications.
+     * Configura los valores predeterminados de la aplicación
      */
     protected function configureDefaults(): void
     {
@@ -50,7 +47,7 @@ class AppServiceProvider extends ServiceProvider
             app()->isProduction(),
         );
 
-        // Política mínima de contraseñas (HU-05).
+        // Política mínima de contraseñas
         Password::defaults(fn (): Password => app()->isProduction()
             ? Password::min(8)->letters()->numbers()->uncompromised()
             : Password::min(8)->letters()->numbers(),

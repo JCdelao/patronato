@@ -4,7 +4,7 @@ export type CleanupFn = () => void;
 
 export function useMobileNavigation(): CleanupFn {
     return useCallback(() => {
-        // Remove pointer-events style from body...
+        // Quita pointer-events del body
         document.body.style.removeProperty('pointer-events');
     }, []);
 }

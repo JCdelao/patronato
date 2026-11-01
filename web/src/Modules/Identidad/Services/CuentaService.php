@@ -17,7 +17,7 @@ class CuentaService
     ) {}
 
     /**
-     * Crea el administrador técnico de un residencial con una contraseña temporal (HU-01).
+     * Crea el administrador técnico de un residencial
      *
      * @return array{usuario: User, password_temporal: string}
      */
@@ -32,7 +32,7 @@ class CuentaService
     }
 
     /**
-     * Roles que el administrador técnico puede asignar (HU-06).
+     * Roles que el administrador técnico puede asignar
      *
      * @return Collection<int, Rol>
      */
@@ -46,7 +46,7 @@ class CuentaService
     }
 
     /**
-     * Crea una cuenta del residencial; devuelve la contraseña temporal para mostrarla una sola vez.
+     * Crea una cuenta del residencial
      *
      * @param  array{name: string, email: string, rol_id: int|string, residente_id?: int|string|null}  $datos
      * @return array{usuario: User, password_temporal: string}
@@ -90,7 +90,7 @@ class CuentaService
     }
 
     /**
-     * Activa o desactiva una cuenta; sus registros históricos se conservan (HU-06).
+     * Activa o desactiva una cuenta
      */
     public function cambiarActivo(User $actor, User $cuenta, bool $activo): void
     {
@@ -102,7 +102,7 @@ class CuentaService
     }
 
     /**
-     * Busca una cuenta de la URL: si es de otro residencial, deniega y audita (HU-02).
+     * Busca la cuenta indicada en la URL
      */
     public function resolverDelResidencial(int $id, User $actor): User
     {
@@ -118,7 +118,7 @@ class CuentaService
     }
 
     /**
-     * Convierte una cuenta existente en administrador de la plataforma.
+     * Convierte una cuenta existente en administrador de la plataforma
      */
     public function asignarAdministradorPlataforma(User $usuario): void
     {
@@ -138,8 +138,7 @@ class CuentaService
 
         $usuario = new User;
 
-        // El correo lo aporta un administrador y la cuenta entra con contraseña
-        // temporal, así que no se le exige verificarlo para el primer acceso.
+        // Marca el correo como verificado
         $usuario->forceFill([
             'name' => $nombre,
             'email' => $correo,

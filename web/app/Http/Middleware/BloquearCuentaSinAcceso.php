@@ -10,8 +10,7 @@ use Symfony\Component\HttpFoundation\Response;
 class BloquearCuentaSinAcceso
 {
     /**
-     * Cierra la sesión de quien ya estaba dentro cuando su residencial se suspendió
-     * o su cuenta se desactivó (HU-03, HU-06).
+     * Cierra la sesión si el residencial está suspendido o la cuenta inactiva
      *
      * @param  Closure(Request): (Response)  $next
      */

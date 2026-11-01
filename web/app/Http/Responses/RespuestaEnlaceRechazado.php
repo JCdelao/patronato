@@ -11,7 +11,7 @@ use Symfony\Component\HttpFoundation\Response;
 class RespuestaEnlaceRechazado implements FailedPasswordResetLinkRequestResponse
 {
     /**
-     * Responde igual que cuando el enlace se envía, para no revelar qué cuentas existen (HU-05).
+     * Responde igual que cuando el enlace se envía
      *
      * @param  Request  $request
      */

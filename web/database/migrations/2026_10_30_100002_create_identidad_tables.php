@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Run the migrations.
+     * Aplica la migración
      */
     public function up(): void
     {
@@ -25,7 +25,7 @@ return new class extends Migration
             $table->boolean('debe_cambiar_password')->default(false);
         });
 
-        // Matriz de permisos de cada residencial (HU-07).
+        // Matriz de permisos de cada residencial
         Schema::create('rol_permisos', function (Blueprint $table) {
             $table->foreignId('residencial_id')->constrained('residenciales');
             $table->foreignId('rol_id')->constrained('roles');
@@ -34,8 +34,7 @@ return new class extends Migration
             $table->primary(['residencial_id', 'rol_id', 'modulo', 'accion']);
         });
 
-        // Bitácora de auditoría (HU-08). También cubre el historial de cambios (HU-13),
-        // suspensiones de residenciales (HU-03) e intentos de acceso denegado (HU-02).
+        // Bitácora de auditoría
         Schema::create('auditoria', function (Blueprint $table) {
             $table->id();
             $table->foreignId('residencial_id')->nullable()->constrained('residenciales');
@@ -76,7 +75,7 @@ return new class extends Migration
     }
 
     /**
-     * Reverse the migrations.
+     * Revierte la migración
      */
     public function down(): void
     {

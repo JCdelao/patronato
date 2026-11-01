@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Run the migrations.
+     * Aplica la migración
      */
     public function up(): void
     {
@@ -113,7 +113,7 @@ return new class extends Migration
             $table->string('nombre', 150);
             $table->string('identidad', 30)->nullable();
             $table->string('tipo', 40);
-            // Lista de días ISO 8601: 1 = lunes ... 7 = domingo.
+            // Lista de días ISO 8601: 1 = lunes ... 7 = domingo
             $table->jsonb('dias_semana');
             $table->time('hora_inicio', 0);
             $table->time('hora_fin', 0);
@@ -132,7 +132,7 @@ return new class extends Migration
             $table->foreign(['residencial_id', 'vivienda_id'], 'autorizado_viviendas_vivienda_foreign')->references(['residencial_id', 'id'])->on('viviendas');
         });
 
-        // identificador lo genera el dispositivo: evita duplicados al sincronizar sin conexión (HU-42, HU-51).
+        // El identificador lo genera el dispositivo
         Schema::create('visitas', function (Blueprint $table) {
             $table->id();
             $table->foreignId('residencial_id');
@@ -162,7 +162,7 @@ return new class extends Migration
 
         DB::statement('CREATE INDEX visitas_dentro_index ON visitas (residencial_id) WHERE salida_en IS NULL');
 
-        // El token no contiene datos personales ni financieros (HU-47).
+        // El token no contiene datos personales ni financieros
         Schema::create('qr_residentes', function (Blueprint $table) {
             $table->id();
             $table->foreignId('residencial_id');
@@ -207,7 +207,7 @@ return new class extends Migration
 
         if (DB::getDriverName() === 'pgsql') {
             DB::unprepared(<<<'SQL'
-                -- Permite impedir turnos superpuestos por guardia (HU-39).
+                -- Permite impedir turnos superpuestos por guardia.
                 CREATE EXTENSION IF NOT EXISTS btree_gist;
 
                 ALTER TABLE turnos
@@ -227,7 +227,7 @@ return new class extends Migration
     }
 
     /**
-     * Reverse the migrations.
+     * Revierte la migración
      */
     public function down(): void
     {

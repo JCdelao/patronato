@@ -30,7 +30,7 @@ class Residente extends Model
     protected $table = 'residentes';
 
     /**
-     * Get the attributes that should be cast.
+     * Conversiones de tipo de los atributos
      *
      * @return array<string, string>
      */

@@ -23,7 +23,7 @@ beforeEach(function () {
 
     Notification::fake();
 
-    // Simula pg_dump escribiendo el archivo que recibe en --file.
+    // Simula pg_dump escribiendo el archivo que recibe en --file
     $this->dumpExitoso = fn () => Process::fake(function (PendingProcess $proceso) {
         foreach ((array) $proceso->command as $argumento) {
             if (str_starts_with($argumento, '--file=')) {
