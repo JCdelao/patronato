@@ -1,0 +1,53 @@
+<?php
+
+return [
+    'boolean' => 'El campo :attribute debe ser verdadero o falso.',
+    'confirmed' => 'La confirmación de :attribute no coincide.',
+    'current_password' => 'La contraseña no es correcta.',
+    'decimal' => 'El campo :attribute debe tener como máximo 2 decimales.',
+    'different' => 'El campo :attribute debe ser distinto de :other.',
+    'email' => 'El campo :attribute debe ser un correo válido.',
+    'exists' => 'El valor de :attribute no es válido.',
+    'image' => 'El campo :attribute debe ser una imagen.',
+    'in' => 'El valor de :attribute no es válido.',
+    'integer' => 'El campo :attribute debe ser un número entero.',
+    'lowercase' => 'El campo :attribute debe estar en minúsculas.',
+    'max' => [
+        'file' => 'El campo :attribute no puede pesar más de :max KB.',
+        'numeric' => 'El campo :attribute no puede ser mayor que :max.',
+        'string' => 'El campo :attribute no puede tener más de :max caracteres.',
+    ],
+    'mimes' => 'El campo :attribute debe ser un archivo de tipo :values.',
+    'min' => [
+        'numeric' => 'El campo :attribute debe ser como mínimo :min.',
+        'string' => 'El campo :attribute debe tener al menos :min caracteres.',
+    ],
+    'numeric' => 'El campo :attribute debe ser un número.',
+    'password' => [
+        'letters' => 'La contraseña debe tener al menos una letra.',
+        'mixed' => 'La contraseña debe tener mayúsculas y minúsculas.',
+        'numbers' => 'La contraseña debe tener al menos un número.',
+        'symbols' => 'La contraseña debe tener al menos un símbolo.',
+        'uncompromised' => 'Esta contraseña apareció en una filtración de datos: elige otra.',
+    ],
+    'required' => 'El campo :attribute es obligatorio.',
+    'string' => 'El campo :attribute debe ser texto.',
+    'unique' => 'El valor de :attribute ya está en uso.',
+
+    'attributes' => [
+        'apellidos' => 'apellido',
+        'codigo' => 'código',
+        'correo' => 'correo',
+        'cuota' => 'cuota mensual',
+        'direccion' => 'dirección',
+        'email' => 'correo',
+        'identidad' => 'identidad',
+        'motivo' => 'motivo',
+        'name' => 'nombre',
+        'nombres' => 'nombre',
+        'password' => 'contraseña',
+        'current_password' => 'contraseña temporal',
+        'telefono' => 'teléfono',
+        'tipo' => 'tipo',
+    ],
+];

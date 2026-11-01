@@ -6,6 +6,7 @@ use App\Concerns\PasswordValidationRules;
 use App\Models\User;
 use Illuminate\Support\Facades\Validator;
 use Laravel\Fortify\Contracts\ResetsUserPasswords;
+use Patronato\Modules\Identidad\Services\BloqueoLoginService;
 
 class ResetUserPassword implements ResetsUserPasswords
 {
@@ -24,6 +25,9 @@ class ResetUserPassword implements ResetsUserPasswords
 
         $user->forceFill([
             'password' => $input['password'],
+            'debe_cambiar_password' => false,
         ])->save();
+
+        app(BloqueoLoginService::class)->limpiar($user->email);
     }
 }

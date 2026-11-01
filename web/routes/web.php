@@ -9,3 +9,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 require __DIR__.'/settings.php';
+require __DIR__.'/plataforma.php';
+require __DIR__.'/padron.php';
+require __DIR__.'/identidad.php';

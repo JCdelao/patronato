@@ -2,9 +2,12 @@
 
 namespace App\Providers;
 
+use App\Models\User;
 use Carbon\CarbonImmutable;
+use Illuminate\Auth\Access\Response;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 
@@ -24,6 +27,16 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+
+        Gate::define('administrar-plataforma', fn (User $user): bool => $user->esAdminPlataforma());
+        Gate::define('administrar-usuarios', fn (User $user): Response => $user->puedeAdministrarUsuarios()
+            ? Response::allow()
+            : Response::deny('Acceso denegado'));
+
+        // Uso en rutas: can:permiso,'modulo','accion' (con comillas, o Laravel los busca como parámetros).
+        Gate::define('permiso', fn (User $user, string $modulo, string $accion): Response => $user->puede($modulo, $accion)
+            ? Response::allow()
+            : Response::deny('Acceso denegado'));
     }
 
     /**
@@ -37,14 +50,10 @@ class AppServiceProvider extends ServiceProvider
             app()->isProduction(),
         );
 
-        Password::defaults(fn (): ?Password => app()->isProduction()
-            ? Password::min(12)
-                ->mixedCase()
-                ->letters()
-                ->numbers()
-                ->symbols()
-                ->uncompromised()
-            : null,
+        // Política mínima de contraseñas (HU-05).
+        Password::defaults(fn (): Password => app()->isProduction()
+            ? Password::min(8)->letters()->numbers()->uncompromised()
+            : Password::min(8)->letters()->numbers(),
         );
     }
 }

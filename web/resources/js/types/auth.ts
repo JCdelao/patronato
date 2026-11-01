@@ -12,6 +12,10 @@ export type User = {
 
 export type Auth = {
     user: User;
+    esAdminPlataforma: boolean;
+    permisos: string[];
+    puedeAdministrarUsuarios: boolean;
+    rol: string | null;
 };
 
 export type Passkey = {

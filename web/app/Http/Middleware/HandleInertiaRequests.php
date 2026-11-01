@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use Illuminate\Http\Request;
 use Inertia\Middleware;
+use Patronato\Modules\Identidad\Services\PermisoService;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -40,6 +41,10 @@ class HandleInertiaRequests extends Middleware
             'name' => config('app.name'),
             'auth' => [
                 'user' => $request->user(),
+                'esAdminPlataforma' => $request->user()?->esAdminPlataforma() ?? false,
+                'permisos' => $request->user() ? app(PermisoService::class)->deUsuario($request->user()) : [],
+                'puedeAdministrarUsuarios' => $request->user()?->puedeAdministrarUsuarios() ?? false,
+                'rol' => $request->user()?->rol?->nombre,
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];

@@ -1,0 +1,154 @@
+<?php
+
+namespace Patronato\Modules\Identidad\Controllers;
+
+use App\Http\Controllers\Controller;
+use App\Models\User;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Crypt;
+use Inertia\Inertia;
+use Inertia\Response;
+use Patronato\Modules\Identidad\Controllers\Requests\GuardarCuentaRequest;
+use Patronato\Modules\Identidad\Models\Rol;
+use Patronato\Modules\Identidad\Services\CuentaService;
+use Patronato\Modules\Padron\Services\ResidenteService;
+use Patronato\Modules\Plataforma\Services\ConfiguracionService;
+
+class CuentaController extends Controller
+{
+    /**
+     * Muestra las cuentas del residencial.
+     */
+    public function index(Request $request, CuentaService $cuentas, ResidenteService $residentes, ConfiguracionService $configuracion): Response
+    {
+        $actor = $request->user();
+        $credenciales = $request->session()->get('credenciales');
+        $residentesDisponibles = $residentes->paraCuentas();
+
+        return Inertia::render('identidad/usuarios', [
+            'cuentas' => User::query()
+                ->where('residencial_id', $actor->residencial_id)
+                ->with('rol')
+                ->orderBy('name')
+                ->get()
+                ->map(function (User $cuenta) use ($actor, $residentesDisponibles) {
+                    $residente = collect($residentesDisponibles)->firstWhere('user_id', $cuenta->id);
+
+                    return [
+                        'id' => $cuenta->id,
+                        'name' => $cuenta->name,
+                        'email' => $cuenta->email,
+                        'rol_id' => $cuenta->rol_id,
+                        'rol' => $cuenta->rol?->nombre,
+                        'activo' => $cuenta->activo,
+                        'residente_id' => $residente['id'] ?? null,
+                        'vivienda' => $residente['vivienda'] ?? null,
+                        'editable' => $this->esEditable($actor, $cuenta),
+                    ];
+                }),
+            'roles' => $cuentas->rolesAsignables()->map(fn (Rol $rol) => [
+                'id' => $rol->id,
+                'codigo' => $rol->codigo,
+                'nombre' => $rol->nombre,
+            ])->values(),
+            'residentes' => $residentesDisponibles,
+            'parametros' => $configuracion->seguridad($actor->residencial_id),
+            'credenciales' => is_string($credenciales) ? Crypt::decrypt($credenciales) : null,
+        ]);
+    }
+
+    /**
+     * Crea una cuenta y muestra una sola vez su contraseña temporal.
+     */
+    public function store(GuardarCuentaRequest $request, CuentaService $cuentas): RedirectResponse
+    {
+        /** @var array{name: string, email: string, rol_id: string, residente_id?: string|null} $datos */
+        $datos = $request->validated();
+
+        $cuenta = $cuentas->crear($request->user(), $datos);
+
+        // Va cifrada porque la sesión se guarda en la base de datos hasta la siguiente petición.
+        $request->session()->flash('credenciales', Crypt::encrypt([
+            'correo' => $cuenta['usuario']->email,
+            'password_temporal' => $cuenta['password_temporal'],
+        ]));
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => 'Cuenta creada.']);
+
+        return back();
+    }
+
+    /**
+     * Actualiza una cuenta del residencial.
+     */
+    public function update(GuardarCuentaRequest $request, CuentaService $cuentas, User $cuenta): RedirectResponse
+    {
+        abort_unless($this->esEditable($request->user(), $cuenta), 403, 'Esta cuenta no se puede modificar desde aquí');
+
+        /** @var array{name: string, email: string, rol_id: string, residente_id?: string|null} $datos */
+        $datos = $request->validated();
+
+        $cuentas->actualizar($request->user(), $cuenta, $datos);
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => 'Cuenta actualizada.']);
+
+        return back();
+    }
+
+    /**
+     * Impide que la cuenta inicie sesión; sus registros históricos se conservan.
+     */
+    public function desactivar(Request $request, CuentaService $cuentas, User $cuenta): RedirectResponse
+    {
+        abort_unless($this->esEditable($request->user(), $cuenta), 403, 'Esta cuenta no se puede modificar desde aquí');
+
+        $cuentas->cambiarActivo($request->user(), $cuenta, false);
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => 'Cuenta desactivada.']);
+
+        return back();
+    }
+
+    /**
+     * Devuelve el acceso a una cuenta desactivada.
+     */
+    public function activar(Request $request, CuentaService $cuentas, User $cuenta): RedirectResponse
+    {
+        abort_unless($this->esEditable($request->user(), $cuenta), 403, 'Esta cuenta no se puede modificar desde aquí');
+
+        $cuentas->cambiarActivo($request->user(), $cuenta, true);
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => 'Cuenta activada.']);
+
+        return back();
+    }
+
+    /**
+     * Guarda los parámetros de acceso del residencial (HU-04).
+     */
+    public function parametros(Request $request, ConfiguracionService $configuracion): RedirectResponse
+    {
+        /** @var array{max_intentos_login: string, minutos_bloqueo_login: string, minutos_inactividad_sesion: string} $datos */
+        $datos = $request->validate([
+            'max_intentos_login' => ['required', 'integer', 'min:1', 'max:20'],
+            'minutos_bloqueo_login' => ['required', 'integer', 'min:1', 'max:1440'],
+            'minutos_inactividad_sesion' => ['required', 'integer', 'min:5', 'max:1440'],
+        ]);
+
+        $configuracion->actualizarSeguridad((int) $request->user()->residencial_id, $datos);
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => 'Parámetros guardados.']);
+
+        return back();
+    }
+
+    /**
+     * La cuenta propia y las de administrador técnico no se administran aquí,
+     * para que el residencial no se quede sin quien lo administre.
+     */
+    private function esEditable(User $actor, User $cuenta): bool
+    {
+        return $cuenta->id !== $actor->id && $cuenta->rol?->codigo !== Rol::ADMIN_TECNICO;
+    }
+}

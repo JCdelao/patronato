@@ -1,6 +1,3 @@
-import { Link } from '@inertiajs/react';
-import AppLogoIcon from '@/components/app-logo-icon';
-import { home } from '@/routes';
 import type { AuthLayoutProps } from '@/types';
 
 export default function AuthSimpleLayout({
@@ -9,30 +6,21 @@ export default function AuthSimpleLayout({
     description,
 }: AuthLayoutProps) {
     return (
-        <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-background p-6 md:p-10">
-            <div className="w-full max-w-sm">
-                <div className="flex flex-col gap-8">
-                    <div className="flex flex-col items-center gap-4">
-                        <Link
-                            href={home()}
-                            className="flex flex-col items-center gap-2 font-medium"
-                        >
-                            <div className="mb-1 flex h-9 w-9 items-center justify-center rounded-md">
-                                <AppLogoIcon className="size-9 fill-current text-[var(--foreground)] dark:text-white" />
-                            </div>
-                            <span className="sr-only">{title}</span>
-                        </Link>
-
-                        <div className="space-y-2 text-center">
-                            <h1 className="text-xl font-medium">{title}</h1>
-                            <p className="text-center text-sm text-muted-foreground">
-                                {description}
-                            </p>
-                        </div>
-                    </div>
-                    {children}
-                </div>
-            </div>
+        <div className="flex min-h-svh items-center justify-center bg-linear-to-br from-[#0b3229] to-[#0d5c46] p-4 md:p-10">
+            <main className="w-full max-w-md rounded-2xl bg-card p-8 shadow-xl sm:p-10">
+                <p className="text-xs font-bold tracking-[0.12em] text-primary uppercase">
+                    Patronato Digital
+                </p>
+                <h1 className="mt-2 text-3xl font-bold tracking-tight">
+                    {title}
+                </h1>
+                {description && (
+                    <p className="mt-2 text-sm text-muted-foreground">
+                        {description}
+                    </p>
+                )}
+                <div className="mt-8">{children}</div>
+            </main>
         </div>
     );
 }

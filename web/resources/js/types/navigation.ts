@@ -9,6 +9,8 @@ export type BreadcrumbItem = {
 export type NavItem = {
     title: string;
     href: NonNullable<InertiaLinkProps['href']>;
+    // El módulo se muestra sin enlace porque aún no está disponible.
+    disabled?: boolean;
     icon?: LucideIcon | null;
     isActive?: boolean;
 };

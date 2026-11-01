@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Middleware\BloquearCuentaSinAcceso;
+use App\Http\Middleware\CerrarSesionInactiva;
+use App\Http\Middleware\ExigirCambioPassword;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Foundation\Application;
@@ -21,6 +24,9 @@ return Application::configure(basePath: dirname(__DIR__))
             HandleAppearance::class,
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
+            CerrarSesionInactiva::class,
+            BloquearCuentaSinAcceso::class,
+            ExigirCambioPassword::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

@@ -11,7 +11,6 @@ import {
     SidebarMenuItem,
     useSidebar,
 } from '@/components/ui/sidebar';
-import { UserInfo } from '@/components/user-info';
 import { UserMenuContent } from '@/components/user-menu-content';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -34,8 +33,17 @@ export function NavUser() {
                             className="group text-sidebar-accent-foreground data-[state=open]:bg-sidebar-accent"
                             data-test="sidebar-menu-button"
                         >
-                            <UserInfo user={auth.user} />
-                            <ChevronsUpDown className="ml-auto size-4" />
+                            <span className="grid min-w-0 flex-1 text-left">
+                                <span className="truncate text-sm text-sidebar-foreground">
+                                    {auth.user.email}
+                                </span>
+                                {auth.rol && (
+                                    <span className="truncate text-sm text-sidebar-primary">
+                                        {auth.rol}
+                                    </span>
+                                )}
+                            </span>
+                            <ChevronsUpDown className="ml-auto size-4 text-sidebar-foreground" />
                         </SidebarMenuButton>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent
