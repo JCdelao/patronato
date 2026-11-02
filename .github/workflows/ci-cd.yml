@@ -1,4 +1,4 @@
-# Se activa en la Entrega 2: ver docs/pipeline-ci-cd.md
+
 name: CI/CD
 
 on:
@@ -45,7 +45,7 @@ jobs:
           cp .env.example .env
           php artisan key:generate --no-interaction
 
-      # Genera las rutas que usa TypeScript
+
       - name: Compilar el frontend
         run: npm run build
 
@@ -124,7 +124,6 @@ jobs:
       - name: Aplicar las migraciones
         run: php artisan migrate --force --no-interaction
 
-  # Apagado hasta definir el servidor de producción
   desplegar:
     name: Despliegue a producción
     needs: [verificar, migraciones]
