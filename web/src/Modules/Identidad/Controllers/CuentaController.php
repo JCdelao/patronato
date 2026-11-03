@@ -54,6 +54,7 @@ class CuentaController extends Controller
             ])->values(),
             'residentes' => $residentesDisponibles,
             'parametros' => $configuracion->seguridad($actor->residencial_id),
+            'puedeConfigurarAccesos' => $actor->can('configurar-accesos'),
             'credenciales' => is_string($credenciales) ? Crypt::decrypt($credenciales) : null,
         ]);
     }

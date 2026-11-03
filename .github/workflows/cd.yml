@@ -1,0 +1,92 @@
+name: CD
+
+on:
+  workflow_run:
+    workflows:
+      - CI
+    types:
+      - completed
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: produccion
+  cancel-in-progress: false
+
+jobs:
+  desplegar:
+    name: Despliegue a producción
+    if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
+    runs-on: ubuntu-latest
+    environment: produccion
+
+    env:
+      VERSION: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+    defaults:
+      run:
+        working-directory: web
+
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ env.VERSION }}
+          persist-credentials: false
+
+      - name: Preparar PHP
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962
+        with:
+          php-version: '8.4'
+          tools: composer:v2
+          coverage: none
+
+      - name: Preparar Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: '24'
+
+      - name: Instalar dependencias de producción
+        run: |
+          composer install --no-dev --no-interaction --prefer-dist --no-progress --optimize-autoloader
+          npm ci --no-audit --no-fund
+
+      - name: Compilar el frontend
+        run: |
+          cp .env.example .env
+          php artisan key:generate --no-interaction
+          npm run build
+          rm .env
+
+      - name: Empaquetar la versión
+        working-directory: .
+        run: |
+          tar --exclude='web/node_modules' --exclude='web/storage' --exclude='web/tests' --exclude='web/.env' \
+            -czf "patronato-$VERSION.tar.gz" web
+
+      - name: Configurar el acceso al servidor
+        working-directory: .
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/id_despliegue
+          chmod 600 ~/.ssh/id_despliegue
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+
+      - name: Publicar en el servidor
+        working-directory: .
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_PORT: ${{ secrets.SSH_PORT || '22' }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+        run: |
+          scp -i ~/.ssh/id_despliegue -P "$SSH_PORT" "patronato-$VERSION.tar.gz" "$SSH_USER@$SSH_HOST:/tmp/"
+          ssh -i ~/.ssh/id_despliegue -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" \
+            "bash -s -- '$DEPLOY_PATH' '$VERSION'" < web/scripts/desplegar.sh

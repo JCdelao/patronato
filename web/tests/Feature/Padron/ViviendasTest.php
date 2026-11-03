@@ -5,6 +5,7 @@ use Database\Seeders\RolesSeeder;
 use Illuminate\Support\Facades\DB;
 use Inertia\Testing\AssertableInertia;
 use Patronato\Modules\Finanzas\Models\Tarifa;
+use Patronato\Modules\Identidad\Models\Auditoria;
 use Patronato\Modules\Identidad\Models\Rol;
 use Patronato\Modules\Padron\Models\Residente;
 use Patronato\Modules\Padron\Models\Vivienda;
@@ -22,7 +23,7 @@ beforeEach(function () {
         'rol_id' => Rol::query()->where('codigo', Rol::SECRETARIO)->value('id'),
     ]);
 
-    $this->datos = ['codigo' => 'A-01', 'direccion' => 'Bloque A, Casa 1', 'tipo' => 'casa', 'cuota' => '500'];
+    $this->datos = ['codigo' => 'A-01', 'tipo' => 'casa', 'calle_bloque' => 'Bloque A', 'numero' => '1', 'estado_ocupacion' => 'ocupada', 'cuota' => '500'];
 });
 
 test('only users with registry access can use it', function () {
@@ -51,7 +52,7 @@ test('a housing unit is registered with its monthly fee', function () {
 
     expect($vivienda->residencial_id)->toBe($this->residencial->id)
         ->and($vivienda->codigo)->toBe('A-01')
-        ->and($vivienda->calle_bloque)->toBe('Bloque A, Casa 1');
+        ->and($vivienda->calle_bloque)->toBe('Bloque A');
 
     $this->get(route('padron.viviendas.index'))
         ->assertInertia(fn (AssertableInertia $page) => $page
@@ -68,8 +69,8 @@ test('the code is unique per residencial and data is validated', function () {
         ->post(route('padron.viviendas.store'), $this->datos)
         ->assertSessionHasErrors('codigo');
 
-    $this->post(route('padron.viviendas.store'), ['codigo' => '', 'direccion' => '', 'tipo' => 'otro', 'cuota' => '-1'])
-        ->assertSessionHasErrors(['codigo', 'direccion', 'tipo', 'cuota']);
+    $this->post(route('padron.viviendas.store'), ['codigo' => '', 'tipo' => 'otro', 'numero' => '', 'estado_ocupacion' => 'vacia', 'cuota' => '-1'])
+        ->assertSessionHasErrors(['codigo', 'tipo', 'numero', 'estado_ocupacion', 'cuota']);
 
     Vivienda::query()->create(['residencial_id' => $this->otro->id, 'codigo' => 'B-01', 'tipo' => 'casa']);
 
@@ -187,3 +188,53 @@ test('the search matches code, name and phone', function (string $buscar, int $r
     'sin resultados' => ['zzz', 0],
     'vacio' => ['', 2],
 ]);
+
+test('an apartment records its building and number and a house its street and number', function () {
+    $this->actingAs($this->usuario);
+
+    $apartamento = [...$this->datos, 'codigo' => 'T-304', 'tipo' => 'apartamento', 'calle_bloque' => null, 'numero' => '304'];
+
+    $this->post(route('padron.viviendas.store'), $apartamento)->assertSessionHasErrors('edificio_torre');
+    $this->post(route('padron.viviendas.store'), [...$this->datos, 'calle_bloque' => null])->assertSessionHasErrors('calle_bloque');
+
+    $this->post(route('padron.viviendas.store'), [...$apartamento, 'edificio_torre' => 'Torre B', 'calle_bloque' => 'ignorada', 'estado_ocupacion' => 'desocupada'])
+        ->assertSessionHasNoErrors();
+
+    $vivienda = Vivienda::query()->sole();
+
+    expect($vivienda->edificio_torre)->toBe('Torre B')
+        ->and($vivienda->calle_bloque)->toBeNull()
+        ->and($vivienda->numero)->toBe('304')
+        ->and($vivienda->estado_ocupacion)->toBe('desocupada');
+
+    $this->put(route('padron.viviendas.update', $vivienda->id), [...$this->datos, 'codigo' => 'T-304'])
+        ->assertSessionHasNoErrors();
+
+    expect($vivienda->refresh()->edificio_torre)->toBeNull()
+        ->and($vivienda->calle_bloque)->toBe('Bloque A')
+        ->and($vivienda->estado_ocupacion)->toBe('ocupada');
+
+    $this->get(route('padron.viviendas.index'))
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->where('viviendas.data.0.calle_bloque', 'Bloque A')
+            ->where('viviendas.data.0.numero', '1')
+            ->where('viviendas.data.0.estado_ocupacion', 'ocupada'));
+});
+
+test('every change to housing units is audited', function () {
+    $this->actingAs($this->usuario)->post(route('padron.viviendas.store'), $this->datos);
+
+    $vivienda = Vivienda::query()->sole();
+
+    $this->put(route('padron.viviendas.update', $vivienda->id), [...$this->datos, 'cuota' => '650']);
+    $this->put(route('padron.viviendas.update', $vivienda->id), [...$this->datos, 'cuota' => '650']);
+    $this->delete(route('padron.viviendas.destroy', $vivienda->id));
+
+    $registros = Auditoria::query()->where('modulo', 'padron')->orderBy('id')->get();
+
+    expect($registros->pluck('accion')->all())->toBe(['vivienda_registrada', 'vivienda_editada', 'vivienda_eliminada'])
+        ->and($registros[0]->valor_nuevo['codigo'])->toBe('A-01')
+        ->and($registros[1]->valor_anterior)->toBe(['cuota' => '500.00'])
+        ->and($registros[1]->valor_nuevo)->toBe(['cuota' => '650.00'])
+        ->and($registros[2]->valor_anterior['codigo'])->toBe('A-01');
+});

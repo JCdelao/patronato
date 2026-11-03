@@ -3,8 +3,9 @@
 namespace Patronato\Modules\Padron\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Patronato\Shared\PerteneceAResidencial;
 
 /**
@@ -17,7 +18,8 @@ use Patronato\Shared\PerteneceAResidencial;
  * @property string|null $telefono
  * @property string|null $correo
  * @property bool $activo
- * @property-read ViviendaResidente|null $vinculoVigente
+ * @property-read Collection<int, ViviendaResidente> $vinculos
+ * @property-read Collection<int, ViviendaResidente> $vinculosVigentes
  */
 #[Fillable(['residencial_id', 'user_id', 'nombres', 'apellidos', 'identidad', 'telefono', 'correo', 'activo'])]
 class Residente extends Model
@@ -42,10 +44,22 @@ class Residente extends Model
     }
 
     /**
-     * @return HasOne<ViviendaResidente, $this>
+     * Todas las viviendas donde ha vivido, con sus fechas
+     *
+     * @return HasMany<ViviendaResidente, $this>
      */
-    public function vinculoVigente(): HasOne
+    public function vinculos(): HasMany
     {
-        return $this->hasOne(ViviendaResidente::class)->whereNull('fecha_fin');
+        return $this->hasMany(ViviendaResidente::class);
+    }
+
+    /**
+     * Las viviendas donde vive actualmente
+     *
+     * @return HasMany<ViviendaResidente, $this>
+     */
+    public function vinculosVigentes(): HasMany
+    {
+        return $this->hasMany(ViviendaResidente::class)->whereNull('fecha_fin');
     }
 }

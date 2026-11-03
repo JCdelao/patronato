@@ -29,43 +29,64 @@ import type { NavItem } from '@/types';
 export function AppSidebar() {
     const { auth } = usePage().props;
 
-    const items: NavItem[] = [
-        { title: 'Panel', href: dashboard(), icon: LayoutGrid },
-        ...(auth.esAdminPlataforma
-            ? [
-                  {
-                      title: 'Residenciales',
-                      href: ResidencialController.index(),
-                      icon: Building2,
-                  },
-              ]
-            : []),
+    // Solo se muestran las opciones que el usuario puede usar
+    const opciones: (NavItem & { visible: boolean })[] = [
+        { title: 'Panel', href: dashboard(), icon: LayoutGrid, visible: true },
+        {
+            title: 'Residenciales',
+            href: ResidencialController.index(),
+            icon: Building2,
+            visible: auth.esAdminPlataforma,
+        },
         {
             title: 'Viviendas',
             href: ViviendaController.index(),
             icon: Home,
-            disabled: !auth.permisos.includes('padron.ver'),
+            visible: auth.permisos.includes('padron.ver'),
         },
-        { title: 'Cobros', href: '#', icon: Wallet, disabled: true },
-        { title: 'Vigilancia', href: '#', icon: ShieldCheck, disabled: true },
-        { title: 'Vehículos', href: '#', icon: Car, disabled: true },
-        { title: 'Reportes', href: '#', icon: ChartColumn, disabled: true },
+        {
+            title: 'Cobros',
+            href: '#',
+            icon: Wallet,
+            disabled: true,
+            visible: auth.permisos.includes('cobros.ver'),
+        },
+        {
+            title: 'Vigilancia',
+            href: '#',
+            icon: ShieldCheck,
+            disabled: true,
+            visible: auth.permisos.includes('vigilancia.ver'),
+        },
+        {
+            title: 'Vehículos',
+            href: '#',
+            icon: Car,
+            disabled: true,
+            visible: auth.permisos.includes('vehiculos.ver'),
+        },
+        {
+            title: 'Reportes',
+            href: '#',
+            icon: ChartColumn,
+            disabled: true,
+            visible: auth.permisos.includes('reportes.ver'),
+        },
         {
             title: 'Usuarios',
             href: CuentaController.index(),
             icon: Users,
-            disabled: !auth.puedeAdministrarUsuarios,
+            visible: auth.puedeAdministrarUsuarios,
         },
-        ...(auth.permisos.includes('auditoria.ver')
-            ? [
-                  {
-                      title: 'Auditoría',
-                      href: AuditoriaController.index(),
-                      icon: ScrollText,
-                  },
-              ]
-            : []),
+        {
+            title: 'Auditoría',
+            href: AuditoriaController.index(),
+            icon: ScrollText,
+            visible: auth.permisos.includes('auditoria.ver'),
+        },
     ];
+
+    const items: NavItem[] = opciones.filter((opcion) => opcion.visible);
 
     return (
         <Sidebar collapsible="offcanvas">

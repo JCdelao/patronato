@@ -8,7 +8,10 @@ Route::middleware(['auth', 'verified'])
     ->prefix('padron')
     ->name('padron.')
     ->group(function () {
-        Route::get('viviendas', [ViviendaController::class, 'index'])->middleware("can:permiso,'padron','ver'")->name('viviendas.index');
+        Route::middleware("can:permiso,'padron','ver'")->group(function () {
+            Route::get('viviendas', [ViviendaController::class, 'index'])->name('viviendas.index');
+            Route::get('residentes', [ResidenteController::class, 'index'])->name('residentes.index');
+        });
 
         Route::middleware("can:permiso,'padron','registrar'")->group(function () {
             Route::post('viviendas', [ViviendaController::class, 'store'])->name('viviendas.store');
@@ -17,6 +20,7 @@ Route::middleware(['auth', 'verified'])
 
             Route::post('residentes', [ResidenteController::class, 'store'])->name('residentes.store');
             Route::put('residentes/{residente}', [ResidenteController::class, 'update'])->whereNumber('residente')->name('residentes.update');
+            Route::post('residentes/{residente}/viviendas', [ResidenteController::class, 'agregarVivienda'])->whereNumber('residente')->name('residentes.agregar-vivienda');
         });
 
         Route::middleware("can:permiso,'padron','anular'")->group(function () {

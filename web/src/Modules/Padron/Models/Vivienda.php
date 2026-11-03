@@ -12,10 +12,13 @@ use Patronato\Shared\PerteneceAResidencial;
  * @property int $residencial_id
  * @property string $codigo
  * @property string $tipo
+ * @property string|null $edificio_torre
  * @property string|null $calle_bloque
+ * @property string|null $numero
+ * @property string $estado_ocupacion
  * @property bool $activa
  */
-#[Fillable(['residencial_id', 'codigo', 'tipo', 'calle_bloque', 'activa'])]
+#[Fillable(['residencial_id', 'codigo', 'tipo', 'edificio_torre', 'calle_bloque', 'numero', 'estado_ocupacion', 'activa'])]
 class Vivienda extends Model
 {
     use PerteneceAResidencial;

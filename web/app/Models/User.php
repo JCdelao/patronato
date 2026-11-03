@@ -117,7 +117,7 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
      */
     public function puedeAdministrarUsuarios(): bool
     {
-        return $this->residencial_id !== null && $this->rol?->codigo === Rol::ADMIN_TECNICO;
+        return $this->residencial_id !== null && in_array($this->rol?->codigo, [Rol::ADMIN_TECNICO, Rol::PRESIDENTE], true);
     }
 
     /**

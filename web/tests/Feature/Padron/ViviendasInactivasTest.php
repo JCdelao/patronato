@@ -61,7 +61,7 @@ test('an inactive housing unit can be reactivated and keeps its fee', function (
 });
 
 test('an inactive housing unit cannot be edited or deleted until reactivated', function () {
-    $datos = ['codigo' => 'B-01', 'direccion' => 'x', 'tipo' => 'casa', 'cuota' => '1'];
+    $datos = ['codigo' => 'B-01', 'tipo' => 'casa', 'calle_bloque' => 'x', 'numero' => '1', 'estado_ocupacion' => 'ocupada', 'cuota' => '1'];
 
     $this->put(route('padron.viviendas.update', $this->inactiva->id), $datos)->assertNotFound();
     $this->delete(route('padron.viviendas.destroy', $this->inactiva->id))->assertNotFound();
@@ -70,7 +70,7 @@ test('an inactive housing unit cannot be edited or deleted until reactivated', f
 });
 
 test('its code stays reserved while inactive', function () {
-    $this->post(route('padron.viviendas.store'), ['codigo' => 'B-01', 'direccion' => 'x', 'tipo' => 'casa', 'cuota' => '1'])
+    $this->post(route('padron.viviendas.store'), ['codigo' => 'B-01', 'tipo' => 'casa', 'calle_bloque' => 'x', 'numero' => '1', 'estado_ocupacion' => 'ocupada', 'cuota' => '1'])
         ->assertSessionHasErrors('codigo');
 });
 

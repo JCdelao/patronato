@@ -119,12 +119,13 @@ test('opening another residencial record is denied and audited', function (Closu
         ->and($auditoria->entidad)->toBe($tabla)
         ->and($auditoria->entidad_id)->toBe($id);
 })->with([
-    'editar vivienda' => [fn ($t, int $id) => $t->put(route('padron.viviendas.update', $id), ['codigo' => 'X', 'direccion' => 'x', 'tipo' => 'casa', 'cuota' => '1']), 'viviendas', 'viviendaAjena'],
+    'editar vivienda' => [fn ($t, int $id) => $t->put(route('padron.viviendas.update', $id), ['codigo' => 'X', 'tipo' => 'casa', 'calle_bloque' => 'x', 'numero' => '1', 'estado_ocupacion' => 'ocupada', 'cuota' => '1']), 'viviendas', 'viviendaAjena'],
     'editar vivienda con datos invalidos' => [fn ($t, int $id) => $t->put(route('padron.viviendas.update', $id), []), 'viviendas', 'viviendaAjena'],
     'eliminar vivienda' => [fn ($t, int $id) => $t->delete(route('padron.viviendas.destroy', $id)), 'viviendas', 'viviendaAjena'],
     'reactivar vivienda' => [fn ($t, int $id) => $t->post(route('padron.viviendas.reactivar', $id)), 'viviendas', 'viviendaAjena'],
     'editar residente' => [fn ($t, int $id) => $t->put(route('padron.residentes.update', $id), []), 'residentes', 'residenteAjeno'],
     'dar de baja residente' => [fn ($t, int $id) => $t->delete(route('padron.residentes.destroy', $id)), 'residentes', 'residenteAjeno'],
+    'agregar vivienda a residente' => [fn ($t, int $id) => $t->post(route('padron.residentes.agregar-vivienda', $id), []), 'residentes', 'residenteAjeno'],
 ]);
 
 test('denied requests change nothing', function () {
@@ -155,7 +156,7 @@ test('own records keep working', function () {
         ->assertSessionHasNoErrors();
 
     expect($this->residentePropio->refresh()->nombres)->toBe('Nuevo')
-        ->and(Auditoria::query()->count())->toBe(0);
+        ->and(Auditoria::query()->where('accion', 'acceso_denegado')->count())->toBe(0);
 });
 
 test('the registered residenciales are only available to platform administrators', function () {

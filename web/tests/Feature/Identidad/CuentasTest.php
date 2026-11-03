@@ -53,7 +53,7 @@ function residenteCon(Residencial $residencial, string $codigo = 'A-01'): Reside
     return $residente;
 }
 
-test('only the technical administrator manages accounts', function (string $rol) {
+test('only the technical administrator and the president manage accounts', function (string $rol) {
     $this->actingAs(User::factory()->create([
         'residencial_id' => $this->residencial->id,
         'rol_id' => ($this->rol)($rol),
@@ -61,7 +61,32 @@ test('only the technical administrator manages accounts', function (string $rol)
 
     $this->get(route('usuarios.index'))->assertForbidden();
     $this->post(route('usuarios.store'), ($this->datos)())->assertForbidden();
-})->with(['presidente', 'secretario', 'cobrador', 'residente']);
+})->with(['secretario', 'cobrador', 'residente']);
+
+test('the president creates a resident account and changes its role', function () {
+    $presidente = User::factory()->create([
+        'residencial_id' => $this->residencial->id,
+        'rol_id' => ($this->rol)(Rol::PRESIDENTE),
+    ]);
+    $residente = residenteCon($this->residencial);
+
+    $this->actingAs($presidente)->get(route('usuarios.index'))
+        ->assertInertia(fn (AssertableInertia $page) => $page->where('puedeConfigurarAccesos', false));
+    $this->put(route('usuarios.parametros'), [])->assertForbidden();
+
+    $this->post(route('usuarios.store'), ($this->datos)([
+        'rol_id' => ($this->rol)(Rol::RESIDENTE),
+        'residente_id' => $residente->id,
+    ]))->assertSessionHasNoErrors();
+
+    $cuenta = User::query()->where('email', 'luis@laspalmas.test')->sole();
+
+    expect($cuenta->rol?->codigo)->toBe(Rol::RESIDENTE);
+
+    $this->put(route('usuarios.update', $cuenta->id), ($this->datos)())->assertSessionHasNoErrors();
+
+    expect($cuenta->refresh()->rol?->codigo)->toBe('cobrador');
+});
 
 test('the platform administrator does not manage residencial accounts', function () {
     $this->actingAs(User::factory()->create(['rol_id' => ($this->rol)(Rol::ADMIN_PLATAFORMA)]));
