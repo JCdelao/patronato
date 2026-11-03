@@ -22,8 +22,11 @@ class GuardarViviendaRequest extends FormRequest
                     ->where('residencial_id', $this->user()->residencial_id)
                     ->ignore($this->route('vivienda')),
             ],
-            'direccion' => ['required', 'string', 'max:60'],
             'tipo' => ['required', Rule::in(['casa', 'apartamento'])],
+            'edificio_torre' => ['nullable', 'required_if:tipo,apartamento', 'string', 'max:60'],
+            'calle_bloque' => ['nullable', 'required_if:tipo,casa', 'string', 'max:60'],
+            'numero' => ['required', 'string', 'max:20'],
+            'estado_ocupacion' => ['required', Rule::in(['ocupada', 'desocupada'])],
             'cuota' => ['required', 'numeric', 'min:0', 'max:9999999.99', 'decimal:0,2'],
         ];
     }
@@ -37,6 +40,21 @@ class GuardarViviendaRequest extends FormRequest
     {
         return [
             'codigo.unique' => 'Ya existe una vivienda con ese código.',
+            'edificio_torre.required_if' => 'Indica el edificio o la torre.',
+            'calle_bloque.required_if' => 'Indica la calle o el bloque.',
+        ];
+    }
+
+    /**
+     * Nombres de los campos en los mensajes
+     *
+     * @return array<string, string>
+     */
+    public function attributes(): array
+    {
+        return [
+            'numero' => 'número',
+            'estado_ocupacion' => 'ocupación',
         ];
     }
 }

@@ -22,9 +22,11 @@ Route::middleware(['auth', 'verified', 'can:administrar-usuarios'])
     ->group(function () {
         Route::get('/', [CuentaController::class, 'index'])->name('index');
         Route::post('/', [CuentaController::class, 'store'])->name('store');
-        Route::put('parametros', [CuentaController::class, 'parametros'])->name('parametros');
-        Route::get('permisos', [PermisoController::class, 'index'])->name('permisos.index');
-        Route::put('permisos/{rol}', [PermisoController::class, 'update'])->whereNumber('rol')->name('permisos.update');
+        Route::middleware('can:configurar-accesos')->group(function () {
+            Route::put('parametros', [CuentaController::class, 'parametros'])->name('parametros');
+            Route::get('permisos', [PermisoController::class, 'index'])->name('permisos.index');
+            Route::put('permisos/{rol}', [PermisoController::class, 'update'])->whereNumber('rol')->name('permisos.update');
+        });
         Route::put('{cuenta}', [CuentaController::class, 'update'])->whereNumber('cuenta')->name('update');
         Route::post('{cuenta}/desactivar', [CuentaController::class, 'desactivar'])->whereNumber('cuenta')->name('desactivar');
         Route::post('{cuenta}/activar', [CuentaController::class, 'activar'])->whereNumber('cuenta')->name('activar');

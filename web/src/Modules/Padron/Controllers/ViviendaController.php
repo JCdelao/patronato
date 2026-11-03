@@ -39,7 +39,7 @@ class ViviendaController extends Controller
                         });
                 });
             })
-            ->with('vinculosVigentes.residente')
+            ->with('vinculosVigentes.residente.vinculosVigentes.vivienda')
             ->orderBy('codigo')
             ->paginate(24)
             ->withQueryString();
@@ -53,7 +53,10 @@ class ViviendaController extends Controller
                 'id' => $vivienda->id,
                 'codigo' => $vivienda->codigo,
                 'tipo' => $vivienda->tipo,
-                'direccion' => $vivienda->calle_bloque,
+                'edificio_torre' => $vivienda->edificio_torre,
+                'calle_bloque' => $vivienda->calle_bloque,
+                'numero' => $vivienda->numero,
+                'estado_ocupacion' => $vivienda->estado_ocupacion,
                 'cuota' => $cuotas[$vivienda->id] ?? null,
                 'residentes' => $vivienda->vinculosVigentes
                     ->sortByDesc('es_responsable_pago')
@@ -68,6 +71,11 @@ class ViviendaController extends Controller
                         'identidad' => $vinculo->residente->identidad,
                         'telefono' => $vinculo->residente->telefono,
                         'correo' => $vinculo->residente->correo,
+                        'otras_viviendas' => $vinculo->residente->vinculosVigentes
+                            ->where('vivienda_id', '!=', $vinculo->vivienda_id)
+                            ->map(fn (ViviendaResidente $otro) => $otro->vivienda->codigo)
+                            ->sort()
+                            ->values(),
                     ]),
             ]),
             'opcionesViviendas' => Vivienda::query()
@@ -84,10 +92,10 @@ class ViviendaController extends Controller
      */
     public function store(GuardarViviendaRequest $request, ViviendaService $viviendas): RedirectResponse
     {
-        /** @var array{codigo: string, tipo: string, direccion: string, cuota: string} $datos */
+        /** @var array{codigo: string, tipo: string, edificio_torre?: string|null, calle_bloque?: string|null, numero: string, estado_ocupacion: string, cuota: string} $datos */
         $datos = $request->validated();
 
-        $viviendas->registrar((int) $request->user()->residencial_id, $datos, $request->user()->id);
+        $viviendas->registrar($request->user(), $datos);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Vivienda registrada.']);
 
@@ -101,10 +109,10 @@ class ViviendaController extends Controller
     {
         abort_unless($vivienda->activa, 404);
 
-        /** @var array{codigo: string, tipo: string, direccion: string, cuota: string} $datos */
+        /** @var array{codigo: string, tipo: string, edificio_torre?: string|null, calle_bloque?: string|null, numero: string, estado_ocupacion: string, cuota: string} $datos */
         $datos = $request->validated();
 
-        $viviendas->actualizar($vivienda, $datos, $request->user()->id);
+        $viviendas->actualizar($request->user(), $vivienda, $datos);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Vivienda actualizada.']);
 
@@ -114,12 +122,12 @@ class ViviendaController extends Controller
     /**
      * Elimina una vivienda o la deja inactiva
      */
-    public function destroy(ViviendaService $viviendas, Vivienda $vivienda): RedirectResponse
+    public function destroy(Request $request, ViviendaService $viviendas, Vivienda $vivienda): RedirectResponse
     {
         abort_unless($vivienda->activa, 404);
 
         try {
-            $borrada = $viviendas->eliminar($vivienda);
+            $borrada = $viviendas->eliminar($request->user(), $vivienda);
         } catch (ValidationException $e) {
             Inertia::flash('toast', ['type' => 'error', 'message' => $e->getMessage()]);
 
@@ -137,9 +145,11 @@ class ViviendaController extends Controller
     /**
      * Reactiva una vivienda
      */
-    public function reactivar(ViviendaService $viviendas, Vivienda $vivienda): RedirectResponse
+    public function reactivar(Request $request, ViviendaService $viviendas, Vivienda $vivienda): RedirectResponse
     {
-        $viviendas->reactivar($vivienda);
+        abort_if($vivienda->activa, 404);
+
+        $viviendas->reactivar($request->user(), $vivienda);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => "Vivienda {$vivienda->codigo} reactivada."]);
 

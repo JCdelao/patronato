@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
+use Patronato\Modules\Identidad\Models\Rol;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -27,6 +28,9 @@ class AppServiceProvider extends ServiceProvider
 
         Gate::define('administrar-plataforma', fn (User $user): bool => $user->esAdminPlataforma());
         Gate::define('administrar-usuarios', fn (User $user): Response => $user->puedeAdministrarUsuarios()
+            ? Response::allow()
+            : Response::deny('Acceso denegado'));
+        Gate::define('configurar-accesos', fn (User $user): Response => $user->residencial_id !== null && $user->rol?->codigo === Rol::ADMIN_TECNICO
             ? Response::allow()
             : Response::deny('Acceso denegado'));
 

@@ -26,12 +26,14 @@ export default function Usuarios({
     roles,
     residentes,
     parametros,
+    puedeConfigurarAccesos,
     credenciales,
 }: {
     cuentas: Cuenta[];
     roles: RolOpcion[];
     residentes: ResidenteOpcion[];
     parametros: ParametrosAcceso;
+    puedeConfigurarAccesos: boolean;
     credenciales: { correo: string; password_temporal: string } | null;
 }) {
     const [dialogo, setDialogo] = useState<Dialogo | null>(null);
@@ -59,19 +61,25 @@ export default function Usuarios({
                     </div>
 
                     <div className="flex flex-wrap gap-3">
-                        <Button variant="outline" asChild>
-                            <Link href={PermisoController.index()}>
-                                <ShieldCheck />
-                                Permisos
-                            </Link>
-                        </Button>
-                        <Button
-                            variant="outline"
-                            onClick={() => setDialogo({ tipo: 'parametros' })}
-                        >
-                            <Settings2 />
-                            Parámetros
-                        </Button>
+                        {puedeConfigurarAccesos && (
+                            <>
+                                <Button variant="outline" asChild>
+                                    <Link href={PermisoController.index()}>
+                                        <ShieldCheck />
+                                        Permisos
+                                    </Link>
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    onClick={() =>
+                                        setDialogo({ tipo: 'parametros' })
+                                    }
+                                >
+                                    <Settings2 />
+                                    Parámetros
+                                </Button>
+                            </>
+                        )}
                         <Button onClick={() => setDialogo({ tipo: 'cuenta' })}>
                             <Plus />
                             Cuenta

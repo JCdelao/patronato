@@ -2,61 +2,144 @@
 
 namespace Patronato\Modules\Padron\Services;
 
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
+use Patronato\Modules\Identidad\Services\AuditoriaService;
 use Patronato\Modules\Padron\Models\Residente;
 use Patronato\Modules\Padron\Models\ViviendaResidente;
 
 class ResidenteService
 {
+    public function __construct(private AuditoriaService $auditoria) {}
+
     /**
      * Registra un residente en una vivienda
      *
      * @param  array{vivienda_id: int|string, tipo: string, nombres: string, apellidos: string, identidad?: string|null, telefono?: string|null, correo?: string|null}  $datos
      */
-    public function registrar(int $residencialId, array $datos, bool $esResponsable): Residente
+    public function registrar(User $usuario, array $datos, bool $esResponsable): Residente
     {
-        return DB::transaction(function () use ($residencialId, $datos, $esResponsable) {
+        return DB::transaction(function () use ($usuario, $datos, $esResponsable) {
             $residente = Residente::query()->create([
-                'residencial_id' => $residencialId,
+                'residencial_id' => $usuario->residencial_id,
                 ...$this->datosPersonales($datos),
             ]);
 
             $this->vincular($residente, (int) $datos['vivienda_id'], $datos['tipo'], $esResponsable);
+
+            $this->auditoria->registrar($usuario, 'padron', 'residente_registrado', $residente, [
+                'valor_nuevo' => [...$this->datosPersonales($datos), 'vivienda_id' => (int) $datos['vivienda_id'], 'tipo' => $datos['tipo']],
+            ]);
 
             return $residente;
         });
     }
 
     /**
-     * Actualiza un residente
+     * Actualiza un residente y su vínculo con una de sus viviendas
      *
      * @param  array{vivienda_id: int|string, tipo: string, nombres: string, apellidos: string, identidad?: string|null, telefono?: string|null, correo?: string|null}  $datos
+     *
+     * @throws ValidationException
      */
-    public function actualizar(Residente $residente, array $datos, bool $esResponsable): void
+    public function actualizar(User $usuario, Residente $residente, ?int $viviendaOrigenId, array $datos, bool $esResponsable): void
     {
-        DB::transaction(function () use ($residente, $datos, $esResponsable) {
+        $vinculo = $residente->vinculosVigentes()
+            ->when($viviendaOrigenId !== null, fn ($query) => $query->where('vivienda_id', $viviendaOrigenId))
+            ->orderBy('id')
+            ->first();
+
+        if ($vinculo === null) {
+            throw ValidationException::withMessages(['vivienda_id' => 'El residente ya no vive en esa vivienda.']);
+        }
+
+        $viviendaId = (int) $datos['vivienda_id'];
+
+        if ($vinculo->vivienda_id !== $viviendaId && $this->viveEn($residente, $viviendaId)) {
+            throw ValidationException::withMessages(['vivienda_id' => 'El residente ya vive en esa vivienda.']);
+        }
+
+        DB::transaction(function () use ($usuario, $residente, $vinculo, $viviendaId, $datos, $esResponsable) {
+            $anterior = [...$this->datosPersonales($residente->toArray()), 'vivienda_id' => $vinculo->vivienda_id, 'tipo' => $vinculo->tipo];
+
             $residente->update($this->datosPersonales($datos));
 
-            $viviendaId = (int) $datos['vivienda_id'];
-            $vinculo = $residente->vinculoVigente;
-
-            if ($vinculo === null || $vinculo->vivienda_id !== $viviendaId) {
-                if ($vinculo !== null) {
-                    $this->cerrar($vinculo);
+            if ($vinculo->vivienda_id !== $viviendaId) {
+                $this->cerrar($vinculo);
+                $this->vincular($residente, $viviendaId, $datos['tipo'], $esResponsable);
+            } else {
+                if ($esResponsable) {
+                    $this->quitarResponsable($viviendaId);
                 }
 
-                $this->vincular($residente, $viviendaId, $datos['tipo'], $esResponsable);
+                $vinculo->update(['tipo' => $datos['tipo'], 'es_responsable_pago' => $esResponsable]);
 
-                return;
+                $this->asegurarResponsable($viviendaId);
             }
 
-            if ($esResponsable) {
-                $this->quitarResponsable($viviendaId);
+            $nuevo = [...$this->datosPersonales($datos), 'vivienda_id' => $viviendaId, 'tipo' => $datos['tipo']];
+
+            if ($anterior !== $nuevo) {
+                $this->auditoria->registrar($usuario, 'padron', 'residente_editado', $residente, [
+                    'valor_anterior' => array_diff_assoc($anterior, $nuevo),
+                    'valor_nuevo' => array_diff_assoc($nuevo, $anterior),
+                ]);
+            }
+        });
+    }
+
+    /**
+     * Agrega una vivienda a un residente y lo reactiva si estaba inactivo
+     *
+     * @param  array{vivienda_id: int|string, tipo: string}  $datos
+     *
+     * @throws ValidationException
+     */
+    public function agregarVivienda(User $usuario, Residente $residente, array $datos, bool $esResponsable): void
+    {
+        $viviendaId = (int) $datos['vivienda_id'];
+
+        if ($this->viveEn($residente, $viviendaId)) {
+            throw ValidationException::withMessages(['vivienda_id' => 'El residente ya vive en esa vivienda.']);
+        }
+
+        DB::transaction(function () use ($usuario, $residente, $viviendaId, $datos, $esResponsable) {
+            $reactivado = ! $residente->activo;
+
+            if ($reactivado) {
+                $residente->update(['activo' => true]);
             }
 
-            $vinculo->update(['tipo' => $datos['tipo'], 'es_responsable_pago' => $esResponsable]);
+            $this->vincular($residente, $viviendaId, $datos['tipo'], $esResponsable);
 
-            $this->asegurarResponsable($viviendaId);
+            $this->auditoria->registrar($usuario, 'padron', $reactivado ? 'residente_reactivado' : 'residente_vinculado', $residente, [
+                'valor_nuevo' => ['vivienda_id' => $viviendaId, 'tipo' => $datos['tipo']],
+            ]);
+        });
+    }
+
+    /**
+     * Saca a un residente de una vivienda, o de todas, y lo deja inactivo si ya no vive en ninguna
+     */
+    public function darDeBaja(User $usuario, Residente $residente, ?int $viviendaId = null): void
+    {
+        DB::transaction(function () use ($usuario, $residente, $viviendaId) {
+            $vinculos = $residente->vinculosVigentes()
+                ->when($viviendaId !== null, fn ($query) => $query->where('vivienda_id', $viviendaId))
+                ->get();
+
+            $vinculos->each(fn (ViviendaResidente $vinculo) => $this->cerrar($vinculo));
+
+            $sigue = $residente->vinculosVigentes()->exists();
+
+            if (! $sigue) {
+                $residente->update(['activo' => false]);
+            }
+
+            $this->auditoria->registrar($usuario, 'padron', $sigue ? 'residente_retirado_de_vivienda' : 'residente_dado_de_baja', $residente, [
+                'valor_anterior' => ['viviendas' => $vinculos->pluck('vivienda_id')->all()],
+            ]);
         });
     }
 
@@ -81,13 +164,16 @@ class ResidenteService
     {
         return Residente::query()
             ->where('activo', true)
-            ->with('vinculoVigente.vivienda')
+            ->with('vinculosVigentes.vivienda')
             ->orderBy('nombres')
             ->get()
             ->map(fn (Residente $residente) => [
                 'id' => $residente->id,
                 'nombre' => "{$residente->nombres} {$residente->apellidos}",
-                'vivienda' => $residente->vinculoVigente?->vivienda->codigo,
+                'vivienda' => $residente->vinculosVigentes
+                    ->map(fn (ViviendaResidente $vinculo) => $vinculo->vivienda->codigo)
+                    ->sort()
+                    ->implode(', ') ?: null,
                 'user_id' => $residente->user_id,
             ])
             ->values()
@@ -95,21 +181,7 @@ class ResidenteService
     }
 
     /**
-     * Da de baja a un residente
-     */
-    public function darDeBaja(Residente $residente): void
-    {
-        DB::transaction(function () use ($residente) {
-            $residente->update(['activo' => false]);
-
-            if ($residente->vinculoVigente !== null) {
-                $this->cerrar($residente->vinculoVigente);
-            }
-        });
-    }
-
-    /**
-     * @param  array{nombres: string, apellidos: string, identidad?: string|null, telefono?: string|null, correo?: string|null}  $datos
+     * @param  array<string, mixed>  $datos
      * @return array<string, string|null>
      */
     private function datosPersonales(array $datos): array
@@ -121,6 +193,11 @@ class ResidenteService
             'telefono' => $datos['telefono'] ?? null,
             'correo' => $datos['correo'] ?? null,
         ];
+    }
+
+    private function viveEn(Residente $residente, int $viviendaId): bool
+    {
+        return $residente->vinculosVigentes()->where('vivienda_id', $viviendaId)->exists();
     }
 
     private function vincular(Residente $residente, int $viviendaId, string $tipo, bool $esResponsable): void

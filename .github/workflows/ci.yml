@@ -1,11 +1,18 @@
-# Se activa en la Entrega 2: ver docs/pipeline-ci-cd.md
-name: CI/CD
+name: CI
 
 on:
+  push:
+    branches:
+      - main
+  pull_request:
   workflow_dispatch:
 
 permissions:
   contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 defaults:
   run:
@@ -18,12 +25,12 @@ jobs:
 
     steps:
       - name: Descargar el código
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           persist-credentials: false
 
       - name: Preparar PHP
-        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # v2
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962
         with:
           php-version: '8.4'
           extensions: pdo_pgsql, pdo_sqlite
@@ -31,7 +38,7 @@ jobs:
           coverage: none
 
       - name: Preparar Node
-        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
         with:
           node-version: '24'
 
@@ -45,7 +52,6 @@ jobs:
           cp .env.example .env
           php artisan key:generate --no-interaction
 
-      # Genera las rutas que usa TypeScript
       - name: Compilar el frontend
         run: npm run build
 
@@ -71,9 +77,8 @@ jobs:
           path: web/public/build
           retention-days: 7
 
-  # Comprueba las migraciones en PostgreSQL
-  migraciones:
-    name: Migraciones en PostgreSQL
+  base-de-datos:
+    name: Migraciones, respaldo y restauración en PostgreSQL
     runs-on: ubuntu-latest
 
     services:
@@ -98,15 +103,25 @@ jobs:
       DB_DATABASE: patronato
       DB_USERNAME: patronato_app
       DB_PASSWORD: solo_para_ci
+      PGPASSWORD: solo_para_ci
+      PG_BIN_PATH: /usr/lib/postgresql/18/bin
 
     steps:
       - name: Descargar el código
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           persist-credentials: false
 
+      - name: Instalar las herramientas de PostgreSQL 18
+        working-directory: .
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-common
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+          sudo apt-get install -y postgresql-client-18
+
       - name: Preparar PHP
-        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # v2
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962
         with:
           php-version: '8.4'
           extensions: pdo_pgsql
@@ -122,15 +137,26 @@ jobs:
           php artisan key:generate --no-interaction
 
       - name: Aplicar las migraciones
-        run: php artisan migrate --force --no-interaction
+        run: |
+          php artisan migrate --force --no-interaction
+          php artisan db:seed --class=RolesSeeder --force --no-interaction
 
-  # Apagado hasta definir el servidor de producción
-  desplegar:
-    name: Despliegue a producción
-    needs: [verificar, migraciones]
-    if: ${{ false }}
-    runs-on: ubuntu-latest
+      - name: Crear un respaldo
+        run: php artisan respaldos:crear
 
-    steps:
-      - name: Publicar en el servidor
-        run: echo "Pendiente de definir el servidor de producción"
+      - name: Restaurar el respaldo en una base de prueba
+        run: |
+          "$PG_BIN_PATH/psql" --host=127.0.0.1 --username=patronato_app --dbname=patronato --command="CREATE DATABASE patronato_restaurada"
+          php artisan respaldos:restaurar "$(ls storage/app/private/respaldos | head -n 1)" --base=patronato_restaurada
+
+      - name: Comprobar que la base restaurada es igual a la original
+        run: |
+          consultar() {
+            "$PG_BIN_PATH/psql" --host=127.0.0.1 --username=patronato_app --dbname="$1" --tuples-only --no-align \
+              --command="SELECT (SELECT count(*) FROM pg_tables WHERE schemaname = 'public') || ' tablas, ' || (SELECT count(*) FROM roles) || ' roles'"
+          }
+          original="$(consultar patronato)"
+          restaurada="$(consultar patronato_restaurada)"
+          echo "Original: $original"
+          echo "Restaurada: $restaurada"
+          test "$original" = "$restaurada"

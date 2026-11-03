@@ -54,6 +54,14 @@ export default function ResidenteDialog({
                 >
                     {({ processing, errors }) => (
                         <>
+                            {residente && (
+                                <input
+                                    type="hidden"
+                                    name="vivienda_origen_id"
+                                    value={residente.vivienda_id}
+                                />
+                            )}
+
                             <div className="grid gap-2">
                                 <Label htmlFor="vivienda_id">Vivienda</Label>
                                 <Select

@@ -34,6 +34,7 @@ class GuardarResidenteRequest extends FormRequest
             'telefono' => ['nullable', 'string', 'max:30'],
             'correo' => ['nullable', 'string', 'email', 'max:255'],
             'es_responsable_pago' => ['nullable', 'boolean'],
+            'vivienda_origen_id' => ['nullable', 'integer'],
         ];
     }
 

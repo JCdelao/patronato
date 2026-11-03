@@ -25,7 +25,7 @@ beforeEach(function () {
     $this->admin = ($this->crear)(Rol::ADMIN_TECNICO);
     $this->secretario = ($this->crear)(Rol::SECRETARIO);
 
-    $this->vivienda = ['codigo' => 'A-01', 'direccion' => 'x', 'tipo' => 'casa', 'cuota' => '1'];
+    $this->vivienda = ['codigo' => 'A-01', 'tipo' => 'casa', 'calle_bloque' => 'x', 'numero' => '1', 'estado_ocupacion' => 'ocupada', 'cuota' => '1'];
 });
 
 test('only the technical administrator configures permissions', function (string $rol) {

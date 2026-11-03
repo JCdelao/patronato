@@ -1,6 +1,7 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
     Ellipsis,
+    HousePlus,
     Pencil,
     Plus,
     RotateCcw,
@@ -11,7 +12,9 @@ import {
 import { useRef, useState } from 'react';
 import ResidenteController from '@/actions/Patronato/Modules/Padron/Controllers/ResidenteController';
 import ViviendaController from '@/actions/Patronato/Modules/Padron/Controllers/ViviendaController';
+import AgregarViviendaDialog from '@/components/padron/agregar-vivienda-dialog';
 import ConfirmarDialog from '@/components/padron/confirmar-dialog';
+import PadronNav from '@/components/padron/padron-nav';
 import ResidenteDialog from '@/components/padron/residente-dialog';
 import ViviendaDialog from '@/components/padron/vivienda-dialog';
 import { Button } from '@/components/ui/button';
@@ -35,9 +38,20 @@ type Dialogo =
     | { tipo: 'residente'; residente?: Residente }
     | { tipo: 'eliminar-vivienda'; vivienda: Vivienda }
     | { tipo: 'reactivar-vivienda'; vivienda: Vivienda }
-    | { tipo: 'baja-residente'; residente: Residente };
+    | { tipo: 'baja-residente'; residente: Residente }
+    | { tipo: 'agregar-vivienda'; residente: Residente };
 
 const TIPOS_VIVIENDA = { casa: 'Casa', apartamento: 'Apartamento' };
+
+const ubicacion = (vivienda: Vivienda) =>
+    [
+        vivienda.tipo === 'apartamento'
+            ? vivienda.edificio_torre
+            : vivienda.calle_bloque,
+        vivienda.numero && `No. ${vivienda.numero}`,
+    ]
+        .filter(Boolean)
+        .join(', ');
 
 const formatoCuota = (cuota: string) =>
     Number(cuota).toLocaleString('es-HN', {
@@ -137,37 +151,7 @@ export default function Viviendas({
                         />
                     </div>
 
-                    <nav
-                        aria-label="Estado de las viviendas"
-                        className="flex gap-1 rounded-xl border bg-card p-1"
-                    >
-                        <Button
-                            asChild
-                            size="sm"
-                            variant={inactivas ? 'ghost' : 'secondary'}
-                        >
-                            <Link
-                                href={ViviendaController.index()}
-                                aria-current={inactivas ? undefined : 'page'}
-                            >
-                                Activas
-                            </Link>
-                        </Button>
-                        <Button
-                            asChild
-                            size="sm"
-                            variant={inactivas ? 'secondary' : 'ghost'}
-                        >
-                            <Link
-                                href={ViviendaController.index({
-                                    query: { estado: 'inactivas' },
-                                })}
-                                aria-current={inactivas ? 'page' : undefined}
-                            >
-                                Inactivas
-                            </Link>
-                        </Button>
-                    </nav>
+                    <PadronNav actual={estado} />
                 </div>
 
                 {viviendas.data.length === 0 ? (
@@ -193,11 +177,17 @@ export default function Viviendas({
                                         <p className="mt-1 text-muted-foreground">
                                             {[
                                                 TIPOS_VIVIENDA[vivienda.tipo],
-                                                vivienda.direccion,
+                                                ubicacion(vivienda),
                                             ]
                                                 .filter(Boolean)
                                                 .join(' · ')}
                                         </p>
+                                        {vivienda.estado_ocupacion ===
+                                            'desocupada' && (
+                                            <span className="mt-2 inline-block rounded-full bg-muted px-3 py-0.5 text-sm text-muted-foreground">
+                                                Desocupada
+                                            </span>
+                                        )}
                                     </div>
 
                                     <div className="flex shrink-0 items-center gap-1">
@@ -298,9 +288,34 @@ export default function Viviendas({
                                                     (responsable)
                                                 </span>
                                             )}
+                                            {residente.otras_viviendas.length >
+                                                0 && (
+                                                <span className="text-sm text-muted-foreground">
+                                                    también en{' '}
+                                                    {residente.otras_viviendas.join(
+                                                        ', ',
+                                                    )}
+                                                </span>
+                                            )}
                                             <span className="ml-auto text-muted-foreground">
                                                 {residente.telefono}
                                             </span>
+                                            {puedeRegistrar && (
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="size-8"
+                                                    aria-label={`Agregar otra vivienda a ${residente.nombres}`}
+                                                    onClick={() =>
+                                                        setDialogo({
+                                                            tipo: 'agregar-vivienda',
+                                                            residente,
+                                                        })
+                                                    }
+                                                >
+                                                    <HousePlus />
+                                                </Button>
+                                            )}
                                             {puedeRegistrar && (
                                                 <Button
                                                     variant="ghost"
@@ -408,10 +423,32 @@ export default function Viviendas({
             {dialogo?.tipo === 'baja-residente' && (
                 <ConfirmarDialog
                     titulo={`¿Dar de baja a ${dialogo.residente.nombres}?`}
-                    descripcion="Dejará de aparecer en la vivienda, pero su historial se conserva."
+                    descripcion={
+                        dialogo.residente.otras_viviendas.length > 0
+                            ? `Dejará de aparecer en esta vivienda y seguirá en ${dialogo.residente.otras_viviendas.join(', ')}.`
+                            : 'Dejará de aparecer en la vivienda y pasará a Residentes inactivos. Su historial se conserva.'
+                    }
                     confirmar="Dar de baja"
                     accion={ResidenteController.destroy.form(
                         dialogo.residente.id,
+                        { query: { vivienda: dialogo.residente.vivienda_id } },
+                    )}
+                    onClose={cerrar}
+                    onGuardado={alGuardar}
+                />
+            )}
+
+            {dialogo?.tipo === 'agregar-vivienda' && (
+                <AgregarViviendaDialog
+                    residente={dialogo.residente}
+                    titulo={`Agregar vivienda a ${dialogo.residente.nombres}`}
+                    descripcion="El residente seguirá en sus viviendas actuales y quedará asociado también a la que elijas."
+                    viviendas={opcionesViviendas.filter(
+                        (opcion) =>
+                            opcion.id !== dialogo.residente.vivienda_id &&
+                            !dialogo.residente.otras_viviendas.includes(
+                                opcion.codigo,
+                            ),
                     )}
                     onClose={cerrar}
                     onGuardado={alGuardar}
