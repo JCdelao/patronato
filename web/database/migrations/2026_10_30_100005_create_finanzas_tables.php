@@ -36,8 +36,7 @@ return new class extends Migration
             $table->unique(['residencial_id', 'id']);
         });
 
-        // Sin tipo_vivienda ni vivienda_id, la tarifa aplica a todas
-        // La tarifa especial (vivienda_id) prevalece sobre la del tipo
+        // La tarifa de una vivienda prevalece sobre la de su tipo
         Schema::create('tarifas', function (Blueprint $table) {
             $table->id();
             $table->foreignId('residencial_id');
@@ -55,7 +54,6 @@ return new class extends Migration
             $table->unique(['concepto_id', 'tipo_vivienda', 'vivienda_id', 'vigente_desde'], 'tarifas_vigencia_unique')->nullsNotDistinct();
         });
 
-        // El UNIQUE evita duplicar cargos si el proceso mensual se repite
         Schema::create('cargos', function (Blueprint $table) {
             $table->id();
             $table->foreignId('residencial_id');
@@ -103,7 +101,6 @@ return new class extends Migration
             $table->enum('origen', ['sistema', 'portal', 'migracion'])->default('sistema');
             $table->decimal('monto', 12, 2);
             $table->date('fecha_pago');
-            // La aplicación asigna el consecutivo
             $table->string('numero_recibo', 30)->nullable();
             $table->foreignId('caja_id')->nullable()->index();
             $table->foreignId('registrado_por')->nullable()->constrained('users');
@@ -129,7 +126,6 @@ return new class extends Migration
             $table->index(['residencial_id', 'fecha_pago']);
         });
 
-        // Una transferencia rechazada o anulada puede volver a registrarse
         DB::statement("CREATE UNIQUE INDEX pagos_referencia_banco_unique ON pagos (residencial_id, lower(banco), numero_referencia) WHERE numero_referencia IS NOT NULL AND estado NOT IN ('rechazado', 'anulado')");
 
         // Qué parte de cada pago cubre cada cargo
@@ -218,7 +214,6 @@ return new class extends Migration
             $table->index(['residencial_id', 'fecha']);
         });
 
-        // pago_id se llena en los ingresos automáticos por cuotas confirmadas
         Schema::create('ingresos', function (Blueprint $table) {
             $table->id();
             $table->foreignId('residencial_id');

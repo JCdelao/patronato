@@ -48,6 +48,7 @@ jobs:
           npm ci --no-audit --no-fund
 
       - name: Configurar la aplicación
+        id: configurar
         run: |
           cp .env.example .env
           php artisan key:generate --no-interaction
@@ -67,8 +68,62 @@ jobs:
       - name: Revisar tipos de TypeScript
         run: npm run types:check
 
-      - name: Ejecutar las pruebas
-        run: php artisan test
+      # Cada historia corre aunque falle otra, para ver todas las que fallan
+      - name: Pruebas HU-01 · Registrar un residencial
+        if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
+        run: php artisan test tests/Feature/Plataforma/RegistrarResidencialTest.php
+
+      - name: Pruebas HU-02 · Aislar la información de cada residencial
+        if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
+        run: php artisan test tests/Feature/Identidad/AislamientoResidencialTest.php
+
+      - name: Pruebas HU-03 · Suspender o reactivar un residencial
+        if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
+        run: php artisan test tests/Feature/Plataforma/SuspenderResidencialTest.php
+
+      - name: Pruebas HU-04 · Iniciar sesión
+        if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
+        run: php artisan test tests/Feature/Identidad/AccesoTest.php tests/Feature/Auth/AuthenticationTest.php tests/Feature/ExampleTest.php
+
+      - name: Pruebas HU-05 · Recuperar la contraseña
+        if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
+        run: php artisan test tests/Feature/Identidad/RecuperarPasswordTest.php tests/Feature/Auth/PasswordResetTest.php
+
+      - name: Pruebas HU-06 · Administrar cuentas de usuario
+        if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
+        run: php artisan test tests/Feature/Identidad/CuentasTest.php tests/Feature/Identidad/PasswordTemporalTest.php
+
+      - name: Pruebas HU-07 · Configurar permisos por rol
+        if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
+        run: php artisan test tests/Feature/Identidad/PermisosTest.php
+
+      - name: Pruebas HU-08 · Consultar la bitácora de auditoría
+        if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
+        run: php artisan test tests/Feature/Identidad/BitacoraTest.php
+
+      - name: Pruebas HU-09 · Respaldar y restaurar la base de datos
+        if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
+        run: php artisan test tests/Feature/Plataforma/RespaldosTest.php
+
+      - name: Pruebas HU-10 · Registrar viviendas
+        if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
+        run: php artisan test tests/Feature/Padron/ViviendasTest.php tests/Feature/Padron/ViviendasInactivasTest.php
+
+      - name: Pruebas HU-11 · Registrar residentes
+        if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
+        run: php artisan test tests/Feature/Padron/ResidentesTest.php
+
+      - name: Pruebas HU-12 · Buscar vecinos y viviendas
+        if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
+        run: php artisan test tests/Feature/Padron --filter=search
+
+      - name: Pruebas de la base (perfil, verificación de correo y panel)
+        if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
+        run: >-
+          php artisan test tests/Unit tests/Feature/Settings tests/Feature/DashboardTest.php
+          tests/Feature/Auth/EmailVerificationTest.php tests/Feature/Auth/PasswordConfirmationTest.php
+          tests/Feature/Auth/RegistrationTest.php tests/Feature/Auth/TwoFactorChallengeTest.php
+          tests/Feature/Auth/VerificationNotificationTest.php
 
       - name: Guardar el frontend compilado
         uses: actions/upload-artifact@v4

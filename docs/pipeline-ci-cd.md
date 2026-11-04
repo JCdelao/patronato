@@ -4,8 +4,8 @@ El pipeline usa GitHub Actions y está dividido en dos archivos:
 
 | Archivo | Qué hace | Cuándo corre |
 |---|---|---|
-| [`ci.yml`](../.github/workflows/ci.yml) | Integración continua: calidad, pruebas, migraciones, respaldo y restauración | En cada `push` a `main`, en cada pull request y a mano |
-| [`cd.yml`](../.github/workflows/cd.yml) | Entrega continua: publica la versión en el servidor de producción | Cuando CI termina bien después de un `push` a `main`, o a mano |
+| [`ci.yml`](../.github/workflows/ci.yml) | Integración continua: calidad, pruebas por historia de usuario, migraciones, respaldo y restauración | En cada `push` a `main`, en cada pull request y a mano |
+| [`cd.yml`](../.github/workflows/cd.yml) | Entrega continua: publica la versión en Azure App Service | Cuando CI termina bien después de un `push` a `main`, o a mano |
 
 ## Flujo
 
@@ -15,11 +15,13 @@ flowchart LR
     pr["Pull request"] --> ci
 
     subgraph ci["CI"]
-        verificar["Calidad, pruebas y compilación"]
+        verificar["Calidad, pruebas por historia y compilación"]
         bd["Migraciones, respaldo y restauración en PostgreSQL 18"]
     end
 
-    ci -->|"si todo pasa"| cd["CD: despliegue a producción"]
+    ci -->|"si todo pasa"| cd["CD: Azure App Service"]
+    cd --> app["App Service PHP 8.4"]
+    app --> pg[("Azure Database for PostgreSQL")]
 ```
 
 Un pull request solo corre CI. El despliegue ocurre únicamente con cambios que ya están en `main`.
@@ -34,7 +36,7 @@ Un pull request solo corre CI. El despliegue ocurre únicamente con cambios que 
 | | Análisis PHP | `vendor/bin/phpstan analyse` | Hay errores de tipos en PHP |
 | | Frontend | `npm run check` | Hay errores de formato o lint |
 | | Tipos | `npm run types:check` | Hay errores de TypeScript |
-| | Pruebas | `php artisan test` | Se rompió un comportamiento esperado |
+| | Pruebas por historia | `php artisan test <archivos de la historia>` | Esa historia de usuario dejó de cumplir sus criterios |
 | Migraciones, respaldo y restauración | Migraciones | `php artisan migrate --force` | El esquema no se aplica en PostgreSQL |
 | | Respaldo | `php artisan respaldos:crear` | `pg_dump` no puede respaldar la base |
 | | Restauración | `php artisan respaldos:restaurar` en una base nueva | El respaldo no se puede recuperar |
@@ -42,38 +44,88 @@ Un pull request solo corre CI. El despliegue ocurre únicamente con cambios que 
 
 El segundo trabajo existe porque las pruebas corren en SQLite y producción usa PostgreSQL. También cumple el criterio de HU-09 de probar la restauración en un ambiente de pruebas.
 
+### Pruebas por historia de usuario
+
+Cada historia terminada tiene su propio paso en CI, así GitHub muestra cuál pasa y cuál falla. Los pasos corren aunque falle uno anterior.
+
+| Paso | Archivos de prueba | Pruebas |
+|---|---|---|
+| HU-01 · Registrar un residencial | `Plataforma/RegistrarResidencialTest` | 12 |
+| HU-02 · Aislar la información de cada residencial | `Identidad/AislamientoResidencialTest` | 19 |
+| HU-03 · Suspender o reactivar un residencial | `Plataforma/SuspenderResidencialTest` | 10 |
+| HU-04 · Iniciar sesión | `Identidad/AccesoTest`, `Auth/AuthenticationTest`, `ExampleTest` | 19 |
+| HU-05 · Recuperar la contraseña | `Identidad/RecuperarPasswordTest`, `Auth/PasswordResetTest` | 12 |
+| HU-06 · Administrar cuentas de usuario | `Identidad/CuentasTest`, `Identidad/PasswordTemporalTest` | 28 |
+| HU-07 · Configurar permisos por rol | `Identidad/PermisosTest` | 15 |
+| HU-08 · Consultar la bitácora de auditoría | `Identidad/BitacoraTest` | 17 |
+| HU-09 · Respaldar y restaurar la base de datos | `Plataforma/RespaldosTest` | 7 |
+| HU-10 · Registrar viviendas | `Padron/ViviendasTest`, `Padron/ViviendasInactivasTest` | 21 |
+| HU-11 · Registrar residentes | `Padron/ResidentesTest` | 13 |
+| HU-12 · Buscar vecinos y viviendas | Pruebas de búsqueda de `Padron` (`--filter=search`) | 6 |
+| Base del sistema | `Unit`, `Settings`, `DashboardTest` y el resto de `Auth` | 28 |
+
+Los archivos están en `web/tests/Feature`. Las pruebas de HU-12 también forman parte de HU-10. Sin contarlas dos veces, los pasos suman las 201 pruebas del proyecto.
+
+Al agregar una historia nueva, crea su archivo de prueba y agrega su paso en `ci.yml`.
+
 ## CD
 
 1. Descarga la versión que pasó CI.
 2. Instala las dependencias de producción y compila el frontend.
-3. Empaqueta la carpeta `web`, sin `node_modules`, `storage`, `tests` ni `.env`.
-4. La copia al servidor por SSH y ejecuta [`web/scripts/desplegar.sh`](../web/scripts/desplegar.sh), que:
-   - descomprime la versión en `releases/<commit>`;
-   - enlaza el `.env` y la carpeta `storage` compartidos, para que no se pierdan entre versiones;
-   - aplica las migraciones, carga los roles y prepara la caché de Laravel;
-   - cambia el enlace `current` a la versión nueva, así el sitio no queda a medias;
-   - reinicia las colas y deja en `cron` la ejecución de `schedule:run` cada minuto, que dispara el respaldo diario;
-   - conserva las 5 versiones más recientes.
+3. Empaqueta la carpeta `web` en un `.zip`, sin `node_modules`, `tests` ni `.env`.
+4. Publica el `.zip` en App Service con el *publish profile* guardado como secreto, y el sitio se reinicia.
+5. Al arrancar, App Service ejecuta [`web/scripts/azure/inicio.sh`](../web/scripts/azure/inicio.sh), que:
+   - configura Nginx con [`nginx.conf`](../web/scripts/azure/nginx.conf) para servir la carpeta `public`;
+   - enlaza `storage` a `/home/patronato/storage`, que se conserva entre despliegues, así no se pierden los logos;
+   - aplica las migraciones, carga los roles y prepara la caché de Laravel.
+6. Consulta `/up` hasta que el sitio responde. Si no responde en 5 minutos, el despliegue falla.
 
-## Configuración en GitHub
+### Recursos en Azure
 
-En **Settings > Environments**, crea el ambiente `produccion` y agrega estos secretos:
+| Recurso | Plan | Uso |
+|---|---|---|
+| App Service (Linux, PHP 8.4) | B1 | Aplicación web |
+| Azure Database for PostgreSQL, servidor flexible | Burstable B1ms, 32 GB | Base de datos |
 
-| Secreto | Valor |
-|---|---|
-| `SSH_HOST` | Dirección del servidor |
-| `SSH_PORT` | Puerto SSH. Si no se define, se usa 22 |
-| `SSH_USER` | Usuario que publica |
-| `SSH_PRIVATE_KEY` | Llave privada SSH de ese usuario |
-| `SSH_KNOWN_HOSTS` | Resultado de `ssh-keyscan -p PUERTO SERVIDOR` |
-| `DEPLOY_PATH` | Carpeta de la aplicación, por ejemplo `/var/www/patronato` |
+La configuración de producción (`APP_KEY`, datos de la base, `APP_URL`) vive en la **configuración de la aplicación** de App Service, no en un archivo `.env`.
+
+## Puesta en marcha
+
+Se hace una sola vez.
+
+1. En [Azure Cloud Shell](https://shell.azure.com), modo Bash, sube el script [`web/scripts/azure/crear-recursos.sh`](../web/scripts/azure/crear-recursos.sh) y ejecútalo con nombres únicos:
+
+   ```bash
+   APP=patronato-tuapellido BD=patronato-bd-tuapellido bash crear-recursos.sh
+   ```
+
+   Crea el grupo de recursos, PostgreSQL con la base `patronato` y el App Service, y descarga el *publish profile* en `publish-profile-<APP>.xml`. Al final muestra los valores para GitHub y la contraseña de PostgreSQL. **Guarda esa contraseña**: no se vuelve a mostrar.
+
+   Variables opcionales: `REGION` (por omisión `eastus2`), `SKU` (`B1`) y `VERSION_PG` (`17`).
+
+2. En GitHub, **Settings > Environments**, crea el ambiente `produccion` y agrega:
+
+   | Tipo | Nombre | Valor |
+   |---|---|---|
+   | Secreto | `AZURE_WEBAPP_PUBLISH_PROFILE` | Todo el contenido de `publish-profile-<APP>.xml` |
+   | Variable | `AZURE_WEBAPP_NAME` | El valor de `APP` |
+   | Variable | `AZURE_WEBAPP_HOST` | El dominio del sitio que muestra el script, sin `https://` |
+
+   Después borra el archivo `.xml`: da acceso para publicar en el sitio.
+
+3. En **Actions > CD > Run workflow**, lanza el primer despliegue.
+
+4. Crea el primer administrador de la plataforma: regístrate en `https://<AZURE_WEBAPP_HOST>/register` y luego, desde **App Service > SSH**, ejecuta:
+
+   ```bash
+   cd /home/site/wwwroot && php artisan plataforma:admin tu-correo@ejemplo.com
+   ```
 
 En **Settings > Branches**, protege `main` y exige que pasen los dos trabajos de CI antes de unir cambios.
 
-## Preparación del servidor
+## Diferencias con un servidor propio
 
-Se hace una sola vez:
-
-1. Instalar PHP 8.4 con `pdo_pgsql`, PostgreSQL 18 y Nginx, y apuntar el sitio a `DEPLOY_PATH/current/web/public`.
-2. Crear `DEPLOY_PATH/shared/.env` con `APP_ENV=production`, `APP_DEBUG=false`, la `APP_KEY`, los datos de PostgreSQL, el correo SMTP y `PG_BIN_PATH=/usr/lib/postgresql/18/bin`.
-3. Dejar un proceso permanente de `php artisan queue:work` para las colas.
+- **Respaldos (HU-09).** App Service no tiene `cron` ni `pg_dump`, así que el comando `respaldos:crear` no corre en Azure. Los respaldos los hace Azure Database for PostgreSQL: uno diario automático, con 7 días de retención y restauración a un momento exacto. La retención se puede subir hasta 35 días.
+- **Colas.** Se usa `QUEUE_CONNECTION=sync`: las tareas se ejecutan en el momento, sin un proceso aparte.
+- **Registro.** Los errores salen por `stderr`; se ven en **App Service > Log stream**.
+- **Varias instancias.** Si el plan se escala a más de una instancia, cada una aplica las migraciones al arrancar. Para eso conviene pasar las migraciones a un paso propio del CD.

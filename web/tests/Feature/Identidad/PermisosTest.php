@@ -6,6 +6,10 @@ use Illuminate\Support\Facades\DB;
 use Inertia\Testing\AssertableInertia;
 use Patronato\Modules\Identidad\Models\Auditoria;
 use Patronato\Modules\Identidad\Models\Rol;
+use Patronato\Modules\Identidad\Permisos\AccesoTotal;
+use Patronato\Modules\Identidad\Permisos\PermisosPorRol;
+use Patronato\Modules\Identidad\Permisos\SinPermisos;
+use Patronato\Modules\Identidad\Services\PermisoService;
 use Patronato\Modules\Padron\Models\Vivienda;
 use Patronato\Modules\Plataforma\Models\Residencial;
 
@@ -133,4 +137,14 @@ test('the home screen follows the permissions', function () {
     $this->actingAs($this->admin)->put(route('usuarios.permisos.update', ($this->rol)(Rol::SECRETARIO)), []);
 
     expect($this->secretario->rutaInicio())->toBe('dashboard');
+});
+
+test('each user gets the permission strategy of its role', function () {
+    $permisos = app(PermisoService::class);
+
+    expect($permisos->estrategia($this->admin))->toBeInstanceOf(AccesoTotal::class)
+        ->and($permisos->estrategia($this->secretario))->toBeInstanceOf(PermisosPorRol::class)
+        ->and($permisos->estrategia(User::factory()->create()))->toBeInstanceOf(SinPermisos::class)
+        ->and($permisos->deUsuario($this->admin))->toBe($permisos->catalogo())
+        ->and($permisos->deUsuario($this->secretario))->toBe(['padron.anular', 'padron.registrar', 'padron.ver']);
 });

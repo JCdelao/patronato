@@ -19,10 +19,12 @@ concurrency:
 
 jobs:
   desplegar:
-    name: Despliegue a producción
+    name: Despliegue a Azure App Service
     if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
     runs-on: ubuntu-latest
-    environment: produccion
+    environment:
+      name: produccion
+      url: https://${{ vars.AZURE_WEBAPP_HOST }}
 
     env:
       VERSION: ${{ github.event.workflow_run.head_sha || github.sha }}
@@ -63,30 +65,30 @@ jobs:
           rm .env
 
       - name: Empaquetar la versión
-        working-directory: .
         run: |
-          tar --exclude='web/node_modules' --exclude='web/storage' --exclude='web/tests' --exclude='web/.env' \
-            -czf "patronato-$VERSION.tar.gz" web
+          zip -r -q -y "../patronato-$VERSION.zip" . \
+            -x 'node_modules/*' 'tests/*' 'public/storage' 'public/hot' '.env' '.env.*' '.git*'
 
-      - name: Configurar el acceso al servidor
-        working-directory: .
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
-        run: |
-          install -m 700 -d ~/.ssh
-          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/id_despliegue
-          chmod 600 ~/.ssh/id_despliegue
-          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+      - name: Publicar en App Service
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ vars.AZURE_WEBAPP_NAME }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: patronato-${{ env.VERSION }}.zip
+          type: zip
+          clean: true
 
-      - name: Publicar en el servidor
-        working-directory: .
+      - name: Comprobar que el sitio responde
         env:
-          SSH_HOST: ${{ secrets.SSH_HOST }}
-          SSH_PORT: ${{ secrets.SSH_PORT || '22' }}
-          SSH_USER: ${{ secrets.SSH_USER }}
-          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          SITIO: https://${{ vars.AZURE_WEBAPP_HOST }}
         run: |
-          scp -i ~/.ssh/id_despliegue -P "$SSH_PORT" "patronato-$VERSION.tar.gz" "$SSH_USER@$SSH_HOST:/tmp/"
-          ssh -i ~/.ssh/id_despliegue -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" \
-            "bash -s -- '$DEPLOY_PATH' '$VERSION'" < web/scripts/desplegar.sh
+          for intento in $(seq 1 30); do
+            if curl --fail --silent --show-error --max-time 20 "$SITIO/up" > /dev/null; then
+              echo "Versión $VERSION en línea: $SITIO"
+              exit 0
+            fi
+            echo "Intento $intento: el sitio todavía no responde"
+            sleep 10
+          done
+          echo "El sitio no respondió en 5 minutos. Revisa el registro en Azure: Log stream." >&2
+          exit 1
