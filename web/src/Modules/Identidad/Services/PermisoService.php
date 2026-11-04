@@ -5,6 +5,10 @@ namespace Patronato\Modules\Identidad\Services;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Patronato\Modules\Identidad\Models\Rol;
+use Patronato\Modules\Identidad\Permisos\AccesoTotal;
+use Patronato\Modules\Identidad\Permisos\EstrategiaPermisos;
+use Patronato\Modules\Identidad\Permisos\PermisosPorRol;
+use Patronato\Modules\Identidad\Permisos\SinPermisos;
 
 class PermisoService
 {
@@ -49,23 +53,21 @@ class PermisoService
         return $permisos;
     }
 
+    /**
+     * Elige la estrategia de permisos según el usuario
+     */
+    public function estrategia(User $usuario): EstrategiaPermisos
+    {
+        return match (true) {
+            $usuario->residencial_id === null || $usuario->rol_id === null => new SinPermisos,
+            $usuario->rol?->codigo === Rol::ADMIN_TECNICO => new AccesoTotal($this->catalogo()),
+            default => new PermisosPorRol,
+        };
+    }
+
     public function puede(User $usuario, string $modulo, string $accion): bool
     {
-        if ($usuario->residencial_id === null) {
-            return false;
-        }
-
-        // El administrador técnico no depende de la matriz
-        if ($usuario->rol?->codigo === Rol::ADMIN_TECNICO) {
-            return in_array("{$modulo}.{$accion}", $this->catalogo(), true);
-        }
-
-        return $usuario->rol_id !== null && DB::table('rol_permisos')
-            ->where('residencial_id', $usuario->residencial_id)
-            ->where('rol_id', $usuario->rol_id)
-            ->where('modulo', $modulo)
-            ->where('accion', $accion)
-            ->exists();
+        return $this->estrategia($usuario)->puede($usuario, $modulo, $accion);
     }
 
     /**
@@ -73,13 +75,7 @@ class PermisoService
      */
     public function deUsuario(User $usuario): array
     {
-        if ($usuario->residencial_id === null || $usuario->rol_id === null) {
-            return [];
-        }
-
-        return $usuario->rol?->codigo === Rol::ADMIN_TECNICO
-            ? $this->catalogo()
-            : $this->deRol($usuario->residencial_id, $usuario->rol_id);
+        return $this->estrategia($usuario)->permisos($usuario);
     }
 
     /**
@@ -87,15 +83,7 @@ class PermisoService
      */
     public function deRol(int $residencialId, int $rolId): array
     {
-        return DB::table('rol_permisos')
-            ->where('residencial_id', $residencialId)
-            ->where('rol_id', $rolId)
-            ->orderBy('modulo')
-            ->orderBy('accion')
-            ->get(['modulo', 'accion'])
-            ->map(fn (object $fila): string => "{$fila->modulo}.{$fila->accion}")
-            ->values()
-            ->all();
+        return PermisosPorRol::deRol($residencialId, $rolId);
     }
 
     public function asignarPredeterminados(int $residencialId): void
