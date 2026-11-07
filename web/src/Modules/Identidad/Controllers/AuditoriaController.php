@@ -9,6 +9,7 @@ use Illuminate\Support\Carbon;
 use Inertia\Inertia;
 use Inertia\Response;
 use Patronato\Modules\Identidad\Models\Auditoria;
+use Patronato\Modules\Identidad\Services\BitacoraService;
 
 class AuditoriaController extends Controller
 {
@@ -20,7 +21,7 @@ class AuditoriaController extends Controller
     /**
      * Muestra la bitácora de auditoría
      */
-    public function index(Request $request): Response
+    public function index(Request $request, BitacoraService $bitacora): Response
     {
         $residencialId = $request->user()->residencial_id;
 
@@ -43,29 +44,30 @@ class AuditoriaController extends Controller
 
         $base = Auditoria::query()->where('residencial_id', $residencialId);
 
+        $registros = $base->clone()
+            ->with('usuario:id,name')
+            ->when($desde, fn ($query, string $fecha) => $query->where('created_at', '>=', Carbon::parse($fecha, self::ZONA_LOCAL)->startOfDay()->utc()))
+            ->when($hasta, fn ($query, string $fecha) => $query->where('created_at', '<=', Carbon::parse($fecha, self::ZONA_LOCAL)->endOfDay()->utc()))
+            ->when($usuario, fn ($query, string $id) => $query->where('user_id', (int) $id))
+            ->when($modulo, fn ($query, string $valor) => $query->where('modulo', $valor))
+            ->when($accion, fn ($query, string $valor) => $query->where('accion', $valor))
+            ->orderByDesc('id')
+            ->paginate(25)
+            ->withQueryString();
+
+        $detalles = $bitacora->presentar($registros->getCollection());
+
         return Inertia::render('identidad/auditoria', [
-            'registros' => $base->clone()
-                ->with('usuario:id,name')
-                ->when($desde, fn ($query, string $fecha) => $query->where('created_at', '>=', Carbon::parse($fecha, self::ZONA_LOCAL)->startOfDay()->utc()))
-                ->when($hasta, fn ($query, string $fecha) => $query->where('created_at', '<=', Carbon::parse($fecha, self::ZONA_LOCAL)->endOfDay()->utc()))
-                ->when($usuario, fn ($query, string $id) => $query->where('user_id', (int) $id))
-                ->when($modulo, fn ($query, string $valor) => $query->where('modulo', $valor))
-                ->when($accion, fn ($query, string $valor) => $query->where('accion', $valor))
-                ->orderByDesc('id')
-                ->paginate(25)
-                ->withQueryString()
-                ->through(fn (Auditoria $registro) => [
-                    'id' => $registro->id,
-                    'fecha' => $registro->created_at->toIso8601String(),
-                    'usuario' => $registro->usuario->name ?? 'Sistema',
-                    'modulo' => $registro->modulo,
-                    'accion' => $registro->accion,
-                    'entidad' => $registro->entidad,
-                    'entidad_id' => $registro->entidad_id,
-                    'valor_anterior' => $registro->valor_anterior,
-                    'valor_nuevo' => $registro->valor_nuevo,
-                    'motivo' => $registro->motivo,
-                ]),
+            'registros' => $registros->through(fn (Auditoria $registro) => [
+                'id' => $registro->id,
+                'fecha' => $registro->created_at->toIso8601String(),
+                'usuario' => $registro->usuario->name ?? 'Sistema',
+                'modulo' => $registro->modulo,
+                'accion' => $registro->accion,
+                'referencia' => $detalles[$registro->id]['referencia'],
+                'cambios' => $detalles[$registro->id]['cambios'],
+                'motivo' => $registro->motivo,
+            ]),
             'usuarios' => User::query()
                 ->where('residencial_id', $residencialId)
                 ->orderBy('name')

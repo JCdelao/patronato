@@ -1,5 +1,9 @@
 import { Form, Head, Link } from '@inertiajs/react';
 import AuditoriaController from '@/actions/Patronato/Modules/Identidad/Controllers/AuditoriaController';
+import TablaCambios, {
+    textoAccion,
+} from '@/components/identidad/tabla-cambios';
+import type { Cambio } from '@/components/identidad/tabla-cambios';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,10 +22,8 @@ type Registro = {
     usuario: string;
     modulo: string;
     accion: string;
-    entidad: string | null;
-    entidad_id: number | null;
-    valor_anterior: Record<string, unknown> | null;
-    valor_nuevo: Record<string, unknown> | null;
+    referencia: string | null;
+    cambios: Cambio[];
     motivo: string | null;
 };
 
@@ -33,7 +35,14 @@ type Filtros = {
     accion: string | null;
 };
 
-const textoAccion = (accion: string) => accion.replaceAll('_', ' ');
+const MODULOS: Record<string, string> = {
+    identidad: 'Cuentas y permisos',
+    padron: 'Viviendas y residentes',
+    plataforma: 'Plataforma',
+    finanzas: 'Finanzas',
+};
+
+const textoModulo = (modulo: string) => MODULOS[modulo] ?? modulo;
 
 function FiltroSelect({
     id,
@@ -135,7 +144,7 @@ export default function Auditoria({
                         valor={filtros.modulo}
                         opciones={modulos.map((modulo) => ({
                             valor: modulo,
-                            texto: modulo,
+                            texto: textoModulo(modulo),
                         }))}
                     />
                     <FiltroSelect
@@ -172,45 +181,21 @@ export default function Auditoria({
                                     </span>
                                 </div>
                                 <p className="text-sm text-muted-foreground">
-                                    {registro.modulo}
-                                    {registro.entidad &&
-                                        ` · ${registro.entidad} #${registro.entidad_id}`}
+                                    {textoModulo(registro.modulo)}
+                                    {registro.referencia &&
+                                        ` · ${registro.referencia}`}
                                 </p>
                                 {registro.motivo && (
                                     <p className="text-sm">{registro.motivo}</p>
                                 )}
-                                {(registro.valor_anterior ||
-                                    registro.valor_nuevo) && (
+                                {registro.cambios.length > 0 && (
                                     <details className="text-sm">
                                         <summary className="cursor-pointer text-primary">
                                             Ver cambio
                                         </summary>
-                                        <div className="mt-2 grid gap-2 md:grid-cols-2">
-                                            <div className="min-w-0">
-                                                <p className="font-medium">
-                                                    Antes
-                                                </p>
-                                                <pre className="overflow-x-auto rounded-lg bg-muted p-2 text-xs">
-                                                    {JSON.stringify(
-                                                        registro.valor_anterior,
-                                                        null,
-                                                        2,
-                                                    )}
-                                                </pre>
-                                            </div>
-                                            <div className="min-w-0">
-                                                <p className="font-medium">
-                                                    Después
-                                                </p>
-                                                <pre className="overflow-x-auto rounded-lg bg-muted p-2 text-xs">
-                                                    {JSON.stringify(
-                                                        registro.valor_nuevo,
-                                                        null,
-                                                        2,
-                                                    )}
-                                                </pre>
-                                            </div>
-                                        </div>
+                                        <TablaCambios
+                                            cambios={registro.cambios}
+                                        />
                                     </details>
                                 )}
                             </li>
