@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -14,6 +13,7 @@ use Patronato\Modules\Finanzas\Services\TarifaService;
 use Patronato\Modules\Padron\Controllers\Requests\GuardarViviendaRequest;
 use Patronato\Modules\Padron\Models\Vivienda;
 use Patronato\Modules\Padron\Models\ViviendaResidente;
+use Patronato\Modules\Padron\Services\BusquedaService;
 use Patronato\Modules\Padron\Services\ViviendaService;
 
 class ViviendaController extends Controller
@@ -29,13 +29,13 @@ class ViviendaController extends Controller
         $viviendas = Vivienda::query()
             ->where('activa', ! $inactivas)
             ->when($buscar !== '', function (Builder $query) use ($buscar) {
-                $patron = '%'.Str::lower($buscar).'%';
+                $patron = BusquedaService::patron($buscar);
 
                 $query->where(function (Builder $query) use ($patron) {
-                    $query->whereRaw('lower(codigo) like ?', [$patron])
+                    $query->whereRaw(BusquedaService::columna('codigo').' like ?', [$patron])
                         ->orWhereHas('vinculosVigentes.residente', function (Builder $query) use ($patron) {
-                            $query->whereRaw("lower(nombres || ' ' || apellidos) like ?", [$patron])
-                                ->orWhereRaw('lower(telefono) like ?', [$patron]);
+                            $query->whereRaw(BusquedaService::columna("nombres || ' ' || apellidos").' like ?', [$patron])
+                                ->orWhereRaw(BusquedaService::columna('telefono').' like ?', [$patron]);
                         });
                 });
             })

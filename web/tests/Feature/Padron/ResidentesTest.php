@@ -224,6 +224,9 @@ test('inactive residents are listed with their history and can be reactivated', 
     $this->get(route('padron.residentes.index', ['buscar' => 'carlos']))
         ->assertInertia(fn (AssertableInertia $page) => $page->count('residentes.data', 0));
 
+    $this->get(route('padron.residentes.index', ['buscar' => 'maria']))
+        ->assertInertia(fn (AssertableInertia $page) => $page->count('residentes.data', 1));
+
     $this->post(route('padron.residentes.agregar-vivienda', $maria->id), ['vivienda_id' => $this->segunda->id, 'tipo' => 'inquilino'])
         ->assertSessionHasNoErrors();
 

@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 use Patronato\Modules\Padron\Controllers\Requests\AgregarViviendaRequest;
@@ -14,6 +13,7 @@ use Patronato\Modules\Padron\Controllers\Requests\GuardarResidenteRequest;
 use Patronato\Modules\Padron\Models\Residente;
 use Patronato\Modules\Padron\Models\Vivienda;
 use Patronato\Modules\Padron\Models\ViviendaResidente;
+use Patronato\Modules\Padron\Services\BusquedaService;
 use Patronato\Modules\Padron\Services\ResidenteService;
 
 class ResidenteController extends Controller
@@ -28,12 +28,12 @@ class ResidenteController extends Controller
         $residentes = Residente::query()
             ->where('activo', false)
             ->when($buscar !== '', function (Builder $query) use ($buscar) {
-                $patron = '%'.Str::lower($buscar).'%';
+                $patron = BusquedaService::patron($buscar);
 
                 $query->where(function (Builder $query) use ($patron) {
-                    $query->whereRaw("lower(nombres || ' ' || apellidos) like ?", [$patron])
-                        ->orWhereRaw('lower(identidad) like ?', [$patron])
-                        ->orWhereRaw('lower(telefono) like ?', [$patron]);
+                    $query->whereRaw(BusquedaService::columna("nombres || ' ' || apellidos").' like ?', [$patron])
+                        ->orWhereRaw(BusquedaService::columna('identidad').' like ?', [$patron])
+                        ->orWhereRaw(BusquedaService::columna('telefono').' like ?', [$patron]);
                 });
             })
             ->with(['vinculos' => fn ($query) => $query->with('vivienda')->orderByDesc('fecha_inicio')->orderByDesc('id')])

@@ -189,6 +189,23 @@ test('the search matches code, name and phone', function (string $buscar, int $r
     'vacio' => ['', 2],
 ]);
 
+test('the search ignores accents', function (string $buscar) {
+    $vivienda = Vivienda::query()->create(['residencial_id' => $this->residencial->id, 'codigo' => 'A-01', 'tipo' => 'casa']);
+    Vivienda::query()->create(['residencial_id' => $this->residencial->id, 'codigo' => 'B-02', 'tipo' => 'casa']);
+
+    $residente = Residente::query()->create([
+        'residencial_id' => $this->residencial->id, 'nombres' => 'José Ángel', 'apellidos' => 'Peña',
+    ]);
+
+    ViviendaResidente::query()->create([
+        'residencial_id' => $this->residencial->id, 'vivienda_id' => $vivienda->id, 'residente_id' => $residente->id, 'tipo' => 'propietario',
+    ]);
+
+    $this->actingAs($this->usuario)
+        ->get(route('padron.viviendas.index', ['buscar' => $buscar]))
+        ->assertInertia(fn (AssertableInertia $page) => $page->count('viviendas.data', 1));
+})->with(['jose', 'JOSE', 'José', 'angel', 'pena', 'Peña', 'jose angel pena']);
+
 test('an apartment records its building and number and a house its street and number', function () {
     $this->actingAs($this->usuario);
 
