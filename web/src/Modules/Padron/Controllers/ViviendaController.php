@@ -4,12 +4,14 @@ namespace Patronato\Modules\Padron\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 use Patronato\Modules\Finanzas\Services\TarifaService;
+use Patronato\Modules\Identidad\Services\BitacoraService;
 use Patronato\Modules\Padron\Controllers\Requests\GuardarViviendaRequest;
 use Patronato\Modules\Padron\Models\Vivienda;
 use Patronato\Modules\Padron\Models\ViviendaResidente;
@@ -85,6 +87,23 @@ class ViviendaController extends Controller
             'buscar' => $buscar,
             'estado' => $inactivas ? 'inactivas' : 'activas',
         ]);
+    }
+
+    /**
+     * Devuelve el historial de cambios de la vivienda y de sus residentes
+     */
+    public function historial(Request $request, BitacoraService $bitacora, Vivienda $vivienda): JsonResponse
+    {
+        $residentes = array_values(array_map('intval', ViviendaResidente::query()
+            ->where('vivienda_id', $vivienda->id)
+            ->distinct()
+            ->pluck('residente_id')
+            ->all()));
+
+        return response()->json($bitacora->historial((int) $request->user()->residencial_id, [
+            'viviendas' => [$vivienda->id],
+            'residentes' => $residentes,
+        ]));
     }
 
     /**
