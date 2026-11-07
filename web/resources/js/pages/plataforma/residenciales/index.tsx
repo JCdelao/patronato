@@ -65,9 +65,9 @@ export default function Residenciales({
                         </AlertTitle>
                         <AlertDescription>
                             <p>
-                                Copia estos datos y entrégalos al administrador
-                                técnico. La contraseña temporal no se volverá a
-                                mostrar.
+                                No se pudo enviar el correo. Copia estos datos y
+                                entrégalos al administrador técnico. La
+                                contraseña temporal no se volverá a mostrar.
                             </p>
                             <p>
                                 Correo: <strong>{credenciales.correo}</strong>

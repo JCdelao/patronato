@@ -93,8 +93,9 @@ export default function Usuarios({
                         <AlertTitle>Cuenta creada</AlertTitle>
                         <AlertDescription>
                             <p>
-                                Copia estos datos y entrégalos a la persona. La
-                                contraseña temporal no se volverá a mostrar.
+                                No se pudo enviar el correo. Copia estos datos y
+                                entrégalos a la persona. La contraseña temporal
+                                no se volverá a mostrar.
                             </p>
                             <p>
                                 Correo: <strong>{credenciales.correo}</strong>

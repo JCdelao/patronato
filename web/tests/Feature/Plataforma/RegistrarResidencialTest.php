@@ -1,10 +1,12 @@
 <?php
 
 use App\Models\User;
+use App\Notifications\CuentaCreada;
 use Database\Seeders\RolesSeeder;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia;
 use Patronato\Modules\Identidad\Models\Rol;
@@ -70,7 +72,25 @@ test('a residencial is registered with its technical administrator', function ()
         ->and($administrador->debe_cambiar_password)->toBeTrue();
 });
 
-test('the temporary password is shown only once and is valid', function () {
+test('the temporary password is emailed to the technical administrator', function () {
+    Notification::fake();
+
+    $this->actingAs($this->admin)
+        ->post(route('plataforma.residenciales.store'), $this->datos)
+        ->assertSessionHasNoErrors();
+
+    $administrador = User::query()->where('email', 'ana@laspalmas.test')->sole();
+
+    Notification::assertSentTo($administrador, CuentaCreada::class, fn (CuentaCreada $aviso) => strlen($aviso->passwordTemporal) === 16
+        && Hash::check($aviso->passwordTemporal, $administrador->password));
+
+    $this->get(route('plataforma.residenciales.index'))
+        ->assertInertia(fn (AssertableInertia $page) => $page->where('credenciales', null));
+});
+
+test('the temporary password is shown only once when the email fails', function () {
+    config(['mail.default' => 'inexistente']);
+
     $this->actingAs($this->admin)
         ->post(route('plataforma.residenciales.store'), $this->datos)
         ->assertSessionHasNoErrors();
@@ -97,6 +117,8 @@ test('the temporary password is shown only once and is valid', function () {
 });
 
 test('the temporary password never reaches the session in plain text', function () {
+    config(['mail.default' => 'inexistente']);
+
     $response = $this->actingAs($this->admin)
         ->post(route('plataforma.residenciales.store'), $this->datos);
 

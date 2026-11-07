@@ -67,6 +67,12 @@ class ResidencialController extends Controller
 
         $registro = $residenciales->registrar($datos, $request->file('logo'));
 
+        if ($registro['correo_enviado']) {
+            Inertia::flash('toast', ['type' => 'success', 'message' => "Residencial registrado. Se envió la contraseña temporal a {$registro['administrador']->email}."]);
+
+            return to_route('plataforma.residenciales.index');
+        }
+
         // Guarda la contraseña temporal cifrada en la sesión
         $request->session()->flash('credenciales', Crypt::encrypt([
             'residencial' => $registro['residencial']->nombre,
@@ -74,7 +80,7 @@ class ResidencialController extends Controller
             'password_temporal' => $registro['password_temporal'],
         ]));
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => 'Residencial registrado.']);
+        Inertia::flash('toast', ['type' => 'error', 'message' => 'Residencial registrado, pero no se pudo enviar el correo.']);
 
         return to_route('plataforma.residenciales.index');
     }

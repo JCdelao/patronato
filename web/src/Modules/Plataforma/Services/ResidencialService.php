@@ -41,14 +41,14 @@ class ResidencialService
      * Registra un residencial junto con su configuración y su administrador técnico
      *
      * @param  array{nombre: string, direccion?: string|null, telefono?: string|null, correo?: string|null, admin_nombre: string, admin_correo: string}  $datos
-     * @return array{residencial: Residencial, administrador: User, password_temporal: string}
+     * @return array{residencial: Residencial, administrador: User, password_temporal: string, correo_enviado: bool}
      */
     public function registrar(array $datos, ?UploadedFile $logo): array
     {
         $logoPath = $logo?->store('logos', 'public') ?: null;
 
         try {
-            return DB::transaction(function () use ($datos, $logoPath) {
+            $registro = DB::transaction(function () use ($datos, $logoPath) {
                 $residencial = Residencial::query()->create([
                     'nombre' => $datos['nombre'],
                     'direccion' => $datos['direccion'] ?? null,
@@ -81,5 +81,10 @@ class ResidencialService
 
             throw $e;
         }
+
+        return [
+            ...$registro,
+            'correo_enviado' => $this->cuentas->enviarPasswordTemporal($registro['administrador'], $registro['password_temporal']),
+        ];
     }
 }
