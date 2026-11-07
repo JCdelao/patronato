@@ -205,6 +205,15 @@ test('leaving one housing unit keeps the resident active until the last one', fu
         ->and(ViviendaResidente::query()->where('residente_id', $maria->id)->count())->toBe(2);
 });
 
+test('the inactive residents search ignores accents', function (string $buscar) {
+    $this->post(route('padron.residentes.store'), ($this->datos)(['apellidos' => 'Peña']));
+
+    $this->delete(route('padron.residentes.destroy', Residente::query()->sole()->id));
+
+    $this->get(route('padron.residentes.index', ['buscar' => $buscar]))
+        ->assertInertia(fn (AssertableInertia $page) => $page->count('residentes.data', 1));
+})->with(['maria', 'MARIA', 'María', 'pena', 'maria pena']);
+
 test('inactive residents are listed with their history and can be reactivated', function () {
     $this->post(route('padron.residentes.store'), ($this->datos)());
     $this->post(route('padron.residentes.store'), ($this->datos)(['nombres' => 'Carlos', 'identidad' => '2']));
