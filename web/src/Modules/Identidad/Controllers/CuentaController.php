@@ -69,13 +69,19 @@ class CuentaController extends Controller
 
         $cuenta = $cuentas->crear($request->user(), $datos);
 
+        if ($cuenta['correo_enviado']) {
+            Inertia::flash('toast', ['type' => 'success', 'message' => "Cuenta creada. Se envió la contraseña temporal a {$cuenta['usuario']->email}."]);
+
+            return back();
+        }
+
         // Guarda la contraseña temporal cifrada en la sesión
         $request->session()->flash('credenciales', Crypt::encrypt([
             'correo' => $cuenta['usuario']->email,
             'password_temporal' => $cuenta['password_temporal'],
         ]));
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => 'Cuenta creada.']);
+        Inertia::flash('toast', ['type' => 'error', 'message' => 'Cuenta creada, pero no se pudo enviar el correo.']);
 
         return back();
     }

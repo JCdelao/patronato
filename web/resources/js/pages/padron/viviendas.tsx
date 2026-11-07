@@ -1,6 +1,7 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
     Ellipsis,
+    History,
     HousePlus,
     Pencil,
     Plus,
@@ -14,6 +15,7 @@ import ResidenteController from '@/actions/Patronato/Modules/Padron/Controllers/
 import ViviendaController from '@/actions/Patronato/Modules/Padron/Controllers/ViviendaController';
 import AgregarViviendaDialog from '@/components/padron/agregar-vivienda-dialog';
 import ConfirmarDialog from '@/components/padron/confirmar-dialog';
+import HistorialDialog from '@/components/padron/historial-dialog';
 import PadronNav from '@/components/padron/padron-nav';
 import ResidenteDialog from '@/components/padron/residente-dialog';
 import ViviendaDialog from '@/components/padron/vivienda-dialog';
@@ -39,7 +41,8 @@ type Dialogo =
     | { tipo: 'eliminar-vivienda'; vivienda: Vivienda }
     | { tipo: 'reactivar-vivienda'; vivienda: Vivienda }
     | { tipo: 'baja-residente'; residente: Residente }
-    | { tipo: 'agregar-vivienda'; residente: Residente };
+    | { tipo: 'agregar-vivienda'; residente: Residente }
+    | { tipo: 'historial'; vivienda: Vivienda };
 
 const TIPOS_VIVIENDA = { casa: 'Casa', apartamento: 'Apartamento' };
 
@@ -199,51 +202,58 @@ export default function Viviendas({
                                             </span>
                                         )}
 
-                                        {!inactivas &&
-                                            (puedeRegistrar || puedeAnular) && (
-                                                <DropdownMenu>
-                                                    <DropdownMenuTrigger
-                                                        asChild
-                                                    >
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            aria-label={`Acciones de ${vivienda.codigo}`}
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    aria-label={`Acciones de ${vivienda.codigo}`}
+                                                >
+                                                    <Ellipsis />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end">
+                                                <DropdownMenuItem
+                                                    onSelect={() =>
+                                                        setDialogo({
+                                                            tipo: 'historial',
+                                                            vivienda,
+                                                        })
+                                                    }
+                                                >
+                                                    <History />
+                                                    Historial
+                                                </DropdownMenuItem>
+                                                {!inactivas &&
+                                                    puedeRegistrar && (
+                                                        <DropdownMenuItem
+                                                            onSelect={() =>
+                                                                setDialogo({
+                                                                    tipo: 'vivienda',
+                                                                    vivienda,
+                                                                })
+                                                            }
                                                         >
-                                                            <Ellipsis />
-                                                        </Button>
-                                                    </DropdownMenuTrigger>
-                                                    <DropdownMenuContent align="end">
-                                                        {puedeRegistrar && (
-                                                            <DropdownMenuItem
-                                                                onSelect={() =>
-                                                                    setDialogo({
-                                                                        tipo: 'vivienda',
-                                                                        vivienda,
-                                                                    })
-                                                                }
-                                                            >
-                                                                <Pencil />
-                                                                Editar
-                                                            </DropdownMenuItem>
-                                                        )}
-                                                        {puedeAnular && (
-                                                            <DropdownMenuItem
-                                                                variant="destructive"
-                                                                onSelect={() =>
-                                                                    setDialogo({
-                                                                        tipo: 'eliminar-vivienda',
-                                                                        vivienda,
-                                                                    })
-                                                                }
-                                                            >
-                                                                <Trash2 />
-                                                                Eliminar
-                                                            </DropdownMenuItem>
-                                                        )}
-                                                    </DropdownMenuContent>
-                                                </DropdownMenu>
-                                            )}
+                                                            <Pencil />
+                                                            Editar
+                                                        </DropdownMenuItem>
+                                                    )}
+                                                {!inactivas && puedeAnular && (
+                                                    <DropdownMenuItem
+                                                        variant="destructive"
+                                                        onSelect={() =>
+                                                            setDialogo({
+                                                                tipo: 'eliminar-vivienda',
+                                                                vivienda,
+                                                            })
+                                                        }
+                                                    >
+                                                        <Trash2 />
+                                                        Eliminar
+                                                    </DropdownMenuItem>
+                                                )}
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
                                     </div>
                                 </div>
 
@@ -436,6 +446,10 @@ export default function Viviendas({
                     onClose={cerrar}
                     onGuardado={alGuardar}
                 />
+            )}
+
+            {dialogo?.tipo === 'historial' && (
+                <HistorialDialog vivienda={dialogo.vivienda} onClose={cerrar} />
             )}
 
             {dialogo?.tipo === 'agregar-vivienda' && (

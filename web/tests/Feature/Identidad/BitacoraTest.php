@@ -6,6 +6,7 @@ use Illuminate\Support\Carbon;
 use Inertia\Testing\AssertableInertia;
 use Patronato\Modules\Identidad\Models\Auditoria;
 use Patronato\Modules\Identidad\Models\Rol;
+use Patronato\Modules\Padron\Models\Vivienda;
 use Patronato\Modules\Plataforma\Models\Residencial;
 
 beforeEach(function () {
@@ -46,9 +47,33 @@ test('the log shows who, what, when, why and the values', function () {
             ->where('registros.data.0.usuario', $this->secretario->name)
             ->where('registros.data.0.accion', 'pago_anulado')
             ->where('registros.data.0.motivo', 'Error de digitación')
-            ->where('registros.data.0.valor_anterior.monto', 500)
-            ->where('registros.data.0.valor_nuevo.monto', 0)
+            ->where('registros.data.0.cambios', [['campo' => 'Monto', 'antes' => '500', 'despues' => '0']])
             ->has('registros.data.0.fecha'));
+});
+
+test('the log shows names instead of ids', function () {
+    $rol = Rol::query()->where('codigo', Rol::RESIDENTE)->sole();
+    $vivienda = Vivienda::query()->create(['residencial_id' => $this->residencial->id, 'codigo' => 'A-01', 'tipo' => 'casa']);
+
+    ($this->registro)([
+        'modulo' => 'identidad',
+        'accion' => 'cuenta_creada',
+        'entidad' => 'users',
+        'entidad_id' => $this->guardia->id,
+        'valor_nuevo' => ['email' => 'luis@laspalmas.test', 'rol_id' => $rol->id, 'vivienda_id' => $vivienda->id],
+    ]);
+    ($this->registro)(['entidad' => 'viviendas', 'entidad_id' => 999, 'valor_anterior' => ['permisos' => ['padron.ver']]]);
+
+    $this->actingAs($this->fiscal)->get(route('auditoria.index'))
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->where('registros.data.1.referencia', "Cuenta: {$this->guardia->name}")
+            ->where('registros.data.1.cambios', [
+                ['campo' => 'Correo', 'antes' => null, 'despues' => 'luis@laspalmas.test'],
+                ['campo' => 'Rol', 'antes' => null, 'despues' => $rol->nombre],
+                ['campo' => 'Vivienda', 'antes' => null, 'despues' => 'A-01'],
+            ])
+            ->where('registros.data.0.referencia', 'Vivienda (ya no existe)')
+            ->where('registros.data.0.cambios.0.antes', 'Viviendas y residentes: ver'));
 });
 
 test('only records of the residencial are visible', function () {

@@ -1,9 +1,11 @@
 <?php
 
 use App\Models\User;
+use App\Notifications\CuentaCreada;
 use Database\Seeders\RolesSeeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Notification;
 use Inertia\Testing\AssertableInertia;
 use Patronato\Modules\Identidad\Models\Auditoria;
 use Patronato\Modules\Identidad\Models\Rol;
@@ -94,7 +96,9 @@ test('the platform administrator does not manage residencial accounts', function
     $this->get(route('usuarios.index'))->assertForbidden();
 });
 
-test('an account is created with a role and a temporary password shown once', function () {
+test('an account is created with a role and its temporary password is emailed', function () {
+    Notification::fake();
+
     $this->post(route('usuarios.store'), ($this->datos)())->assertSessionHasNoErrors();
 
     $cuenta = User::query()->where('email', 'luis@laspalmas.test')->sole();
@@ -102,6 +106,20 @@ test('an account is created with a role and a temporary password shown once', fu
     expect($cuenta->residencial_id)->toBe($this->residencial->id)
         ->and($cuenta->rol?->codigo)->toBe('cobrador')
         ->and($cuenta->debe_cambiar_password)->toBeTrue();
+
+    Notification::assertSentTo($cuenta, CuentaCreada::class, fn (CuentaCreada $aviso) => Hash::check($aviso->passwordTemporal, $cuenta->password)
+        && $aviso->rol === 'Cobrador');
+
+    $this->get(route('usuarios.index'))
+        ->assertInertia(fn (AssertableInertia $page) => $page->where('credenciales', null));
+});
+
+test('the temporary password is shown once when the email fails', function (string $mailer) {
+    config(['mail.default' => $mailer]);
+
+    $this->post(route('usuarios.store'), ($this->datos)())->assertSessionHasNoErrors();
+
+    $cuenta = User::query()->where('email', 'luis@laspalmas.test')->sole();
 
     $password = null;
 
@@ -118,7 +136,7 @@ test('an account is created with a role and a temporary password shown once', fu
 
     $this->get(route('usuarios.index'))
         ->assertInertia(fn (AssertableInertia $page) => $page->where('credenciales', null));
-});
+})->with(['inexistente', 'log']);
 
 test('only accounts of the residencial are listed', function () {
     $this->get(route('usuarios.index'))->assertInertia(fn (AssertableInertia $page) => $page

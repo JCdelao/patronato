@@ -3,11 +3,13 @@
 namespace Patronato\Modules\Identidad\Services;
 
 use App\Models\User;
+use App\Notifications\CuentaCreada;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Patronato\Modules\Identidad\Models\Rol;
 use Patronato\Modules\Padron\Services\ResidenteService;
+use Throwable;
 
 class CuentaService
 {
@@ -46,14 +48,14 @@ class CuentaService
     }
 
     /**
-     * Crea una cuenta del residencial
+     * Crea una cuenta del residencial y le envía la contraseña temporal
      *
      * @param  array{name: string, email: string, rol_id: int|string, residente_id?: int|string|null}  $datos
-     * @return array{usuario: User, password_temporal: string}
+     * @return array{usuario: User, password_temporal: string, correo_enviado: bool}
      */
     public function crear(User $actor, array $datos): array
     {
-        return DB::transaction(function () use ($actor, $datos) {
+        $cuenta = DB::transaction(function () use ($actor, $datos) {
             $cuenta = $this->crearConPasswordTemporal((int) $actor->residencial_id, $datos['name'], $datos['email'], (int) $datos['rol_id']);
 
             $this->residentes->vincularCuenta($cuenta['usuario']->id, $this->residenteDe($datos));
@@ -64,6 +66,29 @@ class CuentaService
 
             return $cuenta;
         });
+
+        return [...$cuenta, 'correo_enviado' => $this->enviarPasswordTemporal($cuenta['usuario'], $cuenta['password_temporal'])];
+    }
+
+    /**
+     * Envía la contraseña temporal al correo de la cuenta
+     */
+    public function enviarPasswordTemporal(User $usuario, string $passwordTemporal): bool
+    {
+        // Con el correo en modo log no le llega nada a la persona
+        if (config('mail.default') === 'log') {
+            return false;
+        }
+
+        try {
+            $usuario->notify(new CuentaCreada($passwordTemporal, (string) $usuario->rol?->nombre));
+
+            return true;
+        } catch (Throwable $e) {
+            report($e);
+
+            return false;
+        }
     }
 
     /**

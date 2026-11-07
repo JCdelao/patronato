@@ -10,6 +10,7 @@ Route::middleware(['auth', 'verified'])
     ->group(function () {
         Route::middleware("can:permiso,'padron','ver'")->group(function () {
             Route::get('viviendas', [ViviendaController::class, 'index'])->name('viviendas.index');
+            Route::get('viviendas/{vivienda}/historial', [ViviendaController::class, 'historial'])->whereNumber('vivienda')->name('viviendas.historial');
             Route::get('residentes', [ResidenteController::class, 'index'])->name('residentes.index');
         });
 
