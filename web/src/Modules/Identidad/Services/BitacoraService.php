@@ -18,6 +18,7 @@ class BitacoraService
         'viviendas' => ['etiqueta' => 'Vivienda', 'columna' => 'codigo'],
         'residentes' => ['etiqueta' => 'Residente', 'columna' => "nombres || ' ' || apellidos"],
         'residenciales' => ['etiqueta' => 'Residencial', 'columna' => 'nombre'],
+        'modalidades_cobro' => ['etiqueta' => 'Modalidad de cobro', 'columna' => 'modalidad'],
     ];
 
     /**
@@ -43,6 +44,9 @@ class BitacoraService
         'viviendas' => 'Viviendas',
         'estado' => 'Estado',
         'monto' => 'Monto',
+        'modalidad' => 'Modalidad',
+        'vigente_desde' => 'Aplica desde',
+        'desglose' => 'Desglose informativo',
     ];
 
     /**
@@ -155,9 +159,10 @@ class BitacoraService
             $campo === 'vivienda_id' => $nombres['viviendas'][(int) $valor] ?? 'Vivienda eliminada',
             $campo === 'viviendas' && is_array($valor) => collect($valor)->map(fn ($id) => $nombres['viviendas'][(int) $id] ?? 'Vivienda eliminada')->implode(', '),
             $campo === 'permisos' && is_array($valor) => collect($valor)->map(fn ($permiso) => $this->permiso((string) $permiso))->implode(', '),
+            $campo === 'desglose' && is_array($valor) => collect($valor)->map(fn ($fila) => is_array($fila) ? ($fila['concepto'] ?? '').': L. '.($fila['monto'] ?? '') : (string) $fila)->implode(', '),
             is_bool($valor) => $valor ? 'Sí' : 'No',
             is_array($valor) => collect($valor)->map(fn ($item) => is_scalar($item) ? (string) $item : json_encode($item))->implode(', '),
-            in_array($campo, ['tipo', 'estado', 'estado_ocupacion'], true) => Str::ucfirst(str_replace('_', ' ', (string) $valor)),
+            in_array($campo, ['tipo', 'estado', 'estado_ocupacion', 'modalidad'], true) => Str::ucfirst(str_replace('_', ' ', (string) $valor)),
             default => is_scalar($valor) ? (string) $valor : (string) json_encode($valor),
         };
     }

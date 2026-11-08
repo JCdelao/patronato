@@ -7,9 +7,11 @@ import {
     LayoutGrid,
     ScrollText,
     ShieldCheck,
+    SlidersHorizontal,
     Users,
     Wallet,
 } from 'lucide-react';
+import ModalidadController from '@/actions/Patronato/Modules/Finanzas/Controllers/ModalidadController';
 import AuditoriaController from '@/actions/Patronato/Modules/Identidad/Controllers/AuditoriaController';
 import CuentaController from '@/actions/Patronato/Modules/Identidad/Controllers/CuentaController';
 import ViviendaController from '@/actions/Patronato/Modules/Padron/Controllers/ViviendaController';
@@ -50,6 +52,12 @@ export function AppSidebar() {
             icon: Wallet,
             disabled: true,
             visible: auth.permisos.includes('cobros.ver'),
+        },
+        {
+            title: 'Modalidad de cobro',
+            href: ModalidadController.index(),
+            icon: SlidersHorizontal,
+            visible: auth.permisos.includes('parametros.ver'),
         },
         {
             title: 'Vigilancia',
