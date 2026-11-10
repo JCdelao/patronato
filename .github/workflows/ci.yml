@@ -125,6 +125,10 @@ jobs:
         if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
         run: php artisan test tests/Feature/Finanzas/ModalidadTest.php
 
+      - name: Pruebas HU-15 · Administrar conceptos de cobro
+        if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
+        run: php artisan test tests/Feature/Finanzas/ConceptosTest.php
+
       - name: Pruebas de la base (perfil, verificación de correo y panel)
         if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
         run: >-

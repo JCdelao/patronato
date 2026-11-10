@@ -8,9 +8,11 @@ import {
     ScrollText,
     ShieldCheck,
     SlidersHorizontal,
+    Tags,
     Users,
     Wallet,
 } from 'lucide-react';
+import ConceptoController from '@/actions/Patronato/Modules/Finanzas/Controllers/ConceptoController';
 import ModalidadController from '@/actions/Patronato/Modules/Finanzas/Controllers/ModalidadController';
 import AuditoriaController from '@/actions/Patronato/Modules/Identidad/Controllers/AuditoriaController';
 import CuentaController from '@/actions/Patronato/Modules/Identidad/Controllers/CuentaController';
@@ -57,6 +59,12 @@ export function AppSidebar() {
             title: 'Modalidad de cobro',
             href: ModalidadController.index(),
             icon: SlidersHorizontal,
+            visible: auth.permisos.includes('parametros.ver'),
+        },
+        {
+            title: 'Conceptos de cobro',
+            href: ConceptoController.index(),
+            icon: Tags,
             visible: auth.permisos.includes('parametros.ver'),
         },
         {

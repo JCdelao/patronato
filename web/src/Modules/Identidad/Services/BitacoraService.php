@@ -19,6 +19,7 @@ class BitacoraService
         'residentes' => ['etiqueta' => 'Residente', 'columna' => "nombres || ' ' || apellidos"],
         'residenciales' => ['etiqueta' => 'Residencial', 'columna' => 'nombre'],
         'modalidades_cobro' => ['etiqueta' => 'Modalidad de cobro', 'columna' => 'modalidad'],
+        'conceptos_cobro' => ['etiqueta' => 'Concepto de cobro', 'columna' => 'nombre'],
     ];
 
     /**
@@ -161,6 +162,7 @@ class BitacoraService
             $campo === 'permisos' && is_array($valor) => collect($valor)->map(fn ($permiso) => $this->permiso((string) $permiso))->implode(', '),
             $campo === 'desglose' && is_array($valor) => collect($valor)->map(fn ($fila) => is_array($fila) ? ($fila['concepto'] ?? '').': L. '.($fila['monto'] ?? '') : (string) $fila)->implode(', '),
             is_bool($valor) => $valor ? 'Sí' : 'No',
+            $campo === 'tipo' && $valor === 'unico' => 'Único',
             is_array($valor) => collect($valor)->map(fn ($item) => is_scalar($item) ? (string) $item : json_encode($item))->implode(', '),
             in_array($campo, ['tipo', 'estado', 'estado_ocupacion', 'modalidad'], true) => Str::ucfirst(str_replace('_', ' ', (string) $valor)),
             default => is_scalar($valor) ? (string) $valor : (string) json_encode($valor),
