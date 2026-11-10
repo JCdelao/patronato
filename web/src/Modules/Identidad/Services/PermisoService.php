@@ -26,6 +26,9 @@ class PermisoService
 
     /**
      * Permisos iniciales de cada residencial
+     *
+     * Solo se asignan al crear un residencial. En los que ya existen,
+     * el administrador técnico los activa desde la pantalla de permisos.
      */
     public const PREDETERMINADOS = [
         Rol::PRESIDENTE => ['padron.ver', 'padron.registrar', 'padron.anular', 'auditoria.ver'],
@@ -33,6 +36,7 @@ class PermisoService
         'tesorero' => ['padron.ver'],
         'fiscal' => ['padron.ver', 'auditoria.ver'],
         'vocal' => ['padron.ver'],
+        'cobrador' => ['cobros.registrar'],
     ];
 
     public function __construct(private AuditoriaService $auditoria) {}
