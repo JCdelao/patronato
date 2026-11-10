@@ -18,6 +18,7 @@ class PermisoService
     public const MODULOS = [
         'padron' => ['etiqueta' => 'Viviendas y residentes', 'acciones' => ['ver', 'registrar', 'anular']],
         'cobros' => ['etiqueta' => 'Cobros', 'acciones' => ['ver', 'registrar', 'verificar', 'aprobar', 'anular']],
+        'parametros' => ['etiqueta' => 'Parámetros de cobro', 'acciones' => ['ver', 'registrar']],
         'vigilancia' => ['etiqueta' => 'Vigilancia', 'acciones' => ['ver', 'registrar']],
         'vehiculos' => ['etiqueta' => 'Vehículos', 'acciones' => ['ver', 'registrar', 'anular']],
         'reportes' => ['etiqueta' => 'Reportes', 'acciones' => ['ver']],
@@ -31,10 +32,10 @@ class PermisoService
      * el administrador técnico los activa desde la pantalla de permisos.
      */
     public const PREDETERMINADOS = [
-        Rol::PRESIDENTE => ['padron.ver', 'padron.registrar', 'padron.anular', 'auditoria.ver'],
+        Rol::PRESIDENTE => ['padron.ver', 'padron.registrar', 'padron.anular', 'auditoria.ver', 'parametros.ver'],
         Rol::SECRETARIO => ['padron.ver', 'padron.registrar', 'padron.anular'],
-        'tesorero' => ['padron.ver'],
-        'fiscal' => ['padron.ver', 'auditoria.ver'],
+        'tesorero' => ['padron.ver', 'parametros.ver', 'parametros.registrar'],
+        'fiscal' => ['padron.ver', 'auditoria.ver', 'parametros.ver'],
         'vocal' => ['padron.ver'],
         'cobrador' => ['cobros.registrar'],
     ];
