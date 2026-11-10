@@ -3,6 +3,7 @@ import {
     Building2,
     Car,
     ChartColumn,
+    HandCoins,
     Home,
     LayoutGrid,
     ScrollText,
@@ -12,6 +13,7 @@ import {
     Users,
     Wallet,
 } from 'lucide-react';
+import CobroController from '@/actions/Patronato/Modules/Finanzas/Controllers/CobroController';
 import ConceptoController from '@/actions/Patronato/Modules/Finanzas/Controllers/ConceptoController';
 import ModalidadController from '@/actions/Patronato/Modules/Finanzas/Controllers/ModalidadController';
 import AuditoriaController from '@/actions/Patronato/Modules/Identidad/Controllers/AuditoriaController';
@@ -47,6 +49,12 @@ export function AppSidebar() {
             href: ViviendaController.index(),
             icon: Home,
             visible: auth.permisos.includes('padron.ver'),
+        },
+        {
+            title: 'Registrar cobro',
+            href: CobroController.create(),
+            icon: HandCoins,
+            visible: auth.permisos.includes('cobros.registrar'),
         },
         {
             title: 'Cobros',

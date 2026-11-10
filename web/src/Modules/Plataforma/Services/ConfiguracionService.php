@@ -31,6 +31,18 @@ class ConfiguracionService
     }
 
     /**
+     * Indica si el residencial acepta pagos que no cubren el mes completo
+     *
+     * Sin configuración guardada vale falso, igual que el valor predeterminado de la tabla.
+     */
+    public function permiteAbonoParcial(int $residencialId): bool
+    {
+        return (bool) DB::table('configuracion_residencial')
+            ->where('residencial_id', $residencialId)
+            ->value('permite_abono_parcial');
+    }
+
+    /**
      * @param  array{max_intentos_login: int|string, minutos_bloqueo_login: int|string, minutos_inactividad_sesion: int|string}  $datos
      */
     public function actualizarSeguridad(int $residencialId, array $datos): void

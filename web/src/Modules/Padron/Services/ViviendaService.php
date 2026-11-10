@@ -3,6 +3,7 @@
 namespace Patronato\Modules\Padron\Services;
 
 use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -117,6 +118,44 @@ class ViviendaService
 
             return false;
         }
+    }
+
+    /**
+     * Viviendas activas que coinciden con la búsqueda, o la vivienda indicada
+     *
+     * Busca por código o por nombre del responsable de pago.
+     *
+     * @return array<int, array{id: int, codigo: string, responsable: string|null}>
+     */
+    public function opcionesActivas(string $buscar = '', ?int $viviendaId = null, int $limite = 10): array
+    {
+        return Vivienda::query()
+            ->where('activa', true)
+            ->when($viviendaId !== null, fn (Builder $query) => $query->whereKey($viviendaId))
+            ->when($viviendaId === null && $buscar !== '', function (Builder $query) use ($buscar) {
+                $patron = BusquedaService::patron($buscar);
+
+                $query->where(function (Builder $query) use ($patron) {
+                    $query->whereRaw(BusquedaService::columna('codigo').' like ?', [$patron])
+                        ->orWhereHas('vinculosVigentes.residente', function (Builder $query) use ($patron) {
+                            $query->whereRaw(BusquedaService::columna("nombres || ' ' || apellidos").' like ?', [$patron]);
+                        });
+                });
+            })
+            ->with(['vinculosVigentes' => fn ($query) => $query->where('es_responsable_pago', true)->with('residente')])
+            ->orderBy('codigo')
+            ->limit($limite)
+            ->get()
+            ->map(function (Vivienda $vivienda): array {
+                $residente = $vivienda->vinculosVigentes->first()?->residente;
+
+                return [
+                    'id' => $vivienda->id,
+                    'codigo' => $vivienda->codigo,
+                    'responsable' => $residente === null ? null : trim("{$residente->nombres} {$residente->apellidos}"),
+                ];
+            })
+            ->all();
     }
 
     /**

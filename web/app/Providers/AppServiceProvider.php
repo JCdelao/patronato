@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
+use Patronato\Modules\Finanzas\Contratos\CargosPendientes;
+use Patronato\Modules\Finanzas\Services\SinCargosPendientes;
 use Patronato\Modules\Identidad\Models\Rol;
 
 class AppServiceProvider extends ServiceProvider
@@ -17,7 +19,11 @@ class AppServiceProvider extends ServiceProvider
     /**
      * Registra los servicios
      */
-    public function register(): void {}
+    public function register(): void
+    {
+        // Se reemplaza por el servicio real cuando exista la generación de cargos
+        $this->app->bind(CargosPendientes::class, SinCargosPendientes::class);
+    }
 
     /**
      * Inicializa los servicios
