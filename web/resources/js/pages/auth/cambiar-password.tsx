@@ -1,5 +1,5 @@
 import { Form, Head } from '@inertiajs/react';
-import PasswordTemporalController from '@/actions/Patronato/Modules/Identidad/Controllers/PasswordTemporalController';
+import PasswordTemporalController from '@/actions/Patronato/Presentacion/Controllers/PasswordTemporalController';
 import InputError from '@/components/input-error';
 import PasswordInput from '@/components/password-input';
 import TextLink from '@/components/text-link';

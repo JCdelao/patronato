@@ -1,16 +1,16 @@
 <?php
 
-use App\Models\User;
 use Database\Seeders\RolesSeeder;
 use Illuminate\Support\Facades\DB;
 use Inertia\Testing\AssertableInertia;
-use Patronato\Modules\Finanzas\Models\Tarifa;
-use Patronato\Modules\Identidad\Models\Auditoria;
-use Patronato\Modules\Identidad\Models\Rol;
-use Patronato\Modules\Padron\Models\Residente;
-use Patronato\Modules\Padron\Models\Vivienda;
-use Patronato\Modules\Padron\Models\ViviendaResidente;
-use Patronato\Modules\Plataforma\Models\Residencial;
+use Patronato\Persistencia\Models\Auditoria;
+use Patronato\Persistencia\Models\Residencial;
+use Patronato\Persistencia\Models\Residente;
+use Patronato\Persistencia\Models\Rol;
+use Patronato\Persistencia\Models\Tarifa;
+use Patronato\Persistencia\Models\User;
+use Patronato\Persistencia\Models\Vivienda;
+use Patronato\Persistencia\Models\ViviendaResidente;
 
 beforeEach(function () {
     $this->seed(RolesSeeder::class);

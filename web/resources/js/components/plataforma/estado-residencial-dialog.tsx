@@ -1,5 +1,5 @@
 import { Form } from '@inertiajs/react';
-import ResidencialController from '@/actions/Patronato/Modules/Plataforma/Controllers/ResidencialController';
+import ResidencialController from '@/actions/Patronato/Presentacion/Controllers/ResidencialController';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import {

@@ -1,5 +1,5 @@
 import { Form, Head, Link } from '@inertiajs/react';
-import AuditoriaController from '@/actions/Patronato/Modules/Identidad/Controllers/AuditoriaController';
+import AuditoriaController from '@/actions/Patronato/Presentacion/Controllers/AuditoriaController';
 import TablaCambios, {
     textoAccion,
 } from '@/components/identidad/tabla-cambios';

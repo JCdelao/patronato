@@ -1,12 +1,12 @@
 <?php
 
-use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
-use Patronato\Modules\Identidad\Controllers\AuditoriaController;
-use Patronato\Modules\Identidad\Controllers\CuentaController;
-use Patronato\Modules\Identidad\Controllers\PermisoController;
-use Patronato\Modules\Identidad\Services\CuentaService;
+use Patronato\Negocio\Services\CuentaService;
+use Patronato\Persistencia\Models\User;
+use Patronato\Presentacion\Controllers\AuditoriaController;
+use Patronato\Presentacion\Controllers\CuentaController;
+use Patronato\Presentacion\Controllers\PermisoController;
 
 Route::bind('cuenta', function (string $valor): User {
     $actor = Auth::user();

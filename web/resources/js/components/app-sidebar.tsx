@@ -9,15 +9,17 @@ import {
     ScrollText,
     ShieldCheck,
     SlidersHorizontal,
+    Tags,
     Users,
     Wallet,
 } from 'lucide-react';
-import CobroController from '@/actions/Patronato/Modules/Finanzas/Controllers/CobroController';
-import ModalidadController from '@/actions/Patronato/Modules/Finanzas/Controllers/ModalidadController';
-import AuditoriaController from '@/actions/Patronato/Modules/Identidad/Controllers/AuditoriaController';
-import CuentaController from '@/actions/Patronato/Modules/Identidad/Controllers/CuentaController';
-import ViviendaController from '@/actions/Patronato/Modules/Padron/Controllers/ViviendaController';
-import ResidencialController from '@/actions/Patronato/Modules/Plataforma/Controllers/ResidencialController';
+import CobroController from '@/actions/Patronato/Presentacion/Controllers/CobroController';
+import ConceptoController from '@/actions/Patronato/Presentacion/Controllers/ConceptoController';
+import ModalidadController from '@/actions/Patronato/Presentacion/Controllers/ModalidadController';
+import AuditoriaController from '@/actions/Patronato/Presentacion/Controllers/AuditoriaController';
+import CuentaController from '@/actions/Patronato/Presentacion/Controllers/CuentaController';
+import ViviendaController from '@/actions/Patronato/Presentacion/Controllers/ViviendaController';
+import ResidencialController from '@/actions/Patronato/Presentacion/Controllers/ResidencialController';
 import AppLogo from '@/components/app-logo';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
@@ -65,6 +67,12 @@ export function AppSidebar() {
             title: 'Modalidad de cobro',
             href: ModalidadController.index(),
             icon: SlidersHorizontal,
+            visible: auth.permisos.includes('parametros.ver'),
+        },
+        {
+            title: 'Conceptos de cobro',
+            href: ConceptoController.index(),
+            icon: Tags,
             visible: auth.permisos.includes('parametros.ver'),
         },
         {

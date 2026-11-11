@@ -1,8 +1,8 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { KeyRound, Pencil, Plus, Settings2, ShieldCheck } from 'lucide-react';
 import { useState } from 'react';
-import CuentaController from '@/actions/Patronato/Modules/Identidad/Controllers/CuentaController';
-import PermisoController from '@/actions/Patronato/Modules/Identidad/Controllers/PermisoController';
+import CuentaController from '@/actions/Patronato/Presentacion/Controllers/CuentaController';
+import PermisoController from '@/actions/Patronato/Presentacion/Controllers/PermisoController';
 import CuentaDialog from '@/components/identidad/cuenta-dialog';
 import ParametrosDialog from '@/components/identidad/parametros-dialog';
 import ConfirmarDialog from '@/components/padron/confirmar-dialog';

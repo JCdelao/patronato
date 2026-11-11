@@ -16,7 +16,7 @@ concurrency:
 
 defaults:
   run:
-    working-directory: web
+    working-directory: presentacion
 
 jobs:
   verificar:
@@ -57,7 +57,7 @@ jobs:
         run: npm run build
 
       - name: Revisar estilo de PHP
-        run: vendor/bin/pint --test
+        run: vendor/bin/pint --test . ../negocio ../persistencia ../base-de-datos
 
       - name: Análisis estático de PHP
         run: vendor/bin/phpstan analyse --no-progress --memory-limit=1G
@@ -69,6 +69,10 @@ jobs:
         run: npm run types:check
 
       # Cada historia corre aunque falle otra, para ver todas las que fallan
+      - name: Pruebas de la arquitectura por capas
+        if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
+        run: php artisan test tests/Unit/ArquitecturaTest.php
+
       - name: Pruebas HU-01 · Registrar un residencial
         if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
         run: php artisan test tests/Feature/Plataforma/RegistrarResidencialTest.php
@@ -125,6 +129,10 @@ jobs:
         if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
         run: php artisan test tests/Feature/Finanzas/ModalidadTest.php
 
+      - name: Pruebas HU-15 · Administrar conceptos de cobro
+        if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
+        run: php artisan test tests/Feature/Finanzas/ConceptosTest.php
+
       - name: Pruebas HU-19 · Registrar un cobro en efectivo
         if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
         run: php artisan test tests/Feature/Finanzas/CobroEfectivoTest.php
@@ -132,7 +140,7 @@ jobs:
       - name: Pruebas de la base (perfil, verificación de correo y panel)
         if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
         run: >-
-          php artisan test tests/Unit tests/Feature/Settings tests/Feature/DashboardTest.php
+          php artisan test tests/Unit/ExampleTest.php tests/Feature/Settings tests/Feature/DashboardTest.php
           tests/Feature/Auth/EmailVerificationTest.php tests/Feature/Auth/PasswordConfirmationTest.php
           tests/Feature/Auth/RegistrationTest.php tests/Feature/Auth/TwoFactorChallengeTest.php
           tests/Feature/Auth/VerificationNotificationTest.php
@@ -141,7 +149,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: frontend
-          path: web/public/build
+          path: presentacion/public/build
           retention-days: 7
 
   base-de-datos:

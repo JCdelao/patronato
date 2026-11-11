@@ -11,8 +11,8 @@ import {
     UserMinus,
 } from 'lucide-react';
 import { useRef, useState } from 'react';
-import ResidenteController from '@/actions/Patronato/Modules/Padron/Controllers/ResidenteController';
-import ViviendaController from '@/actions/Patronato/Modules/Padron/Controllers/ViviendaController';
+import ResidenteController from '@/actions/Patronato/Presentacion/Controllers/ResidenteController';
+import ViviendaController from '@/actions/Patronato/Presentacion/Controllers/ViviendaController';
 import AgregarViviendaDialog from '@/components/padron/agregar-vivienda-dialog';
 import ConfirmarDialog from '@/components/padron/confirmar-dialog';
 import HistorialDialog from '@/components/padron/historial-dialog';

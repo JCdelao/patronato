@@ -64,7 +64,7 @@ Cada historia terminada tiene su propio paso en CI, así GitHub muestra cuál pa
 | HU-12 · Buscar vecinos y viviendas | Pruebas de búsqueda de `Padron` (`--filter=search`) | 6 |
 | Base del sistema | `Unit`, `Settings`, `DashboardTest` y el resto de `Auth` | 28 |
 
-Los archivos están en `web/tests/Feature`. Las pruebas de HU-12 también forman parte de HU-10. Sin contarlas dos veces, los pasos suman las 201 pruebas del proyecto.
+Los archivos están en `presentacion/tests/Feature`. Las pruebas de HU-12 también forman parte de HU-10. Sin contarlas dos veces, los pasos suman las 201 pruebas del proyecto.
 
 Al agregar una historia nueva, crea su archivo de prueba y agrega su paso en `ci.yml`.
 
@@ -72,10 +72,10 @@ Al agregar una historia nueva, crea su archivo de prueba y agrega su paso en `ci
 
 1. Descarga la versión que pasó CI.
 2. Instala las dependencias de producción y compila el frontend.
-3. Empaqueta la carpeta `web` en un `.zip`, sin `node_modules`, `tests` ni `.env`.
+3. Empaqueta en un `.zip` las cuatro capas (`presentacion`, `negocio`, `persistencia` y `base-de-datos`) y la carpeta `scripts`, sin `node_modules`, `tests` ni `.env`.
 4. Publica el `.zip` en App Service con el *publish profile* guardado como secreto, y el sitio se reinicia.
-5. Al arrancar, App Service ejecuta [`web/scripts/azure/inicio.sh`](../web/scripts/azure/inicio.sh), que:
-   - configura Nginx con [`nginx.conf`](../web/scripts/azure/nginx.conf) para servir la carpeta `public`;
+5. Al arrancar, App Service ejecuta [`scripts/azure/inicio.sh`](../scripts/azure/inicio.sh), que:
+   - configura Nginx con [`nginx.conf`](../scripts/azure/nginx.conf) para servir la carpeta `presentacion/public`;
    - enlaza `storage` a `/home/patronato/storage`, que se conserva entre despliegues, así no se pierden los logos;
    - aplica las migraciones, carga los roles y prepara la caché de Laravel.
 6. Consulta `/up` hasta que el sitio responde. Si no responde en 5 minutos, el despliegue falla.
@@ -93,7 +93,7 @@ La configuración de producción (`APP_KEY`, datos de la base, `APP_URL`) vive e
 
 Se hace una sola vez.
 
-1. En [Azure Cloud Shell](https://shell.azure.com), modo Bash, sube el script [`web/scripts/azure/crear-recursos.sh`](../web/scripts/azure/crear-recursos.sh) y ejecútalo con nombres únicos:
+1. En [Azure Cloud Shell](https://shell.azure.com), modo Bash, sube el script [`scripts/azure/crear-recursos.sh`](../scripts/azure/crear-recursos.sh) y ejecútalo con nombres únicos:
 
    ```bash
    APP=patronato-tuapellido BD=patronato-bd-tuapellido bash crear-recursos.sh

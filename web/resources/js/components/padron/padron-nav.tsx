@@ -1,6 +1,6 @@
 import { Link } from '@inertiajs/react';
-import ResidenteController from '@/actions/Patronato/Modules/Padron/Controllers/ResidenteController';
-import ViviendaController from '@/actions/Patronato/Modules/Padron/Controllers/ViviendaController';
+import ResidenteController from '@/actions/Patronato/Presentacion/Controllers/ResidenteController';
+import ViviendaController from '@/actions/Patronato/Presentacion/Controllers/ViviendaController';
 import { Button } from '@/components/ui/button';
 
 const VISTAS = [

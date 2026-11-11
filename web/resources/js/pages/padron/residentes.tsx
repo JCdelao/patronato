@@ -1,7 +1,7 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { RotateCcw, Search } from 'lucide-react';
 import { useRef, useState } from 'react';
-import ResidenteController from '@/actions/Patronato/Modules/Padron/Controllers/ResidenteController';
+import ResidenteController from '@/actions/Patronato/Presentacion/Controllers/ResidenteController';
 import AgregarViviendaDialog from '@/components/padron/agregar-vivienda-dialog';
 import PadronNav from '@/components/padron/padron-nav';
 import { Button } from '@/components/ui/button';

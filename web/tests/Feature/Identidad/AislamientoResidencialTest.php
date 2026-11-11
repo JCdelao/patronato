@@ -1,20 +1,19 @@
 <?php
 
-use App\Models\User;
 use Database\Seeders\RolesSeeder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Str;
-use Patronato\Modules\Finanzas\Models\ConceptoCobro;
-use Patronato\Modules\Finanzas\Models\Tarifa;
-use Patronato\Modules\Identidad\Models\Auditoria;
-use Patronato\Modules\Identidad\Models\Rol;
-use Patronato\Modules\Padron\Models\Residente;
-use Patronato\Modules\Padron\Models\Vivienda;
-use Patronato\Modules\Padron\Models\ViviendaResidente;
-use Patronato\Modules\Plataforma\Models\Residencial;
-use Patronato\Shared\PerteneceAResidencial;
+use Patronato\Persistencia\Models\Auditoria;
+use Patronato\Persistencia\Models\ConceptoCobro;
+use Patronato\Persistencia\Models\PerteneceAResidencial;
+use Patronato\Persistencia\Models\Residencial;
+use Patronato\Persistencia\Models\Residente;
+use Patronato\Persistencia\Models\Rol;
+use Patronato\Persistencia\Models\Tarifa;
+use Patronato\Persistencia\Models\User;
+use Patronato\Persistencia\Models\Vivienda;
+use Patronato\Persistencia\Models\ViviendaResidente;
 
 beforeEach(function () {
     $this->seed(RolesSeeder::class);
@@ -47,12 +46,10 @@ beforeEach(function () {
 });
 
 test('every model with a residencial column is isolated', function () {
-    $modelos = collect(File::glob(base_path('src/Modules/*/Models/*.php')))
-        ->map(fn (string $ruta) => 'Patronato\\'.Str::of($ruta)
-            ->replace('\\', '/')
-            ->after('/src/')
-            ->before('.php')
-            ->replace('/', '\\'))
+    $modelos = collect(File::glob(dirname(base_path()).'/persistencia/Models/*.php'))
+        ->map(fn (string $ruta) => 'Patronato\\Persistencia\\Models\\'.basename($ruta, '.php'))
+        // Las cuentas se filtran por residencial en cada consulta
+        ->filter(fn (string $clase) => is_subclass_of($clase, Model::class) && $clase !== User::class)
         ->filter(function (string $clase) {
             /** @var Model $modelo */
             $modelo = new $clase;

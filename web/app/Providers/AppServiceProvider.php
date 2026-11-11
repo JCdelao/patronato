@@ -2,7 +2,6 @@
 
 namespace App\Providers;
 
-use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Auth\Access\Response;
 use Illuminate\Support\Facades\Date;
@@ -10,9 +9,12 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
-use Patronato\Modules\Finanzas\Contratos\CargosPendientes;
-use Patronato\Modules\Finanzas\Services\SinCargosPendientes;
-use Patronato\Modules\Identidad\Models\Rol;
+use Patronato\Negocio\Contratos\CargosPendientes;
+use Patronato\Negocio\Services\PermisoService;
+use Patronato\Negocio\Services\SinCargosPendientes;
+use Patronato\Persistencia\Models\Residencial;
+use Patronato\Persistencia\Models\Rol;
+use Patronato\Persistencia\Models\User;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -32,6 +34,9 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->configureDefaults();
 
+        // Cada residencial nuevo recibe los permisos iniciales de sus roles
+        Residencial::created(fn (Residencial $residencial) => app(PermisoService::class)->asignarPredeterminados($residencial->id));
+
         Gate::define('administrar-plataforma', fn (User $user): bool => $user->esAdminPlataforma());
         Gate::define('administrar-usuarios', fn (User $user): Response => $user->puedeAdministrarUsuarios()
             ? Response::allow()
@@ -41,7 +46,7 @@ class AppServiceProvider extends ServiceProvider
             : Response::deny('Acceso denegado'));
 
         // Uso en rutas: can:permiso,'modulo','accion'
-        Gate::define('permiso', fn (User $user, string $modulo, string $accion): Response => $user->puede($modulo, $accion)
+        Gate::define('permiso', fn (User $user, string $modulo, string $accion): Response => app(PermisoService::class)->puede($user, $modulo, $accion)
             ? Response::allow()
             : Response::deny('Acceso denegado'));
     }

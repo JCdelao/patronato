@@ -7,8 +7,10 @@ parameters:
         - app/
         - bootstrap/app.php
         - config/
-        - database/
         - routes/
         - src/
+        - ../negocio/
+        - ../persistencia/
+        - ../base-de-datos/
 
     level: 7

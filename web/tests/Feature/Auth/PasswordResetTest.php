@@ -1,9 +1,9 @@
 <?php
 
-use App\Models\User;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Support\Facades\Notification;
 use Laravel\Fortify\Features;
+use Patronato\Persistencia\Models\User;
 
 beforeEach(function () {
     $this->skipUnlessFortifyHas(Features::resetPasswords());

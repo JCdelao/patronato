@@ -1,8 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Patronato\Modules\Padron\Controllers\ResidenteController;
-use Patronato\Modules\Padron\Controllers\ViviendaController;
+use Patronato\Presentacion\Controllers\ResidenteController;
+use Patronato\Presentacion\Controllers\ViviendaController;
 
 Route::middleware(['auth', 'verified'])
     ->prefix('padron')

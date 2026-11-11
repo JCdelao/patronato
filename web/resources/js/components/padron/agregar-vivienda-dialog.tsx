@@ -1,5 +1,5 @@
 import { Form } from '@inertiajs/react';
-import ResidenteController from '@/actions/Patronato/Modules/Padron/Controllers/ResidenteController';
+import ResidenteController from '@/actions/Patronato/Presentacion/Controllers/ResidenteController';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
