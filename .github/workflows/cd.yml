@@ -31,7 +31,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: web
+        working-directory: presentacion
 
     steps:
       - name: Descargar el código
@@ -64,10 +64,13 @@ jobs:
           npm run build
           rm .env
 
+      # El paquete lleva las cuatro capas y los scripts de Azure en la raíz
       - name: Empaquetar la versión
+        working-directory: .
         run: |
-          zip -r -q -y "../patronato-$VERSION.zip" . \
-            -x 'node_modules/*' 'tests/*' 'public/storage' 'public/hot' '.env' '.env.*' '.git*'
+          zip -r -q -y "patronato-$VERSION.zip" presentacion negocio persistencia base-de-datos scripts \
+            -x 'presentacion/node_modules/*' 'presentacion/tests/*' 'presentacion/public/storage' 'presentacion/public/hot' \
+               'presentacion/.env' 'presentacion/.env.*' 'base-de-datos/*.sqlite' '*/.git*'
 
       - name: Publicar en App Service
         uses: azure/webapps-deploy@v3

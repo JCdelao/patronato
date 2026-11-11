@@ -1,7 +1,7 @@
 import { Form, Head } from '@inertiajs/react';
 import { CalendarClock, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
-import ModalidadController from '@/actions/Patronato/Modules/Finanzas/Controllers/ModalidadController';
+import ModalidadController from '@/actions/Patronato/Presentacion/Controllers/ModalidadController';
 import InputError from '@/components/input-error';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';

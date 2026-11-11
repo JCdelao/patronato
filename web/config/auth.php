@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\User;
+use Patronato\Persistencia\Models\User;
 
 return [
     'defaults' => [

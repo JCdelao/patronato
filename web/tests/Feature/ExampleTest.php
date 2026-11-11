@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\User;
+use Patronato\Persistencia\Models\User;
 
 test('guests are sent to the login page', function () {
     $this->get(route('home'))->assertRedirect(route('login'));

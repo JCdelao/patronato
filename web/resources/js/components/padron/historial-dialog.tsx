@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import ViviendaController from '@/actions/Patronato/Modules/Padron/Controllers/ViviendaController';
+import ViviendaController from '@/actions/Patronato/Presentacion/Controllers/ViviendaController';
 import TablaCambios, {
     textoAccion,
 } from '@/components/identidad/tabla-cambios';

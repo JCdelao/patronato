@@ -1,19 +1,19 @@
 <?php
 
-use App\Models\User;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schedule;
-use Patronato\Modules\Identidad\Services\CuentaService;
-use Patronato\Modules\Plataforma\Services\RespaldoService;
+use Patronato\Negocio\Services\CuentaService;
+use Patronato\Negocio\Services\RespaldoService;
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
 Artisan::command('plataforma:admin {email}', function (CuentaService $cuentas) {
-    $usuario = User::query()->where('email', $this->argument('email'))->first();
+    $correo = $this->argument('email');
+    $usuario = is_string($correo) ? $cuentas->porCorreo($correo) : null;
 
     if ($usuario === null) {
         $this->error('No existe una cuenta con ese correo.');

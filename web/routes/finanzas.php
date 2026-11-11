@@ -1,9 +1,9 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Patronato\Modules\Finanzas\Controllers\CobroController;
-use Patronato\Modules\Finanzas\Controllers\ConceptoController;
-use Patronato\Modules\Finanzas\Controllers\ModalidadController;
+use Patronato\Presentacion\Controllers\CobroController;
+use Patronato\Presentacion\Controllers\ConceptoController;
+use Patronato\Presentacion\Controllers\ModalidadController;
 
 Route::middleware(['auth', 'verified'])
     ->prefix('finanzas')

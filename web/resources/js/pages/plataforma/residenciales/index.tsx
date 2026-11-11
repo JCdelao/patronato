@@ -1,7 +1,7 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { Building2, KeyRound } from 'lucide-react';
 import { useState } from 'react';
-import ResidencialController from '@/actions/Patronato/Modules/Plataforma/Controllers/ResidencialController';
+import ResidencialController from '@/actions/Patronato/Presentacion/Controllers/ResidencialController';
 import Heading from '@/components/heading';
 import EstadoResidencialDialog from '@/components/plataforma/estado-residencial-dialog';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';

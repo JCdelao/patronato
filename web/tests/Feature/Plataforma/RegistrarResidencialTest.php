@@ -1,7 +1,5 @@
 <?php
 
-use App\Models\User;
-use App\Notifications\CuentaCreada;
 use Database\Seeders\RolesSeeder;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -9,8 +7,10 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia;
-use Patronato\Modules\Identidad\Models\Rol;
-use Patronato\Modules\Plataforma\Models\Residencial;
+use Patronato\Negocio\Notificaciones\CuentaCreada;
+use Patronato\Persistencia\Models\Residencial;
+use Patronato\Persistencia\Models\Rol;
+use Patronato\Persistencia\Models\User;
 
 beforeEach(function () {
     $this->seed(RolesSeeder::class);

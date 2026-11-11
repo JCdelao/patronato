@@ -1,8 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Patronato\Modules\Identidad\Controllers\PasswordTemporalController;
-use Patronato\Modules\Plataforma\Controllers\ResidencialController;
+use Patronato\Presentacion\Controllers\PasswordTemporalController;
+use Patronato\Presentacion\Controllers\ResidencialController;
 
 Route::middleware(['auth'])->group(function () {
     Route::get('cambiar-password', [PasswordTemporalController::class, 'edit'])->name('password-temporal.edit');

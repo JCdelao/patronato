@@ -1,22 +1,22 @@
 <?php
 
-use App\Models\User;
 use Database\Seeders\RolesSeeder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Inertia\Testing\AssertableInertia;
-use Patronato\Modules\Finanzas\Contratos\CargosNoIntegrados;
-use Patronato\Modules\Finanzas\Contratos\CargosPendientes;
-use Patronato\Modules\Finanzas\Models\Caja;
-use Patronato\Modules\Finanzas\Models\Pago;
-use Patronato\Modules\Finanzas\Models\PagoAplicacion;
-use Patronato\Modules\Finanzas\Services\CobroService;
-use Patronato\Modules\Finanzas\Services\SinCargosPendientes;
-use Patronato\Modules\Identidad\Models\Auditoria;
-use Patronato\Modules\Identidad\Models\Rol;
-use Patronato\Modules\Identidad\Services\PermisoService;
-use Patronato\Modules\Padron\Models\Vivienda;
-use Patronato\Modules\Plataforma\Models\Residencial;
+use Patronato\Negocio\Contratos\CargosNoIntegrados;
+use Patronato\Negocio\Contratos\CargosPendientes;
+use Patronato\Negocio\Services\CobroService;
+use Patronato\Negocio\Services\PermisoService;
+use Patronato\Negocio\Services\SinCargosPendientes;
+use Patronato\Persistencia\Models\Auditoria;
+use Patronato\Persistencia\Models\Caja;
+use Patronato\Persistencia\Models\Pago;
+use Patronato\Persistencia\Models\PagoAplicacion;
+use Patronato\Persistencia\Models\Residencial;
+use Patronato\Persistencia\Models\Rol;
+use Patronato\Persistencia\Models\User;
+use Patronato\Persistencia\Models\Vivienda;
 
 /**
  * Meses pendientes simulados mientras no exista la generación de cargos

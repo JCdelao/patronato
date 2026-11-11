@@ -1,7 +1,7 @@
 import { Form, Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
-import CuentaController from '@/actions/Patronato/Modules/Identidad/Controllers/CuentaController';
-import PermisoController from '@/actions/Patronato/Modules/Identidad/Controllers/PermisoController';
+import CuentaController from '@/actions/Patronato/Presentacion/Controllers/CuentaController';
+import PermisoController from '@/actions/Patronato/Presentacion/Controllers/PermisoController';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';

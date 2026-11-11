@@ -1,7 +1,7 @@
 import { Form, Head, router } from '@inertiajs/react';
 import { CircleAlert, Search, X } from 'lucide-react';
 import { useRef, useState } from 'react';
-import CobroController from '@/actions/Patronato/Modules/Finanzas/Controllers/CobroController';
+import CobroController from '@/actions/Patronato/Presentacion/Controllers/CobroController';
 import InputError from '@/components/input-error';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';

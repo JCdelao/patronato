@@ -1,7 +1,5 @@
 <?php
 
-use App\Models\User;
-use App\Notifications\RespaldoFallido;
 use Database\Seeders\RolesSeeder;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Process\PendingProcess;
@@ -9,9 +7,11 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Process;
-use Patronato\Modules\Identidad\Models\Rol;
-use Patronato\Modules\Plataforma\Models\Residencial;
-use Patronato\Modules\Plataforma\Services\RespaldoService;
+use Patronato\Negocio\Notificaciones\RespaldoFallido;
+use Patronato\Negocio\Services\RespaldoService;
+use Patronato\Persistencia\Models\Residencial;
+use Patronato\Persistencia\Models\Rol;
+use Patronato\Persistencia\Models\User;
 
 beforeEach(function () {
     $this->seed(RolesSeeder::class);

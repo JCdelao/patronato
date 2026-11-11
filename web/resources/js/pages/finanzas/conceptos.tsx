@@ -1,7 +1,7 @@
 import { Head, router } from '@inertiajs/react';
 import { Ban, Ellipsis, Pencil, Plus, RotateCcw, Trash2 } from 'lucide-react';
 import { useState } from 'react';
-import ConceptoController from '@/actions/Patronato/Modules/Finanzas/Controllers/ConceptoController';
+import ConceptoController from '@/actions/Patronato/Presentacion/Controllers/ConceptoController';
 import ConceptoDialog from '@/components/finanzas/concepto-dialog';
 import ConfirmarDialog from '@/components/padron/confirmar-dialog';
 import { Button } from '@/components/ui/button';

@@ -1,17 +1,17 @@
 <?php
 
-use App\Models\User;
 use Database\Seeders\RolesSeeder;
 use Illuminate\Support\Facades\DB;
 use Inertia\Testing\AssertableInertia;
-use Patronato\Modules\Identidad\Models\Auditoria;
-use Patronato\Modules\Identidad\Models\Rol;
-use Patronato\Modules\Identidad\Permisos\AccesoTotal;
-use Patronato\Modules\Identidad\Permisos\PermisosPorRol;
-use Patronato\Modules\Identidad\Permisos\SinPermisos;
-use Patronato\Modules\Identidad\Services\PermisoService;
-use Patronato\Modules\Padron\Models\Vivienda;
-use Patronato\Modules\Plataforma\Models\Residencial;
+use Patronato\Negocio\Permisos\AccesoTotal;
+use Patronato\Negocio\Permisos\PermisosPorRol;
+use Patronato\Negocio\Permisos\SinPermisos;
+use Patronato\Negocio\Services\PermisoService;
+use Patronato\Persistencia\Models\Auditoria;
+use Patronato\Persistencia\Models\Residencial;
+use Patronato\Persistencia\Models\Rol;
+use Patronato\Persistencia\Models\User;
+use Patronato\Persistencia\Models\Vivienda;
 
 beforeEach(function () {
     $this->seed(RolesSeeder::class);
@@ -53,8 +53,8 @@ test('the matrix lists the eight roles of the story', function () {
 
 test('a new residencial starts with the default permissions', function () {
     expect(DB::table('rol_permisos')->where('residencial_id', $this->residencial->id)->count())->toBeGreaterThan(0)
-        ->and($this->secretario->puede('padron', 'registrar'))->toBeTrue()
-        ->and(($this->crear)('guardia')->puede('padron', 'ver'))->toBeFalse();
+        ->and(app(PermisoService::class)->puede($this->secretario, 'padron', 'registrar'))->toBeTrue()
+        ->and(app(PermisoService::class)->puede(($this->crear)('guardia'), 'padron', 'ver'))->toBeFalse();
 });
 
 test('a user without permission is denied with the access denied message', function () {
@@ -136,7 +136,7 @@ test('the technical administrator always keeps access', function () {
 test('the home screen follows the permissions', function () {
     $this->actingAs($this->admin)->put(route('usuarios.permisos.update', ($this->rol)(Rol::SECRETARIO)), []);
 
-    expect($this->secretario->rutaInicio())->toBe('dashboard');
+    expect(app(PermisoService::class)->rutaInicio($this->secretario))->toBe('dashboard');
 });
 
 test('each user gets the permission strategy of its role', function () {

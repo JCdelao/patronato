@@ -2,11 +2,6 @@
 
 namespace App\Providers;
 
-use App\Actions\Fortify\CreateNewUser;
-use App\Actions\Fortify\ResetUserPassword;
-use App\Http\Responses\RespuestaEnlaceRechazado;
-use App\Http\Responses\RespuestaInicioSesion;
-use App\Models\User;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -21,8 +16,14 @@ use Laravel\Fortify\Contracts\LoginResponse;
 use Laravel\Fortify\Contracts\TwoFactorLoginResponse;
 use Laravel\Fortify\Features;
 use Laravel\Fortify\Fortify;
-use Patronato\Modules\Identidad\Services\BloqueoLoginService;
-use Patronato\Modules\Plataforma\Services\ConfiguracionService;
+use Patronato\Negocio\Acciones\CreateNewUser;
+use Patronato\Negocio\Acciones\ResetUserPassword;
+use Patronato\Negocio\Services\BloqueoLoginService;
+use Patronato\Negocio\Services\ConfiguracionService;
+use Patronato\Negocio\Services\CuentaService;
+use Patronato\Persistencia\Models\User;
+use Patronato\Presentacion\Respuestas\RespuestaEnlaceRechazado;
+use Patronato\Presentacion\Respuestas\RespuestaInicioSesion;
 
 class FortifyServiceProvider extends ServiceProvider
 {
@@ -66,7 +67,7 @@ class FortifyServiceProvider extends ServiceProvider
                 ]);
             }
 
-            $user = User::query()->where(Fortify::username(), $correo)->first();
+            $user = app(CuentaService::class)->porCorreo($correo);
 
             if ($user === null || ! Hash::check($request->string('password')->toString(), $user->password)) {
                 $seguridad = app(ConfiguracionService::class)->seguridad($user?->residencial_id);

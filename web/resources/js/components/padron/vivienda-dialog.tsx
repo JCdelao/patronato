@@ -1,6 +1,6 @@
 import { Form } from '@inertiajs/react';
 import { useState } from 'react';
-import ViviendaController from '@/actions/Patronato/Modules/Padron/Controllers/ViviendaController';
+import ViviendaController from '@/actions/Patronato/Presentacion/Controllers/ViviendaController';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import {

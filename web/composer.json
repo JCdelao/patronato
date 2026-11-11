@@ -32,9 +32,11 @@
     "autoload": {
         "psr-4": {
             "App\\": "app/",
-            "Patronato\\": "src/",
-            "Database\\Factories\\": "database/factories/",
-            "Database\\Seeders\\": "database/seeders/"
+            "Patronato\\Presentacion\\": "src/",
+            "Patronato\\Negocio\\": "../negocio/",
+            "Patronato\\Persistencia\\": "../persistencia/",
+            "Database\\Factories\\": "../base-de-datos/factories/",
+            "Database\\Seeders\\": "../base-de-datos/seeders/"
         }
     },
     "autoload-dev": {

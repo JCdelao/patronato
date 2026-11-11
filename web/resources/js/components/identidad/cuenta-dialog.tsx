@@ -1,6 +1,6 @@
 import { Form } from '@inertiajs/react';
 import { useState } from 'react';
-import CuentaController from '@/actions/Patronato/Modules/Identidad/Controllers/CuentaController';
+import CuentaController from '@/actions/Patronato/Presentacion/Controllers/CuentaController';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import {

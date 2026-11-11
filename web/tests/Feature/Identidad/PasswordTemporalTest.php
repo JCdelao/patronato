@@ -1,7 +1,7 @@
 <?php
 
-use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use Patronato\Persistencia\Models\User;
 
 beforeEach(function () {
     $this->usuario = User::factory()->create([

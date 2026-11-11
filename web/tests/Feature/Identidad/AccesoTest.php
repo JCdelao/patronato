@@ -1,10 +1,10 @@
 <?php
 
-use App\Models\User;
 use Database\Seeders\RolesSeeder;
 use Illuminate\Support\Facades\DB;
-use Patronato\Modules\Identidad\Models\Rol;
-use Patronato\Modules\Plataforma\Models\Residencial;
+use Patronato\Persistencia\Models\Residencial;
+use Patronato\Persistencia\Models\Rol;
+use Patronato\Persistencia\Models\User;
 
 beforeEach(function () {
     $this->seed(RolesSeeder::class);

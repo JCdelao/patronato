@@ -1,5 +1,5 @@
 import { Form } from '@inertiajs/react';
-import ConceptoController from '@/actions/Patronato/Modules/Finanzas/Controllers/ConceptoController';
+import ConceptoController from '@/actions/Patronato/Presentacion/Controllers/ConceptoController';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import {
