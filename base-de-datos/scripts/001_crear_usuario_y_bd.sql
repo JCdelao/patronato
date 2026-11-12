@@ -4,7 +4,7 @@
 --
 -- Ejecutar conectado a la base "postgres" con el usuario "postgres",
 -- con auto-commit activado: CREATE DATABASE no puede ir dentro de una transacción.
--- Antes de ejecutar, cambiar la contraseña y copiarla a DB_PASSWORD en web/.env.
+-- Antes de ejecutar, cambiar la contraseña y copiarla a DB_PASSWORD en presentacion/.env.
 
 CREATE ROLE patronato_app LOGIN PASSWORD 'CAMBIAR_ESTA_CONTRASENA';
 
