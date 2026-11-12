@@ -64,11 +64,16 @@ jobs:
           npm run build
           rm .env
 
-      # El paquete lleva las cuatro capas y los scripts de Azure en la raíz
+      # El paquete lleva las cuatro capas y los scripts de Azure en la raíz.
+      # La carpeta public de la raíz atiende el sitio si Nginx sigue con la ruta anterior
+      # (cuando App Service no reinicia): tiene los archivos estáticos y pasa lo demás a Laravel.
       - name: Empaquetar la versión
         working-directory: .
         run: |
-          zip -r -q -y "patronato-$VERSION.zip" presentacion negocio persistencia base-de-datos scripts \
+          mkdir public
+          cp -r presentacion/public/. public/
+          printf '%s\n' '<?php' '' "require __DIR__.'/../presentacion/public/index.php';" > public/index.php
+          zip -r -q -y "patronato-$VERSION.zip" presentacion negocio persistencia base-de-datos scripts public \
             -x 'presentacion/node_modules/*' 'presentacion/tests/*' 'presentacion/public/storage' 'presentacion/public/hot' \
                'presentacion/.env' 'presentacion/.env.*' 'base-de-datos/*.sqlite' '*/.git*'
 
