@@ -1,0 +1,18 @@
+# Todos los archivos de texto usan LF en cualquier sistema, como pide Pint
+* text=auto eol=lf
+
+# Windows necesita CRLF en sus scripts por lotes
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Archivos que no son texto
+*.docx binary
+*.xlsx binary
+*.pdf binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.ico binary
+*.zip binary
+*.dump binary
