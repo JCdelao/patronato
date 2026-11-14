@@ -11,8 +11,10 @@ import {
     SlidersHorizontal,
     Tags,
     Users,
+    Vault,
     Wallet,
 } from 'lucide-react';
+import CajaController from '@/actions/Patronato/Presentacion/Controllers/CajaController';
 import CobroController from '@/actions/Patronato/Presentacion/Controllers/CobroController';
 import ConceptoController from '@/actions/Patronato/Presentacion/Controllers/ConceptoController';
 import ModalidadController from '@/actions/Patronato/Presentacion/Controllers/ModalidadController';
@@ -62,6 +64,12 @@ export function AppSidebar() {
             icon: Wallet,
             disabled: true,
             visible: auth.permisos.includes('cobros.ver'),
+        },
+        {
+            title: 'Cierre de caja',
+            href: CajaController.index(),
+            icon: Vault,
+            visible: auth.permisos.includes('cajas.registrar'),
         },
         {
             title: 'Modalidad de cobro',

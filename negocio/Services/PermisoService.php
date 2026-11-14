@@ -20,6 +20,7 @@ class PermisoService
     public const MODULOS = [
         'padron' => ['etiqueta' => 'Viviendas y residentes', 'acciones' => ['ver', 'registrar', 'anular']],
         'cobros' => ['etiqueta' => 'Cobros', 'acciones' => ['ver', 'registrar', 'verificar', 'aprobar', 'anular']],
+        'cajas' => ['etiqueta' => 'Cierre de caja', 'acciones' => ['registrar']],
         'parametros' => ['etiqueta' => 'Parámetros de cobro', 'acciones' => ['ver', 'registrar']],
         'vigilancia' => ['etiqueta' => 'Vigilancia', 'acciones' => ['ver', 'registrar']],
         'vehiculos' => ['etiqueta' => 'Vehículos', 'acciones' => ['ver', 'registrar', 'anular']],
@@ -36,7 +37,7 @@ class PermisoService
     public const PREDETERMINADOS = [
         Rol::PRESIDENTE => ['padron.ver', 'padron.registrar', 'padron.anular', 'auditoria.ver', 'parametros.ver'],
         Rol::SECRETARIO => ['padron.ver', 'padron.registrar', 'padron.anular'],
-        'tesorero' => ['padron.ver', 'parametros.ver', 'parametros.registrar', 'cobros.ver'],
+        'tesorero' => ['padron.ver', 'parametros.ver', 'parametros.registrar', 'cobros.ver', 'cajas.registrar'],
         'fiscal' => ['padron.ver', 'auditoria.ver', 'parametros.ver'],
         'vocal' => ['padron.ver'],
         'cobrador' => ['cobros.registrar'],

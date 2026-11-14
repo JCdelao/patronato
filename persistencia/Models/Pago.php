@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
+use Patronato\Persistencia\Excepciones\CobroDeCajaCerrada;
 
 /**
  * @property int $id
@@ -36,10 +37,52 @@ class Pago extends Model
 
     public const CONFIRMADO = 'confirmado';
 
+    public const ANULADO = 'anulado';
+
+    /**
+     * Campos que puede cambiar una anulación en un cobro de caja cerrada
+     */
+    private const CAMPOS_ANULACION = ['estado', 'anulado_por', 'anulacion_aprobada_por', 'anulado_en', 'motivo_anulacion', 'updated_at'];
+
     /**
      * @var string
      */
     protected $table = 'pagos';
+
+    /**
+     * Los cobros de una caja cerrada no se editan ni se borran; solo se anulan
+     */
+    protected static function booted(): void
+    {
+        static::updating(function (Pago $pago): void {
+            $cambios = array_diff(array_keys($pago->getDirty()), self::CAMPOS_ANULACION);
+            $esAnulacion = ! $pago->isDirty('estado') || $pago->estado === self::ANULADO;
+
+            if (($cambios !== [] || ! $esAnulacion) && $pago->esDeCajaCerrada()) {
+                throw new CobroDeCajaCerrada;
+            }
+        });
+
+        static::deleting(function (Pago $pago): void {
+            if ($pago->esDeCajaCerrada()) {
+                throw new CobroDeCajaCerrada;
+            }
+        });
+    }
+
+    /**
+     * Indica si el cobro, tal como está guardado, pertenece a una caja cerrada
+     */
+    public function esDeCajaCerrada(): bool
+    {
+        $cajaId = $this->getOriginal('caja_id');
+
+        return $cajaId !== null && Caja::query()
+            ->withoutGlobalScope('residencial')
+            ->whereKey($cajaId)
+            ->where('estado', Caja::CERRADA)
+            ->exists();
+    }
 
     /**
      * Conversiones de tipo de los atributos

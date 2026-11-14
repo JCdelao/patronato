@@ -105,11 +105,11 @@ export default function CobroEfectivo({
                 </div>
 
                 {!cajaAbierta && (
-                    <Alert variant="destructive">
+                    <Alert>
                         <CircleAlert />
                         <AlertTitle>No tienes una caja abierta</AlertTitle>
                         <AlertDescription>
-                            Pide al tesorero que abra tu caja antes de cobrar.
+                            Se abrirá una nueva con tu próximo cobro.
                         </AlertDescription>
                     </Alert>
                 )}
@@ -296,7 +296,6 @@ export default function CobroEfectivo({
                                             className="h-12 w-full text-base"
                                             disabled={
                                                 processing ||
-                                                !cajaAbierta ||
                                                 elegidos.length === 0
                                             }
                                         >

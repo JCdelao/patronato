@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Patronato\Presentacion\Controllers\CajaController;
 use Patronato\Presentacion\Controllers\CobroController;
 use Patronato\Presentacion\Controllers\ComprobanteController;
 use Patronato\Presentacion\Controllers\ConceptoController;
@@ -28,6 +29,12 @@ Route::middleware(['auth', 'verified'])
             ->whereNumber('pago')
             ->middleware('throttle:10,1')
             ->name('comprobantes.enviar');
+
+        Route::middleware("can:permiso,'cajas','registrar'")->group(function () {
+            Route::get('cajas', [CajaController::class, 'index'])->name('cajas.index');
+            Route::get('cajas/{caja}', [CajaController::class, 'show'])->whereNumber('caja')->name('cajas.show');
+            Route::post('cajas/{caja}/cerrar', [CajaController::class, 'cerrar'])->whereNumber('caja')->name('cajas.cerrar');
+        });
 
         Route::get('modalidad', [ModalidadController::class, 'index'])
             ->middleware("can:permiso,'parametros','ver'")

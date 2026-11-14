@@ -141,6 +141,10 @@ jobs:
         if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
         run: php artisan test tests/Feature/Finanzas/ComprobantePagoTest.php
 
+      - name: Pruebas HU-21 · Realizar el cierre de caja
+        if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
+        run: php artisan test tests/Feature/Finanzas/CierreCajaTest.php
+
       - name: Pruebas de la base (perfil, verificación de correo y panel)
         if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
         run: >-

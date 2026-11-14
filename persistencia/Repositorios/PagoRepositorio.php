@@ -78,6 +78,16 @@ class PagoRepositorio
     }
 
     /**
+     * Cambia los datos de un pago; los de una caja cerrada solo admiten una anulación
+     *
+     * @param  array<string, mixed>  $datos
+     */
+    public function actualizar(Pago $pago, array $datos): void
+    {
+        $pago->update($datos);
+    }
+
+    /**
      * Busca un pago sin filtrar por residencial, para el enlace firmado que se abre sin sesión
      */
     public function buscarSinResidencial(int $id): ?Pago

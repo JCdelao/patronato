@@ -331,7 +331,8 @@ test('the amount and the months must match what is pending', function () {
     expect(Pago::query()->count())->toBe(0);
 });
 
-test('a collector without an open box cannot register payments', function () {
+test('a collector without an open box opens a new one with the payment', function () {
+    // HU-21: la caja se abre con el primer cobro
     $this->caja->update(['estado' => 'cerrada']);
 
     $this->actingAs($this->cobrador)
@@ -339,14 +340,13 @@ test('a collector without an open box cannot register payments', function () {
         ->assertInertia(fn (AssertableInertia $page) => $page->where('cajaAbierta', false));
 
     $this->post(route('finanzas.cobros.store'), ['vivienda_id' => $this->casa->id, 'monto' => '500', 'cargos' => [$this->enero]])
-        ->assertSessionHasErrors('caja');
+        ->assertSessionHasNoErrors();
 
-    $this->caja->delete();
+    $nueva = Caja::query()->where('estado', 'abierta')->sole();
 
-    $this->post(route('finanzas.cobros.store'), ['vivienda_id' => $this->casa->id, 'monto' => '500', 'cargos' => [$this->enero]])
-        ->assertSessionHasErrors('caja');
-
-    expect(Pago::query()->count())->toBe(0);
+    expect($nueva->id)->not->toBe($this->caja->id)
+        ->and($nueva->cobrador_id)->toBe($this->cobrador->id)
+        ->and(Pago::query()->sole()->caja_id)->toBe($nueva->id);
 });
 
 test('housing units and boxes of another residential cannot be used', function () {

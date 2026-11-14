@@ -41,6 +41,7 @@ El espacio de nombres sigue la carpeta: `negocio/Services/CobroService.php` es
 
 - `Models/`: los modelos de Eloquent, con sus relaciones y el aislamiento por residencial.
 - `Repositorios/`: todas las consultas a la base de datos.
+- `Excepciones/`: errores de integridad que lanzan los modelos, como editar un cobro de una caja cerrada.
 - `Transaccion.php`: agrupa operaciones que se guardan todas o ninguna.
 
 **base-de-datos/**
