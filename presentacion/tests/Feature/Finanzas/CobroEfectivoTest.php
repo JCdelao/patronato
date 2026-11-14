@@ -190,6 +190,19 @@ test('the system records the date, time and collector of the payment', function 
         ->and($pago->estado)->toBe('confirmado');
 });
 
+test('a payment registered after 6 pm in Honduras keeps the local date', function () {
+    // 19:30 del 8 de noviembre en Honduras ya es 9 de noviembre en UTC
+    $this->travelTo('2026-11-09 01:30:00');
+
+    $this->actingAs($this->cobrador)->post(route('finanzas.cobros.store'), [
+        'vivienda_id' => $this->casa->id,
+        'monto' => '500',
+        'cargos' => [$this->enero],
+    ])->assertSessionHasNoErrors();
+
+    expect(Pago::query()->sole()->fecha_pago->toDateString())->toBe('2026-11-08');
+});
+
 test('receipts are consecutive and unique per residential', function () {
     $febrero = ($this->cargo)($this->casa, '2026-02-01');
 

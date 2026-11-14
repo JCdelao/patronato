@@ -2,6 +2,7 @@
 
 namespace Patronato\Negocio\Services;
 
+use Carbon\CarbonImmutable;
 use Illuminate\Validation\ValidationException;
 use Patronato\Negocio\Contratos\CargosNoIntegrados;
 use Patronato\Persistencia\Models\Pago;
@@ -14,6 +15,11 @@ use Patronato\Persistencia\Transaccion;
  */
 class CobroService
 {
+    /**
+     * Zona horaria de la fecha del pago
+     */
+    private const ZONA_LOCAL = 'America/Tegucigalpa';
+
     public function __construct(
         private PagoRepositorio $pagos,
         private Transaccion $transaccion,
@@ -73,7 +79,8 @@ class CobroService
                 'estado' => Pago::CONFIRMADO,
                 'origen' => 'sistema',
                 'monto' => AplicacionPagoService::monto($centavos),
-                'fecha_pago' => now()->toDateString(),
+                // La fecha es la del día en Honduras, no la de UTC
+                'fecha_pago' => CarbonImmutable::now(self::ZONA_LOCAL)->toDateString(),
                 'numero_recibo' => $this->recibos->siguiente($residencialId),
                 'caja_id' => $caja->id,
                 'registrado_por' => $cobrador->id,
