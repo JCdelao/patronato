@@ -16,6 +16,7 @@ import {
 import CajaController from '@/actions/Patronato/Presentacion/Controllers/CajaController';
 import CobroController from '@/actions/Patronato/Presentacion/Controllers/CobroController';
 import ParametroCobroController from '@/actions/Patronato/Presentacion/Controllers/ParametroCobroController';
+import ReporteCobrosController from '@/actions/Patronato/Presentacion/Controllers/ReporteCobrosController';
 import AuditoriaController from '@/actions/Patronato/Presentacion/Controllers/AuditoriaController';
 import CuentaController from '@/actions/Patronato/Presentacion/Controllers/CuentaController';
 import ViviendaController from '@/actions/Patronato/Presentacion/Controllers/ViviendaController';
@@ -91,9 +92,8 @@ export function AppSidebar() {
         },
         {
             title: 'Reportes',
-            href: '#',
+            href: ReporteCobrosController.index(),
             icon: ChartColumn,
-            disabled: true,
             visible: auth.permisos.includes('reportes.ver'),
         },
         {

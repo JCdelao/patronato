@@ -141,6 +141,10 @@ jobs:
         if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
         run: php artisan test tests/Feature/Finanzas/CierreCajaTest.php
 
+      - name: Pruebas HU-22 · Consultar los cobros por cobrador
+        if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
+        run: php artisan test tests/Feature/Reportes/ReporteCobrosTest.php
+
       - name: Pruebas de la base (perfil, verificación de correo y panel)
         if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
         run: >-

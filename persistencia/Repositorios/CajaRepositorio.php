@@ -83,6 +83,29 @@ class CajaRepositorio extends Repositorio
     }
 
     /**
+     * Usuarios que han tenido caja en el residencial, para filtrar los reportes
+     *
+     * @return list<array{id: int, nombre: string}>
+     */
+    public function cobradores(): array
+    {
+        $filas = Caja::query()
+            ->join('users', 'users.id', '=', 'cajas.cobrador_id')
+            ->distinct()
+            ->orderBy('users.name')
+            ->toBase()
+            ->get(['cajas.cobrador_id', 'users.name']);
+
+        $cobradores = [];
+
+        foreach ($filas as $fila) {
+            $cobradores[] = ['id' => (int) $fila->cobrador_id, 'nombre' => (string) $fila->name];
+        }
+
+        return $cobradores;
+    }
+
+    /**
      * Carga lo que muestra el cierre: cobrador, quién cerró y cobros con su vivienda
      */
     public function conDetalle(Caja $caja): Caja
