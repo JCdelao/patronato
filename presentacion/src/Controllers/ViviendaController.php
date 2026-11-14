@@ -10,6 +10,8 @@ use Inertia\Inertia;
 use Inertia\Response;
 use Patronato\Negocio\Services\BitacoraService;
 use Patronato\Negocio\Services\ResidenteService;
+use Patronato\Negocio\Services\TarifaEspecialService;
+use Patronato\Negocio\Services\TipoViviendaService;
 use Patronato\Negocio\Services\ViviendaService;
 use Patronato\Persistencia\Models\Vivienda;
 use Patronato\Persistencia\Models\ViviendaResidente;
@@ -20,18 +22,23 @@ class ViviendaController extends Controller
     /**
      * Muestra el padrón de viviendas activas o inactivas del residencial
      */
-    public function index(Request $request, ViviendaService $servicio): Response
+    public function index(Request $request, ViviendaService $servicio, TipoViviendaService $tipos, TarifaEspecialService $especiales): Response
     {
         $buscar = $request->string('buscar')->trim()->toString();
         $inactivas = $request->string('estado')->toString() === 'inactivas';
 
         $viviendas = $servicio->padron(! $inactivas, $buscar);
+        $cuotasEspeciales = $especiales->vigentes((int) $request->user()->residencial_id);
 
         return Inertia::render('padron/viviendas', [
             'viviendas' => $viviendas->through(fn (Vivienda $vivienda) => [
+                'cuota_especial' => $cuotasEspeciales[$vivienda->id] ?? null,
                 'id' => $vivienda->id,
                 'codigo' => $vivienda->codigo,
-                'tipo' => $vivienda->tipo,
+                'tipo_vivienda_id' => $vivienda->tipo_vivienda_id,
+                'tipo' => $vivienda->tipoVivienda->nombre,
+                'vivienda_padre_id' => $vivienda->vivienda_padre_id,
+                'pertenece_a' => $vivienda->padre?->codigo,
                 'edificio_torre' => $vivienda->edificio_torre,
                 'calle_bloque' => $vivienda->calle_bloque,
                 'numero' => $vivienda->numero,
@@ -57,6 +64,7 @@ class ViviendaController extends Controller
                     ]),
             ]),
             'opcionesViviendas' => $servicio->activas(),
+            'tiposVivienda' => $tipos->activos(),
             'buscar' => $buscar,
             'estado' => $inactivas ? 'inactivas' : 'activas',
         ]);
@@ -78,7 +86,7 @@ class ViviendaController extends Controller
      */
     public function store(GuardarViviendaRequest $request, ViviendaService $viviendas): RedirectResponse
     {
-        /** @var array{codigo: string, tipo: string, edificio_torre?: string|null, calle_bloque?: string|null, numero: string, estado_ocupacion: string} $datos */
+        /** @var array{codigo: string, tipo_vivienda_id: string, vivienda_padre_id?: string|null, edificio_torre?: string|null, calle_bloque?: string|null, numero: string, estado_ocupacion: string} $datos */
         $datos = $request->validated();
 
         $viviendas->registrar($request->user(), $datos);
@@ -95,7 +103,7 @@ class ViviendaController extends Controller
     {
         abort_unless($vivienda->activa, 404);
 
-        /** @var array{codigo: string, tipo: string, edificio_torre?: string|null, calle_bloque?: string|null, numero: string, estado_ocupacion: string} $datos */
+        /** @var array{codigo: string, tipo_vivienda_id: string, vivienda_padre_id?: string|null, edificio_torre?: string|null, calle_bloque?: string|null, numero: string, estado_ocupacion: string} $datos */
         $datos = $request->validated();
 
         $viviendas->actualizar($request->user(), $vivienda, $datos);

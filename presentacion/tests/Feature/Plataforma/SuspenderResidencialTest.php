@@ -101,7 +101,7 @@ test('other residenciales and the platform administrator keep working', function
 });
 
 test('reactivating restores access with the data intact', function () {
-    $vivienda = Vivienda::query()->create(['residencial_id' => $this->residencial->id, 'codigo' => 'A-01', 'tipo' => 'casa']);
+    $vivienda = Vivienda::query()->create(['residencial_id' => $this->residencial->id, 'codigo' => 'A-01', 'tipo_vivienda_id' => tipoVivienda($this->residencial->id)]);
 
     ($this->suspender)();
 

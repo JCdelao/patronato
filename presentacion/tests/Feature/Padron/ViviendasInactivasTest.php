@@ -17,8 +17,8 @@ beforeEach(function () {
         'rol_id' => Rol::query()->where('codigo', Rol::SECRETARIO)->value('id'),
     ]));
 
-    $this->activa = Vivienda::query()->create(['residencial_id' => $this->residencial->id, 'codigo' => 'A-01', 'tipo' => 'casa']);
-    $this->inactiva = Vivienda::query()->create(['residencial_id' => $this->residencial->id, 'codigo' => 'B-01', 'tipo' => 'casa', 'activa' => false]);
+    $this->activa = Vivienda::query()->create(['residencial_id' => $this->residencial->id, 'codigo' => 'A-01', 'tipo_vivienda_id' => tipoVivienda($this->residencial->id)]);
+    $this->inactiva = Vivienda::query()->create(['residencial_id' => $this->residencial->id, 'codigo' => 'B-01', 'tipo_vivienda_id' => tipoVivienda($this->residencial->id), 'activa' => false]);
 });
 
 test('active and inactive housing units are listed separately', function () {
@@ -57,7 +57,7 @@ test('an inactive housing unit can be reactivated', function () {
 });
 
 test('an inactive housing unit cannot be edited or deleted until reactivated', function () {
-    $datos = ['codigo' => 'B-01', 'tipo' => 'casa', 'calle_bloque' => 'x', 'numero' => '1', 'estado_ocupacion' => 'ocupada', 'cuota' => '1'];
+    $datos = ['codigo' => 'B-01', 'tipo_vivienda_id' => tipoVivienda($this->residencial->id), 'calle_bloque' => 'x', 'numero' => '1', 'estado_ocupacion' => 'ocupada'];
 
     $this->put(route('padron.viviendas.update', $this->inactiva->id), $datos)->assertNotFound();
     $this->delete(route('padron.viviendas.destroy', $this->inactiva->id))->assertNotFound();
@@ -66,7 +66,7 @@ test('an inactive housing unit cannot be edited or deleted until reactivated', f
 });
 
 test('its code stays reserved while inactive', function () {
-    $this->post(route('padron.viviendas.store'), ['codigo' => 'B-01', 'tipo' => 'casa', 'calle_bloque' => 'x', 'numero' => '1', 'estado_ocupacion' => 'ocupada', 'cuota' => '1'])
+    $this->post(route('padron.viviendas.store'), ['codigo' => 'B-01', 'tipo_vivienda_id' => tipoVivienda($this->residencial->id), 'calle_bloque' => 'x', 'numero' => '1', 'estado_ocupacion' => 'ocupada'])
         ->assertSessionHasErrors('codigo');
 });
 

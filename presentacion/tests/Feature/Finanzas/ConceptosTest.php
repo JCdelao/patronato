@@ -44,7 +44,7 @@ beforeEach(function () {
         ->all();
 
     $this->cargar = function (ConceptoCobro $concepto, string $periodo, int $monto) {
-        $vivienda = Vivienda::query()->firstOrCreate(['residencial_id' => $this->residencial->id, 'codigo' => 'A-01'], ['tipo' => 'casa']);
+        $vivienda = Vivienda::query()->firstOrCreate(['residencial_id' => $this->residencial->id, 'codigo' => 'A-01'], ['tipo_vivienda_id' => tipoVivienda($this->residencial->id)]);
 
         return Cargo::query()->forceCreate([
             'residencial_id' => $this->residencial->id, 'vivienda_id' => $vivienda->id,
@@ -213,7 +213,7 @@ test('a concept without charges can be deleted', function () {
 });
 
 test('the monthly fee kept from the registry cannot be edited', function () {
-    $vivienda = Vivienda::query()->create(['residencial_id' => $this->residencial->id, 'codigo' => 'A-01', 'tipo' => 'casa']);
+    $vivienda = Vivienda::query()->create(['residencial_id' => $this->residencial->id, 'codigo' => 'A-01', 'tipo_vivienda_id' => tipoVivienda($this->residencial->id)]);
     $cuota = ConceptoCobro::query()->create([
         'residencial_id' => $this->residencial->id, 'nombre' => TarifaService::CONCEPTO_CUOTA, 'tipo' => 'recurrente', 'es_cuota_unificada' => true,
     ]);

@@ -53,7 +53,7 @@ test('the log shows who, what, when, why and the values', function () {
 
 test('the log shows names instead of ids', function () {
     $rol = Rol::query()->where('codigo', Rol::RESIDENTE)->sole();
-    $vivienda = Vivienda::query()->create(['residencial_id' => $this->residencial->id, 'codigo' => 'A-01', 'tipo' => 'casa']);
+    $vivienda = Vivienda::query()->create(['residencial_id' => $this->residencial->id, 'codigo' => 'A-01', 'tipo_vivienda_id' => tipoVivienda($this->residencial->id)]);
 
     ($this->registro)([
         'modulo' => 'identidad',

@@ -19,7 +19,7 @@ beforeEach(function () {
         'rol_id' => Rol::query()->where('codigo', Rol::SECRETARIO)->value('id'),
     ]);
 
-    $this->vivienda = ['codigo' => 'A-01', 'tipo' => 'casa', 'calle_bloque' => 'Bloque A', 'numero' => '1', 'estado_ocupacion' => 'ocupada', 'cuota' => '500'];
+    $this->vivienda = ['codigo' => 'A-01', 'tipo_vivienda_id' => tipoVivienda($this->residencial->id), 'calle_bloque' => 'Bloque A', 'numero' => '1', 'estado_ocupacion' => 'ocupada'];
 
     $this->actingAs($this->secretario);
 });

@@ -180,9 +180,7 @@ export default function ConceptosSeccion({
 
                                 {concepto.es_cuota_unificada ? (
                                     <p className="mt-4 text-muted-foreground">
-                                        Cada vivienda conserva el monto que
-                                        tenía en el padrón hasta que se definan
-                                        las tarifas por tipo de vivienda.
+                                        El monto depende del tipo de vivienda.
                                     </p>
                                 ) : (
                                     <ul className="mt-4 grid gap-1">

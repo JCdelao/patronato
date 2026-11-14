@@ -27,7 +27,12 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
-import type { OpcionVivienda, Residente, Vivienda } from '@/types/padron';
+import type {
+    OpcionTipoVivienda,
+    OpcionVivienda,
+    Residente,
+    Vivienda,
+} from '@/types/padron';
 
 type Paginado<T> = {
     data: T[];
@@ -44,13 +49,10 @@ type Dialogo =
     | { tipo: 'agregar-vivienda'; residente: Residente }
     | { tipo: 'historial'; vivienda: Vivienda };
 
-const TIPOS_VIVIENDA = { casa: 'Casa', apartamento: 'Apartamento' };
-
 const ubicacion = (vivienda: Vivienda) =>
     [
-        vivienda.tipo === 'apartamento'
-            ? vivienda.edificio_torre
-            : vivienda.calle_bloque,
+        vivienda.calle_bloque,
+        vivienda.edificio_torre,
         vivienda.numero && `No. ${vivienda.numero}`,
     ]
         .filter(Boolean)
@@ -59,11 +61,13 @@ const ubicacion = (vivienda: Vivienda) =>
 export default function Viviendas({
     viviendas,
     opcionesViviendas,
+    tiposVivienda,
     buscar,
     estado,
 }: {
     viviendas: Paginado<Vivienda>;
     opcionesViviendas: OpcionVivienda[];
+    tiposVivienda: OpcionTipoVivienda[];
     buscar: string;
     estado: 'activas' | 'inactivas';
 }) {
@@ -173,12 +177,28 @@ export default function Viviendas({
                                         </h2>
                                         <p className="mt-1 text-muted-foreground">
                                             {[
-                                                TIPOS_VIVIENDA[vivienda.tipo],
+                                                vivienda.tipo,
                                                 ubicacion(vivienda),
                                             ]
                                                 .filter(Boolean)
                                                 .join(' · ')}
                                         </p>
+                                        {vivienda.pertenece_a && (
+                                            <p className="text-sm text-muted-foreground">
+                                                Pertenece a{' '}
+                                                {vivienda.pertenece_a}
+                                            </p>
+                                        )}
+                                        {vivienda.cuota_especial !== null && (
+                                            <span className="mt-2 mr-2 inline-block rounded-full bg-secondary px-3 py-0.5 text-sm">
+                                                Cuota especial L.{' '}
+                                                {Number(
+                                                    vivienda.cuota_especial,
+                                                ).toLocaleString('es-HN', {
+                                                    minimumFractionDigits: 2,
+                                                })}
+                                            </span>
+                                        )}
                                         {vivienda.estado_ocupacion ===
                                             'desocupada' && (
                                             <span className="mt-2 inline-block rounded-full bg-muted px-3 py-0.5 text-sm text-muted-foreground">
@@ -375,6 +395,8 @@ export default function Viviendas({
             {dialogo?.tipo === 'vivienda' && (
                 <ViviendaDialog
                     vivienda={dialogo.vivienda}
+                    tipos={tiposVivienda}
+                    viviendas={opcionesViviendas}
                     onClose={cerrar}
                     onGuardado={alGuardar}
                 />

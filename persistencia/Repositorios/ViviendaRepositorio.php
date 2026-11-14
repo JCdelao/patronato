@@ -31,14 +31,32 @@ class ViviendaRepositorio extends Repositorio
                         });
                 });
             })
-            ->with('vinculosVigentes.residente.vinculosVigentes.vivienda')
+            ->with(['tipoVivienda:id,nombre', 'padre:id,codigo', 'vinculosVigentes.residente.vinculosVigentes.vivienda'])
             ->orderBy('codigo')
             ->paginate($porPagina)
             ->withQueryString();
     }
 
+    public function buscar(int $id): ?Vivienda
+    {
+        return Vivienda::query()->find($id);
+    }
+
     /**
-     * Id y código de las viviendas activas
+     * Vuelve a leer el tipo y la vivienda a la que pertenece
+     */
+    public function cargarTipoYPadre(Vivienda $vivienda): void
+    {
+        $vivienda->load(['tipoVivienda:id,nombre', 'padre:id,codigo']);
+    }
+
+    public function tieneHijas(Vivienda $vivienda): bool
+    {
+        return $vivienda->hijas()->exists();
+    }
+
+    /**
+     * Id, código y vivienda a la que pertenecen las viviendas activas
      *
      * @return Collection<int, Vivienda>
      */
@@ -47,7 +65,7 @@ class ViviendaRepositorio extends Repositorio
         return Vivienda::query()
             ->where('activa', true)
             ->orderBy('codigo')
-            ->get(['id', 'codigo']);
+            ->get(['id', 'codigo', 'vivienda_padre_id']);
     }
 
     /**

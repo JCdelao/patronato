@@ -45,7 +45,7 @@ beforeEach(function () {
 
 function residenteCon(Residencial $residencial, string $codigo = 'A-01'): Residente
 {
-    $vivienda = Vivienda::query()->create(['residencial_id' => $residencial->id, 'codigo' => $codigo, 'tipo' => 'casa']);
+    $vivienda = Vivienda::query()->create(['residencial_id' => $residencial->id, 'codigo' => $codigo, 'tipo_vivienda_id' => tipoVivienda($residencial->id)]);
     $residente = Residente::query()->create(['residencial_id' => $residencial->id, 'nombres' => 'María', 'apellidos' => $codigo]);
 
     ViviendaResidente::query()->create([

@@ -12,9 +12,7 @@ use Patronato\Persistencia\Repositorios\TarifaRepositorio;
 class TarifaService
 {
     /**
-     * Nombre del concepto con la cuota que cada vivienda tenía en el padrón
-     *
-     * Sus montos se conservan hasta que se definan las tarifas por tipo de vivienda.
+     * Nombre del concepto de la cuota mensual, cuyo monto depende del tipo de vivienda
      */
     public const CONCEPTO_CUOTA = 'Cuota mensual';
 
@@ -41,50 +39,125 @@ class TarifaService
     }
 
     /**
-     * Monto general más reciente de un concepto, aunque todavía no rija
+     * Montos de un concepto para cada tipo de vivienda, del más antiguo al más reciente
+     *
+     * @param  array<int, int>  $tipoIds
+     * @return array<int, list<Tarifa>>
      */
-    public function ultimoMonto(ConceptoCobro $concepto): ?Tarifa
+    public function montosPorTipo(ConceptoCobro $concepto, array $tipoIds): array
     {
-        return $this->tarifas->ultimaGeneral($concepto->id);
+        $montos = [];
+
+        foreach ($this->tarifas->deTipos($concepto->id, $tipoIds) as $tarifa) {
+            $montos[(int) $tarifa->tipo_vivienda_id][] = $tarifa;
+        }
+
+        return $montos;
     }
 
     /**
-     * Define el monto general de un concepto desde un período
+     * Monto más reciente de un concepto, general, de un tipo o de una vivienda, aunque todavía no rija
+     */
+    public function ultimoMonto(ConceptoCobro $concepto, ?int $tipoViviendaId = null, ?int $viviendaId = null): ?Tarifa
+    {
+        return $this->tarifas->ultima($concepto->id, $tipoViviendaId, $viviendaId);
+    }
+
+    /**
+     * Monto de un concepto que rige en un período: general, de un tipo o de una vivienda
+     */
+    public function montoVigente(ConceptoCobro $concepto, CarbonInterface $periodo, ?int $tipoViviendaId = null, ?int $viviendaId = null): ?Tarifa
+    {
+        return $this->tarifas->vigenteEn($concepto->id, $tipoViviendaId, $periodo->toDateString(), $viviendaId);
+    }
+
+    /**
+     * Montos especiales de un concepto, del más antiguo al más reciente
+     *
+     * @return list<Tarifa>
+     */
+    public function especiales(ConceptoCobro $concepto): array
+    {
+        return array_values($this->tarifas->especiales($concepto->id)->all());
+    }
+
+    /**
+     * Define el monto de un concepto desde un período, para todas las viviendas, para un tipo o para una vivienda
      *
      * Los montos posteriores todavía no rigen y se reemplazan. Un monto que ya
      * empieza en ese período solo se corrige si no tiene cargos generados.
      *
      * @throws ValidationException
      */
-    public function programarMonto(ConceptoCobro $concepto, string $monto, CarbonInterface $desde, int $usuarioId): void
-    {
+    public function programarMonto(
+        ConceptoCobro $concepto,
+        string $monto,
+        CarbonInterface $desde,
+        int $usuarioId,
+        ?int $tipoViviendaId = null,
+        ?int $viviendaId = null,
+        ?string $motivo = null,
+    ): void {
         $fecha = $desde->toDateString();
 
-        $this->tarifas->borrarGeneralesPosteriores($concepto->id, $fecha);
+        $this->tarifas->borrarPosteriores($concepto->id, $tipoViviendaId, $fecha, $viviendaId);
 
-        $mismo = $this->tarifas->generalDesde($concepto->id, $fecha);
+        $mismo = $this->tarifas->desde($concepto->id, $tipoViviendaId, $fecha, $viviendaId);
 
         if ($mismo !== null) {
-            if ($this->cargos->existenDe($concepto->id, $fecha)) {
-                throw ValidationException::withMessages([
-                    'vigente_desde' => 'Ya hay cargos generados con el monto de ese mes: elige un mes posterior.',
-                ]);
-            }
+            $this->exigirSinCargos($concepto, $fecha, $tipoViviendaId, $viviendaId);
 
-            $this->tarifas->actualizar($mismo, ['monto' => $monto, 'vigente_hasta' => null]);
+            $this->tarifas->actualizar($mismo, ['monto' => $monto, 'motivo' => $motivo, 'vigente_hasta' => null]);
 
             return;
         }
 
-        $this->tarifas->cerrarGeneralesAnteriores($concepto->id, $fecha, $desde->copy()->subDay()->toDateString());
+        $this->tarifas->cerrarAnteriores($concepto->id, $tipoViviendaId, $fecha, $desde->copy()->subDay()->toDateString(), $viviendaId);
 
         $this->tarifas->crear([
             'residencial_id' => $concepto->residencial_id,
             'concepto_id' => $concepto->id,
+            'tipo_vivienda_id' => $tipoViviendaId,
+            'vivienda_id' => $viviendaId,
             'monto' => $monto,
             'vigente_desde' => $fecha,
+            'motivo' => $motivo,
             'created_by' => $usuarioId,
         ]);
+    }
+
+    /**
+     * Deja de aplicar el monto de una vivienda desde un período
+     *
+     * @throws ValidationException
+     */
+    public function terminarMontoDeVivienda(ConceptoCobro $concepto, int $viviendaId, CarbonInterface $desde): void
+    {
+        $fecha = $desde->toDateString();
+
+        $this->tarifas->borrarPosteriores($concepto->id, null, $fecha, $viviendaId);
+
+        $mismo = $this->tarifas->desde($concepto->id, null, $fecha, $viviendaId);
+
+        if ($mismo !== null) {
+            $this->exigirSinCargos($concepto, $fecha, null, $viviendaId);
+
+            $this->tarifas->eliminar($mismo);
+        }
+
+        $this->tarifas->cerrarAnteriores($concepto->id, null, $fecha, $desde->copy()->subDay()->toDateString(), $viviendaId);
+    }
+
+    /**
+     * @throws ValidationException
+     */
+    private function exigirSinCargos(ConceptoCobro $concepto, string $fecha, ?int $tipoViviendaId, ?int $viviendaId): void
+    {
+        if ($this->cargos->existenDe($concepto->id, $fecha, $tipoViviendaId, $viviendaId)) {
+            throw ValidationException::withMessages([
+                'vigente_desde' => 'Ya hay cargos generados con el monto de ese mes: elige un mes posterior.',
+            ]);
+        }
     }
 
     /**
@@ -101,5 +174,13 @@ class TarifaService
     public function eliminarDeConcepto(int $conceptoId): void
     {
         $this->tarifas->eliminarDeConcepto($conceptoId);
+    }
+
+    /**
+     * Elimina las cuotas de un tipo de vivienda que se va a borrar
+     */
+    public function eliminarDeTipo(int $tipoViviendaId): void
+    {
+        $this->tarifas->eliminarDeTipo($tipoViviendaId);
     }
 }

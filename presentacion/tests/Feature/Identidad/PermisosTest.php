@@ -29,7 +29,7 @@ beforeEach(function () {
     $this->admin = ($this->crear)(Rol::ADMIN_TECNICO);
     $this->secretario = ($this->crear)(Rol::SECRETARIO);
 
-    $this->vivienda = ['codigo' => 'A-01', 'tipo' => 'casa', 'calle_bloque' => 'x', 'numero' => '1', 'estado_ocupacion' => 'ocupada', 'cuota' => '1'];
+    $this->vivienda = ['codigo' => 'A-01', 'tipo_vivienda_id' => tipoVivienda($this->residencial->id), 'calle_bloque' => 'x', 'numero' => '1', 'estado_ocupacion' => 'ocupada'];
 });
 
 test('only the technical administrator configures permissions', function (string $rol) {
@@ -67,7 +67,7 @@ test('a user without permission is denied with the access denied message', funct
 
 test('each action is checked separately', function () {
     $tesorero = ($this->crear)('tesorero');
-    $vivienda = Vivienda::query()->create(['residencial_id' => $this->residencial->id, 'codigo' => 'B-01', 'tipo' => 'casa']);
+    $vivienda = Vivienda::query()->create(['residencial_id' => $this->residencial->id, 'codigo' => 'B-01', 'tipo_vivienda_id' => tipoVivienda($this->residencial->id)]);
 
     $this->actingAs($tesorero)->get(route('padron.viviendas.index'))->assertOk();
     $this->post(route('padron.viviendas.store'), $this->vivienda)->assertForbidden();
@@ -89,7 +89,9 @@ test('a change takes effect immediately and only for that residencial', function
         ->assertOk()
         ->assertInertia(fn (AssertableInertia $page) => $page->where('auth.permisos', ['padron.ver']));
 
-    $this->actingAs($otroSecretario)->post(route('padron.viviendas.store'), $this->vivienda)->assertSessionHasNoErrors();
+    $this->actingAs($otroSecretario)
+        ->post(route('padron.viviendas.store'), [...$this->vivienda, 'tipo_vivienda_id' => tipoVivienda($this->otro->id)])
+        ->assertSessionHasNoErrors();
 });
 
 test('a permission can be granted and all can be removed', function () {

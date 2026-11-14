@@ -1,13 +1,27 @@
 import { Head } from '@inertiajs/react';
 import ParametroCobroController from '@/actions/Patronato/Presentacion/Controllers/ParametroCobroController';
 import ConceptosSeccion from '@/components/finanzas/conceptos-seccion';
-import type { Concepto } from '@/types/finanzas';
+import TarifasEspecialesSeccion from '@/components/finanzas/tarifas-especiales-seccion';
+import TiposViviendaSeccion from '@/components/finanzas/tipos-vivienda-seccion';
+import { Separator } from '@/components/ui/separator';
+import type {
+    Concepto,
+    TarifaEspecial,
+    TipoViviendaCuota,
+} from '@/types/finanzas';
+import type { OpcionVivienda } from '@/types/padron';
 
 export default function ParametrosCobro({
+    tipos,
+    especiales,
+    viviendas,
     conceptos,
     periodoActual,
     puedeEditar,
 }: {
+    tipos: TipoViviendaCuota[];
+    especiales: TarifaEspecial[];
+    viviendas: OpcionVivienda[];
     conceptos: Concepto[];
     periodoActual: string;
     puedeEditar: boolean;
@@ -26,8 +40,27 @@ export default function ParametrosCobro({
                     </p>
                 </div>
 
+                <TiposViviendaSeccion
+                    tipos={tipos}
+                    periodoActual={periodoActual}
+                    puedeEditar={puedeEditar}
+                />
+
+                <Separator />
+
+                <TarifasEspecialesSeccion
+                    especiales={especiales}
+                    viviendas={viviendas}
+                    periodoActual={periodoActual}
+                    puedeEditar={puedeEditar}
+                />
+
+                <Separator />
+
                 <ConceptosSeccion
-                    conceptos={conceptos}
+                    conceptos={conceptos.filter(
+                        (concepto) => !concepto.es_cuota_unificada,
+                    )}
                     periodoActual={periodoActual}
                     puedeEditar={puedeEditar}
                 />

@@ -16,7 +16,11 @@ export type Residente = {
 export type Vivienda = {
     id: number;
     codigo: string;
-    tipo: 'casa' | 'apartamento';
+    tipo_vivienda_id: number;
+    tipo: string;
+    vivienda_padre_id: number | null;
+    pertenece_a: string | null;
+    cuota_especial: string | null;
     edificio_torre: string | null;
     calle_bloque: string | null;
     numero: string | null;
@@ -27,6 +31,12 @@ export type Vivienda = {
 export type OpcionVivienda = {
     id: number;
     codigo: string;
+    vivienda_padre_id: number | null;
+};
+
+export type OpcionTipoVivienda = {
+    id: number;
+    nombre: string;
 };
 
 export type ResidenteInactivo = {

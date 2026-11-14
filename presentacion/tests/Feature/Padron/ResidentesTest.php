@@ -21,8 +21,8 @@ beforeEach(function () {
         'rol_id' => Rol::query()->where('codigo', Rol::SECRETARIO)->value('id'),
     ]);
 
-    $this->vivienda = Vivienda::query()->create(['residencial_id' => $this->residencial->id, 'codigo' => 'A-01', 'tipo' => 'casa']);
-    $this->segunda = Vivienda::query()->create(['residencial_id' => $this->residencial->id, 'codigo' => 'A-02', 'tipo' => 'casa']);
+    $this->vivienda = Vivienda::query()->create(['residencial_id' => $this->residencial->id, 'codigo' => 'A-01', 'tipo_vivienda_id' => tipoVivienda($this->residencial->id)]);
+    $this->segunda = Vivienda::query()->create(['residencial_id' => $this->residencial->id, 'codigo' => 'A-02', 'tipo_vivienda_id' => tipoVivienda($this->residencial->id)]);
 
     $this->datos = fn (array $extra = []) => [
         'vivienda_id' => $this->vivienda->id,

@@ -19,21 +19,39 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
-import type { Vivienda } from '@/types/padron';
+import type {
+    OpcionTipoVivienda,
+    OpcionVivienda,
+    Vivienda,
+} from '@/types/padron';
+
+// Valor del selector cuando la vivienda no pertenece a otra
+const NINGUNA = 'ninguna';
 
 export default function ViviendaDialog({
     vivienda,
+    tipos,
+    viviendas,
     onClose,
     onGuardado,
 }: {
     vivienda?: Vivienda;
+    tipos: OpcionTipoVivienda[];
+    viviendas: OpcionVivienda[];
     onClose: () => void;
     onGuardado: () => void;
 }) {
-    const [tipo, setTipo] = useState<Vivienda['tipo']>(
-        vivienda?.tipo ?? 'casa',
+    const [padre, setPadre] = useState(
+        vivienda?.vivienda_padre_id
+            ? String(vivienda.vivienda_padre_id)
+            : NINGUNA,
     );
-    const esApartamento = tipo === 'apartamento';
+
+    // Solo hay un nivel: se puede pertenecer a una vivienda que no pertenece a otra
+    const posiblesPadres = viviendas.filter(
+        (opcion) =>
+            opcion.vivienda_padre_id === null && opcion.id !== vivienda?.id,
+    );
 
     const accion = vivienda
         ? ViviendaController.update.form(vivienda.id)
@@ -73,93 +91,147 @@ export default function ViviendaDialog({
                                 </div>
 
                                 <div className="grid gap-2">
-                                    <Label htmlFor="tipo">Tipo</Label>
+                                    <Label htmlFor="tipo_vivienda_id">
+                                        Tipo
+                                    </Label>
                                     <Select
-                                        name="tipo"
-                                        value={tipo}
-                                        onValueChange={(valor) =>
-                                            setTipo(valor as Vivienda['tipo'])
+                                        name="tipo_vivienda_id"
+                                        defaultValue={
+                                            vivienda
+                                                ? String(
+                                                      vivienda.tipo_vivienda_id,
+                                                  )
+                                                : undefined
                                         }
                                     >
                                         <SelectTrigger
-                                            id="tipo"
+                                            id="tipo_vivienda_id"
                                             className="w-full"
                                         >
-                                            <SelectValue />
+                                            <SelectValue placeholder="Elige el tipo" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="casa">
-                                                Casa
-                                            </SelectItem>
-                                            <SelectItem value="apartamento">
-                                                Apartamento
-                                            </SelectItem>
+                                            {vivienda &&
+                                                !tipos.some(
+                                                    (tipo) =>
+                                                        tipo.id ===
+                                                        vivienda.tipo_vivienda_id,
+                                                ) && (
+                                                    <SelectItem
+                                                        value={String(
+                                                            vivienda.tipo_vivienda_id,
+                                                        )}
+                                                    >
+                                                        {vivienda.tipo}{' '}
+                                                        (inactivo)
+                                                    </SelectItem>
+                                                )}
+                                            {tipos.map((tipo) => (
+                                                <SelectItem
+                                                    key={tipo.id}
+                                                    value={String(tipo.id)}
+                                                >
+                                                    {tipo.nombre}
+                                                </SelectItem>
+                                            ))}
                                         </SelectContent>
                                     </Select>
-                                    <InputError message={errors.tipo} />
+                                    <InputError
+                                        message={errors.tipo_vivienda_id}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid gap-2">
+                                <Label htmlFor="vivienda_padre_id">
+                                    Pertenece a (opcional)
+                                </Label>
+                                <Select value={padre} onValueChange={setPadre}>
+                                    <SelectTrigger
+                                        id="vivienda_padre_id"
+                                        className="w-full"
+                                    >
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value={NINGUNA}>
+                                            Ninguna
+                                        </SelectItem>
+                                        {posiblesPadres.map((opcion) => (
+                                            <SelectItem
+                                                key={opcion.id}
+                                                value={String(opcion.id)}
+                                            >
+                                                {opcion.codigo}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <input
+                                    type="hidden"
+                                    name="vivienda_padre_id"
+                                    value={padre === NINGUNA ? '' : padre}
+                                />
+                                <p className="text-sm text-muted-foreground">
+                                    Por ejemplo, una habitación que pertenece a
+                                    un apartamento. Cada una paga su propia
+                                    cuota.
+                                </p>
+                                <InputError
+                                    message={errors.vivienda_padre_id}
+                                />
+                            </div>
+
+                            <div className="grid gap-4 sm:grid-cols-2">
+                                <div className="grid gap-2">
+                                    <Label htmlFor="calle_bloque">
+                                        Calle o bloque
+                                    </Label>
+                                    <Input
+                                        id="calle_bloque"
+                                        name="calle_bloque"
+                                        defaultValue={
+                                            vivienda?.calle_bloque ?? ''
+                                        }
+                                        placeholder="Bloque A"
+                                        maxLength={60}
+                                    />
+                                    <InputError message={errors.calle_bloque} />
+                                </div>
+
+                                <div className="grid gap-2">
+                                    <Label htmlFor="edificio_torre">
+                                        Edificio o torre
+                                    </Label>
+                                    <Input
+                                        id="edificio_torre"
+                                        name="edificio_torre"
+                                        defaultValue={
+                                            vivienda?.edificio_torre ?? ''
+                                        }
+                                        placeholder="Torre B"
+                                        maxLength={60}
+                                    />
+                                    <InputError
+                                        message={errors.edificio_torre}
+                                    />
                                 </div>
                             </div>
 
                             <div className="grid gap-4 sm:grid-cols-2">
-                                {esApartamento ? (
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="edificio_torre">
-                                            Edificio o torre
-                                        </Label>
-                                        <Input
-                                            key="edificio_torre"
-                                            id="edificio_torre"
-                                            name="edificio_torre"
-                                            defaultValue={
-                                                vivienda?.edificio_torre ?? ''
-                                            }
-                                            placeholder="Torre B"
-                                            maxLength={60}
-                                            required
-                                        />
-                                        <InputError
-                                            message={errors.edificio_torre}
-                                        />
-                                    </div>
-                                ) : (
-                                    <div className="grid gap-2">
-                                        <Label htmlFor="calle_bloque">
-                                            Calle o bloque
-                                        </Label>
-                                        <Input
-                                            key="calle_bloque"
-                                            id="calle_bloque"
-                                            name="calle_bloque"
-                                            defaultValue={
-                                                vivienda?.calle_bloque ?? ''
-                                            }
-                                            placeholder="Bloque A"
-                                            maxLength={60}
-                                            required
-                                        />
-                                        <InputError
-                                            message={errors.calle_bloque}
-                                        />
-                                    </div>
-                                )}
-
                                 <div className="grid gap-2">
                                     <Label htmlFor="numero">Número</Label>
                                     <Input
                                         id="numero"
                                         name="numero"
                                         defaultValue={vivienda?.numero ?? ''}
-                                        placeholder={
-                                            esApartamento ? '304' : '12'
-                                        }
+                                        placeholder="304"
                                         maxLength={20}
                                         required
                                     />
                                     <InputError message={errors.numero} />
                                 </div>
-                            </div>
 
-                            <div className="grid gap-4 sm:grid-cols-2">
                                 <div className="grid gap-2">
                                     <Label htmlFor="estado_ocupacion">
                                         Ocupación
