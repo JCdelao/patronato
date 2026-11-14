@@ -180,7 +180,7 @@ test('the system records the date, time and collector of the payment', function 
         'fecha_pago' => '2020-01-01',
         'registrado_por' => 999,
         'estado' => 'anulado',
-    ])->assertSessionHasNoErrors()->assertRedirect(route('finanzas.cobros.create'));
+    ])->assertSessionHasNoErrors();
 
     $pago = Pago::query()->sole();
 

@@ -36,7 +36,7 @@ class PermisoService
     public const PREDETERMINADOS = [
         Rol::PRESIDENTE => ['padron.ver', 'padron.registrar', 'padron.anular', 'auditoria.ver', 'parametros.ver'],
         Rol::SECRETARIO => ['padron.ver', 'padron.registrar', 'padron.anular'],
-        'tesorero' => ['padron.ver', 'parametros.ver', 'parametros.registrar'],
+        'tesorero' => ['padron.ver', 'parametros.ver', 'parametros.registrar', 'cobros.ver'],
         'fiscal' => ['padron.ver', 'auditoria.ver', 'parametros.ver'],
         'vocal' => ['padron.ver'],
         'cobrador' => ['cobros.registrar'],

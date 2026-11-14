@@ -3,7 +3,9 @@
 namespace Patronato\Persistencia\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 
@@ -20,6 +22,10 @@ use Illuminate\Support\Carbon;
  * @property int|null $caja_id
  * @property int|null $registrado_por
  * @property Carbon $created_at
+ * @property-read Residencial $residencial
+ * @property-read Vivienda $vivienda
+ * @property-read User|null $cobrador
+ * @property-read Collection<int, PagoAplicacion> $aplicaciones
  */
 #[Fillable(['residencial_id', 'vivienda_id', 'forma_pago', 'estado', 'origen', 'monto', 'fecha_pago', 'numero_recibo', 'caja_id', 'registrado_por'])]
 class Pago extends Model
@@ -56,5 +62,31 @@ class Pago extends Model
     public function aplicaciones(): HasMany
     {
         return $this->hasMany(PagoAplicacion::class);
+    }
+
+    /**
+     * @return BelongsTo<Residencial, $this>
+     */
+    public function residencial(): BelongsTo
+    {
+        return $this->belongsTo(Residencial::class);
+    }
+
+    /**
+     * @return BelongsTo<Vivienda, $this>
+     */
+    public function vivienda(): BelongsTo
+    {
+        return $this->belongsTo(Vivienda::class);
+    }
+
+    /**
+     * Usuario que registró el pago
+     *
+     * @return BelongsTo<User, $this>
+     */
+    public function cobrador(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'registrado_por');
     }
 }
