@@ -26,17 +26,6 @@ class ConceptoRepositorio extends Repositorio
     }
 
     /**
-     * Concepto de la cuota de cada vivienda; lo crea si no existe
-     */
-    public function cuotaMensual(int $residencialId, string $nombre): ConceptoCobro
-    {
-        return ConceptoCobro::query()->firstOrCreate(
-            ['residencial_id' => $residencialId, 'nombre' => $nombre],
-            ['tipo' => ConceptoCobro::RECURRENTE, 'es_cuota_unificada' => true],
-        );
-    }
-
-    /**
      * Indica si otro concepto usa el nombre, sin importar mayúsculas
      */
     public function existeNombre(string $nombre, ?int $exceptoId): bool

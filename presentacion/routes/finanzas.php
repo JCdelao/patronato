@@ -5,7 +5,7 @@ use Patronato\Presentacion\Controllers\CajaController;
 use Patronato\Presentacion\Controllers\CobroController;
 use Patronato\Presentacion\Controllers\ComprobanteController;
 use Patronato\Presentacion\Controllers\ConceptoController;
-use Patronato\Presentacion\Controllers\ModalidadController;
+use Patronato\Presentacion\Controllers\ParametroCobroController;
 
 // Enlace firmado para compartir el comprobante por mensajería; se abre sin sesión
 Route::get('comprobantes/{pago}', [ComprobanteController::class, 'publico'])
@@ -36,17 +36,9 @@ Route::middleware(['auth', 'verified'])
             Route::post('cajas/{caja}/cerrar', [CajaController::class, 'cerrar'])->whereNumber('caja')->name('cajas.cerrar');
         });
 
-        Route::get('modalidad', [ModalidadController::class, 'index'])
+        Route::get('parametros', [ParametroCobroController::class, 'index'])
             ->middleware("can:permiso,'parametros','ver'")
-            ->name('modalidad.index');
-
-        Route::put('modalidad', [ModalidadController::class, 'update'])
-            ->middleware("can:permiso,'parametros','registrar'")
-            ->name('modalidad.update');
-
-        Route::get('conceptos', [ConceptoController::class, 'index'])
-            ->middleware("can:permiso,'parametros','ver'")
-            ->name('conceptos.index');
+            ->name('parametros.index');
 
         Route::middleware("can:permiso,'parametros','registrar'")->group(function () {
             Route::post('conceptos', [ConceptoController::class, 'store'])->name('conceptos.store');

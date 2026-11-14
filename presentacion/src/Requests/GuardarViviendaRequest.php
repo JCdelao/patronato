@@ -27,7 +27,6 @@ class GuardarViviendaRequest extends FormRequest
             'calle_bloque' => ['nullable', 'required_if:tipo,casa', 'string', 'max:60'],
             'numero' => ['required', 'string', 'max:20'],
             'estado_ocupacion' => ['required', Rule::in(['ocupada', 'desocupada'])],
-            'cuota' => ['required', 'numeric', 'min:0', 'max:9999999.99', 'decimal:0,2'],
         ];
     }
 

@@ -9,36 +9,6 @@ use Patronato\Persistencia\Models\Tarifa;
 class TarifaRepositorio extends Repositorio
 {
     /**
-     * Monto vigente de la cuota de cada vivienda
-     *
-     * @param  array<int, int>  $viviendaIds
-     * @return array<int, string>
-     */
-    public function cuotasVigentes(array $viviendaIds): array
-    {
-        /** @var array<int, string> $cuotas */
-        $cuotas = Tarifa::query()
-            ->whereIn('vivienda_id', $viviendaIds)
-            ->whereNull('vigente_hasta')
-            ->pluck('monto', 'vivienda_id')
-            ->all();
-
-        return $cuotas;
-    }
-
-    /**
-     * Tarifa sin fecha de fin de una vivienda en un concepto
-     */
-    public function vigenteDeVivienda(int $conceptoId, int $viviendaId): ?Tarifa
-    {
-        return Tarifa::query()
-            ->where('concepto_id', $conceptoId)
-            ->where('vivienda_id', $viviendaId)
-            ->whereNull('vigente_hasta')
-            ->first();
-    }
-
-    /**
      * Montos generales de varios conceptos, del más antiguo al más reciente
      *
      * @param  array<int, int>  $conceptoIds

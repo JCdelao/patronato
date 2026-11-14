@@ -6,52 +6,12 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
-use Inertia\Response;
 use Patronato\Negocio\Services\ConceptoService;
-use Patronato\Negocio\Services\ModalidadService;
-use Patronato\Negocio\Services\PermisoService;
-use Patronato\Negocio\Services\TarifaService;
 use Patronato\Persistencia\Models\ConceptoCobro;
-use Patronato\Persistencia\Models\Tarifa;
 use Patronato\Presentacion\Requests\GuardarConceptoRequest;
 
 class ConceptoController extends Controller
 {
-    /**
-     * Muestra el catálogo de conceptos de cobro
-     */
-    public function index(Request $request, ConceptoService $servicio, TarifaService $tarifas, ModalidadService $modalidades, PermisoService $permisos): Response
-    {
-        $conceptos = $servicio->catalogo();
-
-        /** @var array<int, int> $ids */
-        $ids = $conceptos->pluck('id')->all();
-        $montos = $tarifas->montosGenerales($ids);
-        $periodo = $modalidades->periodoActual()->toDateString();
-
-        return Inertia::render('finanzas/conceptos', [
-            'conceptos' => $conceptos->map(function (ConceptoCobro $concepto) use ($montos, $periodo) {
-                $vigencias = collect($montos[$concepto->id] ?? [])->map(fn (Tarifa $tarifa) => [
-                    'monto' => $tarifa->monto,
-                    'desde' => $tarifa->vigente_desde->toDateString(),
-                ]);
-
-                return [
-                    'id' => $concepto->id,
-                    'nombre' => $concepto->nombre,
-                    'tipo' => $concepto->tipo,
-                    'activo' => $concepto->activo,
-                    'es_cuota_unificada' => $concepto->es_cuota_unificada,
-                    'tiene_cargos' => (bool) $concepto->getAttribute('tiene_cargos'),
-                    'actual' => $vigencias->filter(fn (array $vigencia) => $vigencia['desde'] <= $periodo)->last(),
-                    'proximos' => $vigencias->filter(fn (array $vigencia) => $vigencia['desde'] > $periodo)->values(),
-                ];
-            }),
-            'periodoActual' => $periodo,
-            'puedeEditar' => $permisos->puede($request->user(), 'parametros', 'registrar'),
-        ]);
-    }
-
     /**
      * Registra un concepto de cobro
      */
@@ -133,7 +93,7 @@ class ConceptoController extends Controller
     }
 
     /**
-     * La cuota mensual se define en el padrón y un concepto inactivo no se edita
+     * La cuota mensual de cada vivienda y un concepto inactivo no se editan aquí
      */
     private function editable(ConceptoCobro $concepto): void
     {

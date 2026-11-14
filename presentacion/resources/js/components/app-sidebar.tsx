@@ -9,15 +9,13 @@ import {
     ScrollText,
     ShieldCheck,
     SlidersHorizontal,
-    Tags,
     Users,
     Vault,
     Wallet,
 } from 'lucide-react';
 import CajaController from '@/actions/Patronato/Presentacion/Controllers/CajaController';
 import CobroController from '@/actions/Patronato/Presentacion/Controllers/CobroController';
-import ConceptoController from '@/actions/Patronato/Presentacion/Controllers/ConceptoController';
-import ModalidadController from '@/actions/Patronato/Presentacion/Controllers/ModalidadController';
+import ParametroCobroController from '@/actions/Patronato/Presentacion/Controllers/ParametroCobroController';
 import AuditoriaController from '@/actions/Patronato/Presentacion/Controllers/AuditoriaController';
 import CuentaController from '@/actions/Patronato/Presentacion/Controllers/CuentaController';
 import ViviendaController from '@/actions/Patronato/Presentacion/Controllers/ViviendaController';
@@ -72,15 +70,9 @@ export function AppSidebar() {
             visible: auth.permisos.includes('cajas.registrar'),
         },
         {
-            title: 'Modalidad de cobro',
-            href: ModalidadController.index(),
+            title: 'Parámetros de cobro',
+            href: ParametroCobroController.index(),
             icon: SlidersHorizontal,
-            visible: auth.permisos.includes('parametros.ver'),
-        },
-        {
-            title: 'Conceptos de cobro',
-            href: ConceptoController.index(),
-            icon: Tags,
             visible: auth.permisos.includes('parametros.ver'),
         },
         {

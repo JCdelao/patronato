@@ -46,7 +46,7 @@ export default function ViviendaDialog({
                     {vivienda ? 'Editar vivienda' : 'Nueva vivienda'}
                 </DialogTitle>
                 <DialogDescription className="sr-only">
-                    Datos de la vivienda y su cuota mensual
+                    Datos de la vivienda
                 </DialogDescription>
 
                 <Form
@@ -189,22 +189,6 @@ export default function ViviendaDialog({
                                     <InputError
                                         message={errors.estado_ocupacion}
                                     />
-                                </div>
-
-                                <div className="grid gap-2">
-                                    <Label htmlFor="cuota">
-                                        Cuota mensual (L.)
-                                    </Label>
-                                    <Input
-                                        id="cuota"
-                                        name="cuota"
-                                        type="number"
-                                        min="0"
-                                        step="0.01"
-                                        defaultValue={vivienda?.cuota ?? '500'}
-                                        required
-                                    />
-                                    <InputError message={errors.cuota} />
                                 </div>
                             </div>
 

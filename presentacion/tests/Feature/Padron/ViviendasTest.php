@@ -4,6 +4,7 @@ use Database\Seeders\RolesSeeder;
 use Illuminate\Support\Facades\DB;
 use Inertia\Testing\AssertableInertia;
 use Patronato\Persistencia\Models\Auditoria;
+use Patronato\Persistencia\Models\ConceptoCobro;
 use Patronato\Persistencia\Models\Residencial;
 use Patronato\Persistencia\Models\Residente;
 use Patronato\Persistencia\Models\Rol;
@@ -23,7 +24,7 @@ beforeEach(function () {
         'rol_id' => Rol::query()->where('codigo', Rol::SECRETARIO)->value('id'),
     ]);
 
-    $this->datos = ['codigo' => 'A-01', 'tipo' => 'casa', 'calle_bloque' => 'Bloque A', 'numero' => '1', 'estado_ocupacion' => 'ocupada', 'cuota' => '500'];
+    $this->datos = ['codigo' => 'A-01', 'tipo' => 'casa', 'calle_bloque' => 'Bloque A', 'numero' => '1', 'estado_ocupacion' => 'ocupada'];
 });
 
 test('only users with registry access can use it', function () {
@@ -58,7 +59,6 @@ test('a housing unit is registered with its monthly fee', function () {
         ->assertInertia(fn (AssertableInertia $page) => $page
             ->component('padron/viviendas')
             ->where('viviendas.data.0.codigo', 'A-01')
-            ->where('viviendas.data.0.cuota', '500.00')
             ->where('opcionesViviendas.0.codigo', 'A-01'));
 });
 
@@ -69,8 +69,8 @@ test('the code is unique per residencial and data is validated', function () {
         ->post(route('padron.viviendas.store'), $this->datos)
         ->assertSessionHasErrors('codigo');
 
-    $this->post(route('padron.viviendas.store'), ['codigo' => '', 'tipo' => 'otro', 'numero' => '', 'estado_ocupacion' => 'vacia', 'cuota' => '-1'])
-        ->assertSessionHasErrors(['codigo', 'tipo', 'numero', 'estado_ocupacion', 'cuota']);
+    $this->post(route('padron.viviendas.store'), ['codigo' => '', 'tipo' => 'otro', 'numero' => '', 'estado_ocupacion' => 'vacia'])
+        ->assertSessionHasErrors(['codigo', 'tipo', 'numero', 'estado_ocupacion']);
 
     Vivienda::query()->create(['residencial_id' => $this->otro->id, 'codigo' => 'B-01', 'tipo' => 'casa']);
 
@@ -78,26 +78,14 @@ test('the code is unique per residencial and data is validated', function () {
         ->assertSessionHasNoErrors();
 });
 
-test('a fee change keeps the previous validity', function () {
-    $this->actingAs($this->usuario)->post(route('padron.viviendas.store'), $this->datos);
-
-    $vivienda = Vivienda::query()->sole();
-    $tarifa = Tarifa::query()->sole();
-
-    $this->put(route('padron.viviendas.update', $vivienda->id), [...$this->datos, 'cuota' => '600'])
+test('the housing unit form does not define fees', function () {
+    $this->actingAs($this->usuario)->post(route('padron.viviendas.store'), [...$this->datos, 'cuota' => '500'])
         ->assertSessionHasNoErrors();
 
-    expect(Tarifa::query()->sole()->monto)->toBe('600.00');
-
-    DB::table('tarifas')->where('id', $tarifa->id)->update(['vigente_desde' => now()->subMonth()->toDateString()]);
-
-    $this->put(route('padron.viviendas.update', $vivienda->id), [...$this->datos, 'codigo' => 'A-99', 'cuota' => '700'])
+    $this->put(route('padron.viviendas.update', Vivienda::query()->sole()->id), [...$this->datos, 'cuota' => '600'])
         ->assertSessionHasNoErrors();
 
-    expect(Tarifa::query()->count())->toBe(2)
-        ->and(Tarifa::query()->whereNull('vigente_hasta')->sole()->monto)->toBe('700.00')
-        ->and(Tarifa::query()->whereNotNull('vigente_hasta')->sole()->monto)->toBe('600.00')
-        ->and($vivienda->refresh()->codigo)->toBe('A-99');
+    expect(Tarifa::query()->count())->toBe(0);
 });
 
 test('an unused housing unit is deleted', function () {
@@ -126,6 +114,15 @@ test('a housing unit with history stays inactive instead of being deleted', func
     $this->actingAs($this->usuario)->post(route('padron.viviendas.store'), $this->datos);
 
     $vivienda = Vivienda::query()->sole();
+
+    // Cuota que la vivienda tenía en el padrón antes de las tarifas por tipo
+    $concepto = ConceptoCobro::query()->create([
+        'residencial_id' => $this->residencial->id, 'nombre' => 'Cuota mensual', 'tipo' => 'recurrente', 'es_cuota_unificada' => true,
+    ]);
+    Tarifa::query()->create([
+        'residencial_id' => $this->residencial->id, 'concepto_id' => $concepto->id, 'vivienda_id' => $vivienda->id,
+        'monto' => 500, 'vigente_desde' => '2026-01-01', 'motivo' => 'Cuota definida en el padrón de viviendas',
+    ]);
 
     DB::table('pagos')->insert([
         'residencial_id' => $this->residencial->id,
@@ -243,15 +240,15 @@ test('every change to housing units is audited', function () {
 
     $vivienda = Vivienda::query()->sole();
 
-    $this->put(route('padron.viviendas.update', $vivienda->id), [...$this->datos, 'cuota' => '650']);
-    $this->put(route('padron.viviendas.update', $vivienda->id), [...$this->datos, 'cuota' => '650']);
+    $this->put(route('padron.viviendas.update', $vivienda->id), [...$this->datos, 'numero' => '2']);
+    $this->put(route('padron.viviendas.update', $vivienda->id), [...$this->datos, 'numero' => '2']);
     $this->delete(route('padron.viviendas.destroy', $vivienda->id));
 
     $registros = Auditoria::query()->where('modulo', 'padron')->orderBy('id')->get();
 
     expect($registros->pluck('accion')->all())->toBe(['vivienda_registrada', 'vivienda_editada', 'vivienda_eliminada'])
         ->and($registros[0]->valor_nuevo['codigo'])->toBe('A-01')
-        ->and($registros[1]->valor_anterior)->toBe(['cuota' => '500.00'])
-        ->and($registros[1]->valor_nuevo)->toBe(['cuota' => '650.00'])
+        ->and($registros[1]->valor_anterior)->toBe(['numero' => '1'])
+        ->and($registros[1]->valor_nuevo)->toBe(['numero' => '2'])
         ->and($registros[2]->valor_anterior['codigo'])->toBe('A-01');
 });

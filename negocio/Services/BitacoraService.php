@@ -18,7 +18,6 @@ class BitacoraService
         'viviendas' => ['etiqueta' => 'Vivienda', 'columna' => 'codigo'],
         'residentes' => ['etiqueta' => 'Residente', 'columna' => "nombres || ' ' || apellidos"],
         'residenciales' => ['etiqueta' => 'Residencial', 'columna' => 'nombre'],
-        'modalidades_cobro' => ['etiqueta' => 'Modalidad de cobro', 'columna' => 'modalidad'],
         'conceptos_cobro' => ['etiqueta' => 'Concepto de cobro', 'columna' => 'nombre'],
     ];
 

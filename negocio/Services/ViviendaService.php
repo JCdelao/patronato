@@ -41,9 +41,9 @@ class ViviendaService
     }
 
     /**
-     * Registra una vivienda con su cuota mensual
+     * Registra una vivienda
      *
-     * @param  array{codigo: string, tipo: string, edificio_torre?: string|null, calle_bloque?: string|null, numero: string, estado_ocupacion: string, cuota: float|int|string}  $datos
+     * @param  array{codigo: string, tipo: string, edificio_torre?: string|null, calle_bloque?: string|null, numero: string, estado_ocupacion: string}  $datos
      */
     public function registrar(User $usuario, array $datos): Vivienda
     {
@@ -52,8 +52,6 @@ class ViviendaService
                 'residencial_id' => $usuario->residencial_id,
                 ...$this->datosVivienda($datos),
             ]);
-
-            $this->tarifas->asignarCuota((int) $usuario->residencial_id, $vivienda->id, (float) $datos['cuota'], $usuario->id);
 
             $this->auditoria->registrar($usuario, 'padron', 'vivienda_registrada', $vivienda, [
                 'valor_nuevo' => $this->resumen($vivienda),
@@ -64,9 +62,9 @@ class ViviendaService
     }
 
     /**
-     * Actualiza los datos y la cuota de una vivienda
+     * Actualiza los datos de una vivienda
      *
-     * @param  array{codigo: string, tipo: string, edificio_torre?: string|null, calle_bloque?: string|null, numero: string, estado_ocupacion: string, cuota: float|int|string}  $datos
+     * @param  array{codigo: string, tipo: string, edificio_torre?: string|null, calle_bloque?: string|null, numero: string, estado_ocupacion: string}  $datos
      */
     public function actualizar(User $usuario, Vivienda $vivienda, array $datos): void
     {
@@ -74,8 +72,6 @@ class ViviendaService
             $anterior = $this->resumen($vivienda);
 
             $this->viviendas->actualizar($vivienda, $this->datosVivienda($datos));
-
-            $this->tarifas->asignarCuota($vivienda->residencial_id, $vivienda->id, (float) $datos['cuota'], $usuario->id);
 
             $nuevo = $this->resumen($vivienda);
 
@@ -192,7 +188,6 @@ class ViviendaService
             'calle_bloque' => $vivienda->calle_bloque,
             'numero' => $vivienda->numero,
             'estado_ocupacion' => $vivienda->estado_ocupacion,
-            'cuota' => $this->tarifas->cuotasVigentes([$vivienda->id])[$vivienda->id] ?? null,
         ];
     }
 }

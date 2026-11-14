@@ -21,7 +21,6 @@ export type Vivienda = {
     calle_bloque: string | null;
     numero: string | null;
     estado_ocupacion: 'ocupada' | 'desocupada';
-    cuota: string | null;
     residentes: Residente[];
 };
 

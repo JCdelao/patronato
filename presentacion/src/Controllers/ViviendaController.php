@@ -10,7 +10,6 @@ use Inertia\Inertia;
 use Inertia\Response;
 use Patronato\Negocio\Services\BitacoraService;
 use Patronato\Negocio\Services\ResidenteService;
-use Patronato\Negocio\Services\TarifaService;
 use Patronato\Negocio\Services\ViviendaService;
 use Patronato\Persistencia\Models\Vivienda;
 use Patronato\Persistencia\Models\ViviendaResidente;
@@ -21,16 +20,12 @@ class ViviendaController extends Controller
     /**
      * Muestra el padrón de viviendas activas o inactivas del residencial
      */
-    public function index(Request $request, ViviendaService $servicio, TarifaService $tarifas): Response
+    public function index(Request $request, ViviendaService $servicio): Response
     {
         $buscar = $request->string('buscar')->trim()->toString();
         $inactivas = $request->string('estado')->toString() === 'inactivas';
 
         $viviendas = $servicio->padron(! $inactivas, $buscar);
-
-        /** @var array<int, int> $ids */
-        $ids = $viviendas->getCollection()->pluck('id')->all();
-        $cuotas = $tarifas->cuotasVigentes($ids);
 
         return Inertia::render('padron/viviendas', [
             'viviendas' => $viviendas->through(fn (Vivienda $vivienda) => [
@@ -41,7 +36,6 @@ class ViviendaController extends Controller
                 'calle_bloque' => $vivienda->calle_bloque,
                 'numero' => $vivienda->numero,
                 'estado_ocupacion' => $vivienda->estado_ocupacion,
-                'cuota' => $cuotas[$vivienda->id] ?? null,
                 'residentes' => $vivienda->vinculosVigentes
                     ->sortByDesc('es_responsable_pago')
                     ->values()
@@ -57,7 +51,7 @@ class ViviendaController extends Controller
                         'correo' => $vinculo->residente->correo,
                         'otras_viviendas' => $vinculo->residente->vinculosVigentes
                             ->where('vivienda_id', '!=', $vinculo->vivienda_id)
-                            ->map(fn (ViviendaResidente $otro) => $otro->vivienda->codigo)
+                            ->map(fn (ViviendaResidente $otro): string => $otro->vivienda->codigo)
                             ->sort()
                             ->values(),
                     ]),
@@ -84,7 +78,7 @@ class ViviendaController extends Controller
      */
     public function store(GuardarViviendaRequest $request, ViviendaService $viviendas): RedirectResponse
     {
-        /** @var array{codigo: string, tipo: string, edificio_torre?: string|null, calle_bloque?: string|null, numero: string, estado_ocupacion: string, cuota: string} $datos */
+        /** @var array{codigo: string, tipo: string, edificio_torre?: string|null, calle_bloque?: string|null, numero: string, estado_ocupacion: string} $datos */
         $datos = $request->validated();
 
         $viviendas->registrar($request->user(), $datos);
@@ -101,7 +95,7 @@ class ViviendaController extends Controller
     {
         abort_unless($vivienda->activa, 404);
 
-        /** @var array{codigo: string, tipo: string, edificio_torre?: string|null, calle_bloque?: string|null, numero: string, estado_ocupacion: string, cuota: string} $datos */
+        /** @var array{codigo: string, tipo: string, edificio_torre?: string|null, calle_bloque?: string|null, numero: string, estado_ocupacion: string} $datos */
         $datos = $request->validated();
 
         $viviendas->actualizar($request->user(), $vivienda, $datos);
