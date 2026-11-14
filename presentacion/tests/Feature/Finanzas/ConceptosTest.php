@@ -58,20 +58,20 @@ afterEach(fn () => Carbon::setTestNow());
 test('the treasurer manages the concepts and other board members only see them', function () {
     ($this->registrar)()->assertSessionHasNoErrors();
 
-    $this->get(route('finanzas.conceptos.index'))
+    $this->get(route('finanzas.parametros.index'))
         ->assertInertia(fn (AssertableInertia $page) => $page
-            ->component('finanzas/conceptos')
+            ->component('finanzas/parametros')
             ->where('puedeEditar', true)
             ->where('conceptos.0.nombre', 'Agua'));
 
     foreach ([Rol::PRESIDENTE, 'fiscal'] as $rol) {
-        $this->actingAs(($this->crear)($rol))->get(route('finanzas.conceptos.index'))
+        $this->actingAs(($this->crear)($rol))->get(route('finanzas.parametros.index'))
             ->assertInertia(fn (AssertableInertia $page) => $page->where('puedeEditar', false));
         ($this->registrar)(['nombre' => 'Vigilancia'])->assertForbidden();
     }
 
     foreach ([Rol::SECRETARIO, 'guardia', 'cobrador', 'residente'] as $rol) {
-        $this->actingAs(($this->crear)($rol))->get(route('finanzas.conceptos.index'))->assertForbidden();
+        $this->actingAs(($this->crear)($rol))->get(route('finanzas.parametros.index'))->assertForbidden();
     }
 
     expect(ConceptoCobro::query()->count())->toBe(1);
@@ -89,7 +89,7 @@ test('each concept has a name, an amount, a start month and a type', function ()
         ->and(($this->vigencias)($concepto))->toBe([['1200.50', '2026-12-01', null]])
         ->and(Auditoria::query()->where('accion', 'concepto_creado')->count())->toBe(1);
 
-    $this->get(route('finanzas.conceptos.index'))
+    $this->get(route('finanzas.parametros.index'))
         ->assertInertia(fn (AssertableInertia $page) => $page
             ->where('conceptos.0.actual', null)
             ->where('conceptos.0.proximos.0.monto', '1200.50')
@@ -114,7 +114,7 @@ test('a change of amount creates a new validity period', function () {
     expect($registro->valor_anterior)->toBe(['nombre' => 'Agua', 'monto' => '150.00', 'vigente_desde' => '2026-11-01'])
         ->and($registro->valor_nuevo)->toBe(['nombre' => 'Agua potable', 'monto' => '200.00', 'vigente_desde' => '2027-01-01']);
 
-    $this->get(route('finanzas.conceptos.index'))
+    $this->get(route('finanzas.parametros.index'))
         ->assertInertia(fn (AssertableInertia $page) => $page
             ->where('conceptos.0.actual.monto', '150.00')
             ->where('conceptos.0.proximos.0.monto', '200.00'));
@@ -212,13 +212,17 @@ test('a concept without charges can be deleted', function () {
         ->and(Auditoria::query()->where('accion', 'concepto_eliminado')->count())->toBe(1);
 });
 
-test('the monthly fee of each housing unit is managed in the registry', function () {
+test('the monthly fee kept from the registry cannot be edited', function () {
     $vivienda = Vivienda::query()->create(['residencial_id' => $this->residencial->id, 'codigo' => 'A-01', 'tipo' => 'casa']);
-    app(TarifaService::class)->asignarCuota($this->residencial->id, $vivienda->id, 500, $this->tesorero->id);
+    $cuota = ConceptoCobro::query()->create([
+        'residencial_id' => $this->residencial->id, 'nombre' => TarifaService::CONCEPTO_CUOTA, 'tipo' => 'recurrente', 'es_cuota_unificada' => true,
+    ]);
+    Tarifa::query()->create([
+        'residencial_id' => $this->residencial->id, 'concepto_id' => $cuota->id, 'vivienda_id' => $vivienda->id,
+        'monto' => 500, 'vigente_desde' => '2026-01-01', 'motivo' => 'Cuota definida en el padrón de viviendas',
+    ]);
 
-    $cuota = ConceptoCobro::query()->sole();
-
-    $this->get(route('finanzas.conceptos.index'))
+    $this->get(route('finanzas.parametros.index'))
         ->assertInertia(fn (AssertableInertia $page) => $page
             ->where('conceptos.0.es_cuota_unificada', true)
             ->where('conceptos.0.actual', null));
@@ -252,7 +256,7 @@ test('each residencial has its own concepts', function () {
 
     $otro = ($this->crear)('tesorero', Residencial::query()->create(['nombre' => 'Otro']));
 
-    $this->actingAs($otro)->get(route('finanzas.conceptos.index'))
+    $this->actingAs($otro)->get(route('finanzas.parametros.index'))
         ->assertInertia(fn (AssertableInertia $page) => $page->count('conceptos', 0));
 
     $this->put(route('finanzas.conceptos.update', $concepto), [

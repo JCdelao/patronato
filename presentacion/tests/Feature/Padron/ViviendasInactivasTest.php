@@ -2,7 +2,6 @@
 
 use Database\Seeders\RolesSeeder;
 use Inertia\Testing\AssertableInertia;
-use Patronato\Negocio\Services\TarifaService;
 use Patronato\Persistencia\Models\Residencial;
 use Patronato\Persistencia\Models\Rol;
 use Patronato\Persistencia\Models\User;
@@ -45,9 +44,7 @@ test('the search also works on inactive housing units', function () {
         ->assertInertia(fn (AssertableInertia $page) => $page->count('viviendas.data', 0));
 });
 
-test('an inactive housing unit can be reactivated and keeps its fee', function () {
-    app(TarifaService::class)->asignarCuota($this->residencial->id, $this->inactiva->id, 400, auth()->id());
-
+test('an inactive housing unit can be reactivated', function () {
     $this->post(route('padron.viviendas.reactivar', $this->inactiva->id))->assertSessionHasNoErrors();
 
     expect($this->inactiva->refresh()->activa)->toBeTrue();
@@ -56,7 +53,6 @@ test('an inactive housing unit can be reactivated and keeps its fee', function (
         ->assertInertia(fn (AssertableInertia $page) => $page
             ->count('viviendas.data', 2)
             ->where('viviendas.data.1.codigo', 'B-01')
-            ->where('viviendas.data.1.cuota', '400.00')
             ->count('opcionesViviendas', 2));
 });
 

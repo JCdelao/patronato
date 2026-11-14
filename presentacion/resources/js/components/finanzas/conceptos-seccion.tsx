@@ -1,4 +1,4 @@
-import { Head, router } from '@inertiajs/react';
+import { router } from '@inertiajs/react';
 import { Ban, Ellipsis, Pencil, Plus, RotateCcw, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import ConceptoController from '@/actions/Patronato/Presentacion/Controllers/ConceptoController';
@@ -35,7 +35,7 @@ const formatoMonto = (monto: string) =>
         maximumFractionDigits: 2,
     });
 
-export default function Conceptos({
+export default function ConceptosSeccion({
     conceptos,
     periodoActual,
     puedeEditar,
@@ -56,15 +56,13 @@ export default function Conceptos({
 
     return (
         <>
-            <Head title="Conceptos de cobro" />
-
-            <div className="space-y-6 p-6 md:p-10">
+            <section className="space-y-6">
                 <div className="flex flex-wrap items-center justify-between gap-4">
                     <div>
-                        <h1 className="text-4xl font-bold tracking-tight">
+                        <h2 className="text-2xl font-bold tracking-tight">
                             Conceptos de cobro
-                        </h1>
-                        <p className="mt-1 text-lg text-muted-foreground">
+                        </h2>
+                        <p className="mt-1 text-muted-foreground">
                             Agua, mantenimiento, vigilancia y otros cobros con
                             su monto
                         </p>
@@ -94,9 +92,9 @@ export default function Conceptos({
                             >
                                 <div className="flex items-start justify-between gap-3">
                                     <div className="min-w-0">
-                                        <h2 className="truncate text-2xl font-bold tracking-tight">
+                                        <h3 className="truncate text-xl font-bold tracking-tight">
                                             {concepto.nombre}
-                                        </h2>
+                                        </h3>
                                         <div className="mt-2 flex flex-wrap gap-2">
                                             <span className="rounded-full bg-secondary px-3 py-0.5 text-sm">
                                                 {TIPOS[concepto.tipo]}
@@ -182,8 +180,9 @@ export default function Conceptos({
 
                                 {concepto.es_cuota_unificada ? (
                                     <p className="mt-4 text-muted-foreground">
-                                        El monto se define en cada vivienda del
-                                        padrón.
+                                        Cada vivienda conserva el monto que
+                                        tenía en el padrón hasta que se definan
+                                        las tarifas por tipo de vivienda.
                                     </p>
                                 ) : (
                                     <ul className="mt-4 grid gap-1">
@@ -220,7 +219,7 @@ export default function Conceptos({
                         ))}
                     </div>
                 )}
-            </div>
+            </section>
 
             {dialogo?.tipo === 'concepto' && (
                 <ConceptoDialog
@@ -273,12 +272,3 @@ export default function Conceptos({
         </>
     );
 }
-
-Conceptos.layout = {
-    breadcrumbs: [
-        {
-            title: 'Conceptos de cobro',
-            href: ConceptoController.index(),
-        },
-    ],
-};

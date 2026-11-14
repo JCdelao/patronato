@@ -7,63 +7,21 @@ use Illuminate\Validation\ValidationException;
 use Patronato\Persistencia\Models\ConceptoCobro;
 use Patronato\Persistencia\Models\Tarifa;
 use Patronato\Persistencia\Repositorios\CargoRepositorio;
-use Patronato\Persistencia\Repositorios\ConceptoRepositorio;
 use Patronato\Persistencia\Repositorios\TarifaRepositorio;
 
 class TarifaService
 {
+    /**
+     * Nombre del concepto con la cuota que cada vivienda tenía en el padrón
+     *
+     * Sus montos se conservan hasta que se definan las tarifas por tipo de vivienda.
+     */
     public const CONCEPTO_CUOTA = 'Cuota mensual';
 
     public function __construct(
         private TarifaRepositorio $tarifas,
-        private ConceptoRepositorio $conceptos,
         private CargoRepositorio $cargos,
     ) {}
-
-    /**
-     * Devuelve la cuota vigente de cada vivienda
-     *
-     * @param  array<int, int>  $viviendaIds
-     * @return array<int, string>
-     */
-    public function cuotasVigentes(array $viviendaIds): array
-    {
-        return $this->tarifas->cuotasVigentes($viviendaIds);
-    }
-
-    /**
-     * Define la cuota de una vivienda
-     */
-    public function asignarCuota(int $residencialId, int $viviendaId, float $monto, int $usuarioId): void
-    {
-        $concepto = $this->conceptos->cuotaMensual($residencialId, self::CONCEPTO_CUOTA);
-
-        $vigente = $this->tarifas->vigenteDeVivienda($concepto->id, $viviendaId);
-
-        if ($vigente !== null && (float) $vigente->monto === $monto) {
-            return;
-        }
-
-        if ($vigente !== null && $vigente->vigente_desde->isToday()) {
-            $this->tarifas->actualizar($vigente, ['monto' => $monto]);
-
-            return;
-        }
-
-        if ($vigente !== null) {
-            $this->tarifas->actualizar($vigente, ['vigente_hasta' => now()->subDay()->toDateString()]);
-        }
-
-        $this->tarifas->crear([
-            'residencial_id' => $residencialId,
-            'concepto_id' => $concepto->id,
-            'vivienda_id' => $viviendaId,
-            'monto' => $monto,
-            'vigente_desde' => now()->toDateString(),
-            'motivo' => 'Cuota definida en el padrón de viviendas',
-            'created_by' => $usuarioId,
-        ]);
-    }
 
     /**
      * Montos generales de cada concepto, del más antiguo al más reciente

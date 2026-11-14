@@ -19,7 +19,7 @@ class ConceptoService
         private CargoRepositorio $cargos,
         private Transaccion $transaccion,
         private TarifaService $tarifas,
-        private ModalidadService $modalidades,
+        private PeriodoService $periodos,
         private AuditoriaService $auditoria,
     ) {}
 
@@ -167,7 +167,7 @@ class ConceptoService
     {
         $desde = CarbonImmutable::createFromFormat('!Y-m', $mes);
 
-        if ($desde === null || $desde->toDateString() < $this->modalidades->periodoActual()->toDateString()) {
+        if ($desde === null || $desde->toDateString() < $this->periodos->actual()->toDateString()) {
             throw ValidationException::withMessages([
                 'vigente_desde' => 'El monto no puede regir desde un mes que ya pasó.',
             ]);

@@ -56,12 +56,6 @@ const ubicacion = (vivienda: Vivienda) =>
         .filter(Boolean)
         .join(', ');
 
-const formatoCuota = (cuota: string) =>
-    Number(cuota).toLocaleString('es-HN', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-    });
-
 export default function Viviendas({
     viviendas,
     opcionesViviendas,
@@ -194,14 +188,6 @@ export default function Viviendas({
                                     </div>
 
                                     <div className="flex shrink-0 items-center gap-1">
-                                        {vivienda.cuota !== null && (
-                                            <span className="rounded-full bg-secondary px-3 py-1 text-sm font-medium whitespace-nowrap">
-                                                L.{' '}
-                                                {formatoCuota(vivienda.cuota)}
-                                                /mes
-                                            </span>
-                                        )}
-
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
                                                 <Button
@@ -419,7 +405,7 @@ export default function Viviendas({
             {dialogo?.tipo === 'reactivar-vivienda' && (
                 <ConfirmarDialog
                     titulo={`¿Reactivar ${dialogo.vivienda.codigo}?`}
-                    descripcion="Volverá a aparecer en Activas con sus datos y su cuota."
+                    descripcion="Volverá a aparecer en Activas con sus datos."
                     confirmar="Reactivar"
                     variante="default"
                     accion={ViviendaController.reactivar.form(
