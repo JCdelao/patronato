@@ -19,6 +19,7 @@ class BitacoraService
         'residentes' => ['etiqueta' => 'Residente', 'columna' => "nombres || ' ' || apellidos"],
         'residenciales' => ['etiqueta' => 'Residencial', 'columna' => 'nombre'],
         'conceptos_cobro' => ['etiqueta' => 'Concepto de cobro', 'columna' => 'nombre'],
+        'tipos_vivienda' => ['etiqueta' => 'Tipo de vivienda', 'columna' => 'nombre'],
     ];
 
     /**
@@ -36,6 +37,8 @@ class BitacoraService
         'numero' => 'Número',
         'estado_ocupacion' => 'Ocupación',
         'cuota' => 'Cuota mensual',
+        'pertenece_a' => 'Pertenece a',
+        'cuota_especial' => 'Cuota especial',
         'nombres' => 'Nombres',
         'apellidos' => 'Apellidos',
         'identidad' => 'Identidad',

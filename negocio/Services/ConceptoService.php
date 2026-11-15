@@ -2,7 +2,6 @@
 
 namespace Patronato\Negocio\Services;
 
-use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -58,7 +57,7 @@ class ConceptoService
      */
     public function registrar(User $usuario, array $datos): ConceptoCobro
     {
-        $desde = $this->desde($datos['vigente_desde']);
+        $desde = $this->periodos->desdeMes($datos['vigente_desde']);
 
         return $this->transaccion->ejecutar(function () use ($usuario, $datos, $desde) {
             $concepto = $this->conceptos->crear([
@@ -86,7 +85,7 @@ class ConceptoService
      */
     public function actualizar(User $usuario, ConceptoCobro $concepto, array $datos): void
     {
-        $desde = $this->desde($datos['vigente_desde']);
+        $desde = $this->periodos->desdeMes($datos['vigente_desde']);
 
         $this->transaccion->ejecutar(function () use ($usuario, $concepto, $datos, $desde) {
             $anterior = $this->resumen($concepto);
@@ -156,24 +155,6 @@ class ConceptoService
                 'valor_anterior' => $anterior,
             ]);
         });
-    }
-
-    /**
-     * Convierte el mes elegido (AAAA-MM) en el período desde el que rige
-     *
-     * @throws ValidationException
-     */
-    private function desde(string $mes): CarbonImmutable
-    {
-        $desde = CarbonImmutable::createFromFormat('!Y-m', $mes);
-
-        if ($desde === null || $desde->toDateString() < $this->periodos->actual()->toDateString()) {
-            throw ValidationException::withMessages([
-                'vigente_desde' => 'El monto no puede regir desde un mes que ya pasó.',
-            ]);
-        }
-
-        return $desde;
     }
 
     private function monto(float|int|string $monto): string

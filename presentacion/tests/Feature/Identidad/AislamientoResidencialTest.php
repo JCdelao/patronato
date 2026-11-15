@@ -27,7 +27,7 @@ beforeEach(function () {
     $this->usuarioAjeno = User::factory()->create(['residencial_id' => $this->ajeno->id, 'rol_id' => $rol]);
 
     $crear = function (Residencial $residencial, string $codigo): array {
-        $vivienda = Vivienda::query()->create(['residencial_id' => $residencial->id, 'codigo' => $codigo, 'tipo' => 'casa']);
+        $vivienda = Vivienda::query()->create(['residencial_id' => $residencial->id, 'codigo' => $codigo, 'tipo_vivienda_id' => tipoVivienda($residencial->id)]);
         $residente = Residente::query()->create(['residencial_id' => $residencial->id, 'nombres' => $codigo, 'apellidos' => 'X']);
         $concepto = ConceptoCobro::query()->create(['residencial_id' => $residencial->id, 'nombre' => 'Cuota', 'tipo' => 'recurrente']);
 
@@ -96,7 +96,7 @@ test('a user without residencial sees nothing and the platform admin sees everyt
 test('new records take the residencial of the user', function () {
     $this->actingAs($this->usuario);
 
-    $vivienda = Vivienda::query()->create(['codigo' => 'NUEVA', 'tipo' => 'casa']);
+    $vivienda = Vivienda::query()->create(['codigo' => 'NUEVA', 'tipo_vivienda_id' => tipoVivienda($this->propio->id)]);
 
     expect($vivienda->residencial_id)->toBe($this->propio->id);
 });
@@ -116,7 +116,7 @@ test('opening another residencial record is denied and audited', function (Closu
         ->and($auditoria->entidad)->toBe($tabla)
         ->and($auditoria->entidad_id)->toBe($id);
 })->with([
-    'editar vivienda' => [fn ($t, int $id) => $t->put(route('padron.viviendas.update', $id), ['codigo' => 'X', 'tipo' => 'casa', 'calle_bloque' => 'x', 'numero' => '1', 'estado_ocupacion' => 'ocupada', 'cuota' => '1']), 'viviendas', 'viviendaAjena'],
+    'editar vivienda' => [fn ($t, int $id) => $t->put(route('padron.viviendas.update', $id), ['codigo' => 'X', 'tipo_vivienda_id' => tipoVivienda($t->propio->id), 'calle_bloque' => 'x', 'numero' => '1', 'estado_ocupacion' => 'ocupada']), 'viviendas', 'viviendaAjena'],
     'editar vivienda con datos invalidos' => [fn ($t, int $id) => $t->put(route('padron.viviendas.update', $id), []), 'viviendas', 'viviendaAjena'],
     'eliminar vivienda' => [fn ($t, int $id) => $t->delete(route('padron.viviendas.destroy', $id)), 'viviendas', 'viviendaAjena'],
     'reactivar vivienda' => [fn ($t, int $id) => $t->post(route('padron.viviendas.reactivar', $id)), 'viviendas', 'viviendaAjena'],

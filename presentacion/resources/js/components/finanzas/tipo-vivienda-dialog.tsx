@@ -1,0 +1,131 @@
+import { Form } from '@inertiajs/react';
+import TipoViviendaController from '@/actions/Patronato/Presentacion/Controllers/TipoViviendaController';
+import InputError from '@/components/input-error';
+import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Spinner } from '@/components/ui/spinner';
+import type { TipoViviendaCuota } from '@/types/finanzas';
+
+// Devuelve el mes AAAA-MM sumando meses a una fecha AAAA-MM-DD
+const mes = (fecha: string, meses = 0) => {
+    const valor = new Date(`${fecha}T00:00:00Z`);
+    valor.setUTCMonth(valor.getUTCMonth() + meses);
+
+    return valor.toISOString().slice(0, 7);
+};
+
+export default function TipoViviendaDialog({
+    tipo,
+    periodoActual,
+    onClose,
+    onGuardado,
+}: {
+    tipo?: TipoViviendaCuota;
+    periodoActual: string;
+    onClose: () => void;
+    onGuardado: () => void;
+}) {
+    const ultima = tipo?.proximos.at(-1) ?? tipo?.actual;
+
+    const accion = tipo
+        ? TipoViviendaController.update.form(tipo.id)
+        : TipoViviendaController.store.form();
+
+    return (
+        <Dialog open onOpenChange={(abierto) => !abierto && onClose()}>
+            <DialogContent className="max-h-[90svh] overflow-y-auto rounded-2xl sm:max-w-xl">
+                <DialogTitle className="text-2xl font-bold tracking-tight">
+                    {tipo
+                        ? 'Editar tipo de vivienda'
+                        : 'Nuevo tipo de vivienda'}
+                </DialogTitle>
+                <DialogDescription className="sr-only">
+                    Nombre y cuota mensual del tipo de vivienda
+                </DialogDescription>
+
+                <Form
+                    {...accion}
+                    options={{ preserveScroll: true, preserveState: true }}
+                    onSuccess={onGuardado}
+                    className="grid gap-4"
+                >
+                    {({ processing, errors }) => (
+                        <>
+                            <div className="grid gap-2">
+                                <Label htmlFor="nombre">Nombre</Label>
+                                <Input
+                                    id="nombre"
+                                    name="nombre"
+                                    defaultValue={tipo?.nombre}
+                                    placeholder="Habitación"
+                                    maxLength={60}
+                                    required
+                                    autoFocus
+                                />
+                                <InputError message={errors.nombre} />
+                            </div>
+
+                            <div className="grid gap-4 sm:grid-cols-2">
+                                <div className="grid gap-2">
+                                    <Label htmlFor="monto">
+                                        Cuota mensual (L.)
+                                    </Label>
+                                    <Input
+                                        id="monto"
+                                        name="monto"
+                                        type="number"
+                                        min="0"
+                                        step="0.01"
+                                        defaultValue={ultima?.monto}
+                                        required
+                                    />
+                                    <InputError message={errors.monto} />
+                                </div>
+
+                                <div className="grid gap-2">
+                                    <Label htmlFor="vigente_desde">
+                                        Rige desde
+                                    </Label>
+                                    <Input
+                                        id="vigente_desde"
+                                        name="vigente_desde"
+                                        type="month"
+                                        min={mes(periodoActual)}
+                                        defaultValue={mes(
+                                            periodoActual,
+                                            tipo?.actual ? 1 : 0,
+                                        )}
+                                        required
+                                    />
+                                    <InputError
+                                        message={errors.vigente_desde}
+                                    />
+                                </div>
+                            </div>
+
+                            {tipo && (
+                                <p className="text-sm text-muted-foreground">
+                                    Si cambias la cuota, la nueva regirá desde
+                                    el mes que elijas. Los cargos ya generados
+                                    conservan su monto.
+                                </p>
+                            )}
+
+                            <Button className="w-full" disabled={processing}>
+                                {processing && <Spinner />}
+                                Guardar
+                            </Button>
+                        </>
+                    )}
+                </Form>
+            </DialogContent>
+        </Dialog>
+    );
+}

@@ -43,10 +43,12 @@ class ViviendaService
     /**
      * Registra una vivienda
      *
-     * @param  array{codigo: string, tipo: string, edificio_torre?: string|null, calle_bloque?: string|null, numero: string, estado_ocupacion: string}  $datos
+     * @param  array{codigo: string, tipo_vivienda_id: int|string, vivienda_padre_id?: int|string|null, edificio_torre?: string|null, calle_bloque?: string|null, numero: string, estado_ocupacion: string}  $datos
      */
     public function registrar(User $usuario, array $datos): Vivienda
     {
+        $this->validarPadre(null, $datos);
+
         return $this->transaccion->ejecutar(function () use ($usuario, $datos) {
             $vivienda = $this->viviendas->crear([
                 'residencial_id' => $usuario->residencial_id,
@@ -64,10 +66,12 @@ class ViviendaService
     /**
      * Actualiza los datos de una vivienda
      *
-     * @param  array{codigo: string, tipo: string, edificio_torre?: string|null, calle_bloque?: string|null, numero: string, estado_ocupacion: string}  $datos
+     * @param  array{codigo: string, tipo_vivienda_id: int|string, vivienda_padre_id?: int|string|null, edificio_torre?: string|null, calle_bloque?: string|null, numero: string, estado_ocupacion: string}  $datos
      */
     public function actualizar(User $usuario, Vivienda $vivienda, array $datos): void
     {
+        $this->validarPadre($vivienda, $datos);
+
         $this->transaccion->ejecutar(function () use ($usuario, $vivienda, $datos) {
             $anterior = $this->resumen($vivienda);
 
@@ -159,21 +163,52 @@ class ViviendaService
     }
 
     /**
-     * @param  array{codigo: string, tipo: string, edificio_torre?: string|null, calle_bloque?: string|null, numero: string, estado_ocupacion: string}  $datos
-     * @return array<string, string|null>
+     * @param  array{codigo: string, tipo_vivienda_id: int|string, vivienda_padre_id?: int|string|null, edificio_torre?: string|null, calle_bloque?: string|null, numero: string, estado_ocupacion: string}  $datos
+     * @return array<string, int|string|null>
      */
     private function datosVivienda(array $datos): array
     {
-        $esApartamento = $datos['tipo'] === 'apartamento';
-
         return [
             'codigo' => $datos['codigo'],
-            'tipo' => $datos['tipo'],
-            'edificio_torre' => $esApartamento ? $datos['edificio_torre'] ?? null : null,
-            'calle_bloque' => $esApartamento ? null : $datos['calle_bloque'] ?? null,
+            'tipo_vivienda_id' => (int) $datos['tipo_vivienda_id'],
+            'vivienda_padre_id' => empty($datos['vivienda_padre_id']) ? null : (int) $datos['vivienda_padre_id'],
+            'edificio_torre' => $datos['edificio_torre'] ?? null,
+            'calle_bloque' => $datos['calle_bloque'] ?? null,
             'numero' => $datos['numero'],
             'estado_ocupacion' => $datos['estado_ocupacion'],
         ];
+    }
+
+    /**
+     * Revisa que la vivienda a la que pertenece sea válida
+     *
+     * Solo hay un nivel: un apartamento con habitaciones no pertenece a otra vivienda.
+     *
+     * @param  array{vivienda_padre_id?: int|string|null}  $datos
+     *
+     * @throws ValidationException
+     */
+    private function validarPadre(?Vivienda $vivienda, array $datos): void
+    {
+        $padreId = empty($datos['vivienda_padre_id']) ? null : (int) $datos['vivienda_padre_id'];
+
+        if ($padreId === null) {
+            return;
+        }
+
+        $padre = $this->viviendas->buscar($padreId);
+
+        $motivo = match (true) {
+            $padre === null => 'Esa vivienda no existe.',
+            $vivienda !== null && $padre->id === $vivienda->id => 'Una vivienda no puede pertenecer a sí misma.',
+            $padre->vivienda_padre_id !== null => "{$padre->codigo} ya pertenece a otra vivienda.",
+            $vivienda !== null && $this->viviendas->tieneHijas($vivienda) => 'Otras viviendas pertenecen a esta: no puede pertenecer a otra.',
+            default => null,
+        };
+
+        if ($motivo !== null) {
+            throw ValidationException::withMessages(['vivienda_padre_id' => $motivo]);
+        }
     }
 
     /**
@@ -181,9 +216,12 @@ class ViviendaService
      */
     private function resumen(Vivienda $vivienda): array
     {
+        $this->viviendas->cargarTipoYPadre($vivienda);
+
         return [
             'codigo' => $vivienda->codigo,
-            'tipo' => $vivienda->tipo,
+            'tipo' => $vivienda->tipoVivienda->nombre,
+            'pertenece_a' => $vivienda->padre?->codigo,
             'edificio_torre' => $vivienda->edificio_torre,
             'calle_bloque' => $vivienda->calle_bloque,
             'numero' => $vivienda->numero,

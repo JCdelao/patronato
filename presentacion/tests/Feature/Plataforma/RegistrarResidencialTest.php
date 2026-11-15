@@ -188,7 +188,7 @@ test('nothing is kept when the registration fails', function () {
 test('a new residencial does not inherit data from other residenciales', function () {
     $otro = Residencial::query()->create(['nombre' => 'Otro residencial']);
 
-    DB::table('viviendas')->insert(['residencial_id' => $otro->id, 'codigo' => 'A-1', 'tipo' => 'casa']);
+    DB::table('viviendas')->insert(['residencial_id' => $otro->id, 'codigo' => 'A-1', 'tipo_vivienda_id' => tipoVivienda($otro->id)]);
     User::factory()->create(['residencial_id' => $otro->id]);
 
     $this->actingAs($this->admin)

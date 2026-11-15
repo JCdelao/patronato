@@ -129,6 +129,10 @@ jobs:
         if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
         run: php artisan test tests/Feature/Finanzas/ConceptosTest.php
 
+      - name: Pruebas HU-16 · Definir tarifas por tipo de vivienda
+        if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
+        run: php artisan test tests/Feature/Finanzas/TiposViviendaTest.php tests/Feature/Finanzas/TarifasEspecialesTest.php
+
       - name: Pruebas HU-19 · Registrar un cobro en efectivo
         if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
         run: php artisan test tests/Feature/Finanzas/CobroEfectivoTest.php
