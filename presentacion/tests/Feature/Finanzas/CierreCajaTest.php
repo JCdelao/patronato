@@ -35,7 +35,7 @@ beforeEach(function () {
     $this->casa = Vivienda::query()->create([
         'residencial_id' => $this->residencial->id,
         'codigo' => 'A-01',
-        'tipo' => 'casa',
+        'tipo_vivienda_id' => tipoVivienda($this->residencial->id),
         'estado_ocupacion' => 'ocupada',
         'activa' => true,
     ]);

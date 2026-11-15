@@ -60,7 +60,7 @@ beforeEach(function () {
     $this->vivienda = fn (Residencial $residencial, string $codigo): Vivienda => Vivienda::query()->create([
         'residencial_id' => $residencial->id,
         'codigo' => $codigo,
-        'tipo' => 'casa',
+        'tipo_vivienda_id' => tipoVivienda($residencial->id),
         'estado_ocupacion' => 'ocupada',
         'activa' => true,
     ]);

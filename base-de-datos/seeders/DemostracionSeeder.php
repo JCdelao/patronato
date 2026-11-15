@@ -180,11 +180,14 @@ class DemostracionSeeder extends Seeder
     {
         $ids = [];
 
+        // Los tipos Casa y Apartamento se crean con el residencial (AppServiceProvider)
+        $tipos = DB::table('tipos_vivienda')->where('residencial_id', $residencialId)->pluck('id', 'nombre');
+
         foreach ($filas as [$codigo, $tipo, $bloque, $numero, $nombres, $apellidos]) {
             $ids[$codigo] = (int) DB::table('viviendas')->insertGetId([
                 'residencial_id' => $residencialId,
                 'codigo' => $codigo,
-                'tipo' => $tipo,
+                'tipo_vivienda_id' => $tipos[ucfirst($tipo)],
                 'edificio_torre' => $tipo === 'apartamento' ? 'Torre 1' : null,
                 'calle_bloque' => $bloque,
                 'numero' => $numero,
