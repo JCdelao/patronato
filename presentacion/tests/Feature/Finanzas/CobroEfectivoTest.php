@@ -180,7 +180,7 @@ test('the system records the date, time and collector of the payment', function 
         'fecha_pago' => '2020-01-01',
         'registrado_por' => 999,
         'estado' => 'anulado',
-    ])->assertSessionHasNoErrors()->assertRedirect(route('finanzas.cobros.create'));
+    ])->assertSessionHasNoErrors();
 
     $pago = Pago::query()->sole();
 
@@ -188,6 +188,19 @@ test('the system records the date, time and collector of the payment', function 
         ->and($pago->created_at->format('Y-m-d H:i'))->toBe('2026-11-08 10:15')
         ->and($pago->registrado_por)->toBe($this->cobrador->id)
         ->and($pago->estado)->toBe('confirmado');
+});
+
+test('a payment registered after 6 pm in Honduras keeps the local date', function () {
+    // 19:30 del 8 de noviembre en Honduras ya es 9 de noviembre en UTC
+    $this->travelTo('2026-11-09 01:30:00');
+
+    $this->actingAs($this->cobrador)->post(route('finanzas.cobros.store'), [
+        'vivienda_id' => $this->casa->id,
+        'monto' => '500',
+        'cargos' => [$this->enero],
+    ])->assertSessionHasNoErrors();
+
+    expect(Pago::query()->sole()->fecha_pago->toDateString())->toBe('2026-11-08');
 });
 
 test('receipts are consecutive and unique per residential', function () {
@@ -318,7 +331,8 @@ test('the amount and the months must match what is pending', function () {
     expect(Pago::query()->count())->toBe(0);
 });
 
-test('a collector without an open box cannot register payments', function () {
+test('a collector without an open box opens a new one with the payment', function () {
+    // HU-21: la caja se abre con el primer cobro
     $this->caja->update(['estado' => 'cerrada']);
 
     $this->actingAs($this->cobrador)
@@ -326,14 +340,13 @@ test('a collector without an open box cannot register payments', function () {
         ->assertInertia(fn (AssertableInertia $page) => $page->where('cajaAbierta', false));
 
     $this->post(route('finanzas.cobros.store'), ['vivienda_id' => $this->casa->id, 'monto' => '500', 'cargos' => [$this->enero]])
-        ->assertSessionHasErrors('caja');
+        ->assertSessionHasNoErrors();
 
-    $this->caja->delete();
+    $nueva = Caja::query()->where('estado', 'abierta')->sole();
 
-    $this->post(route('finanzas.cobros.store'), ['vivienda_id' => $this->casa->id, 'monto' => '500', 'cargos' => [$this->enero]])
-        ->assertSessionHasErrors('caja');
-
-    expect(Pago::query()->count())->toBe(0);
+    expect($nueva->id)->not->toBe($this->caja->id)
+        ->and($nueva->cobrador_id)->toBe($this->cobrador->id)
+        ->and(Pago::query()->sole()->caja_id)->toBe($nueva->id);
 });
 
 test('housing units and boxes of another residential cannot be used', function () {

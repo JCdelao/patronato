@@ -68,6 +68,7 @@ class CobroController extends Controller
 
         Inertia::flash('toast', ['type' => 'success', 'message' => "Cobro registrado. Recibo N.º {$pago->numero_recibo}."]);
 
-        return to_route('finanzas.cobros.create');
+        // Desde el registro del pago se descarga o se comparte el comprobante
+        return to_route('finanzas.comprobantes.show', $pago);
     }
 }

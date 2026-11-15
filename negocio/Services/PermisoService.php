@@ -20,6 +20,7 @@ class PermisoService
     public const MODULOS = [
         'padron' => ['etiqueta' => 'Viviendas y residentes', 'acciones' => ['ver', 'registrar', 'anular']],
         'cobros' => ['etiqueta' => 'Cobros', 'acciones' => ['ver', 'registrar', 'verificar', 'aprobar', 'anular']],
+        'cajas' => ['etiqueta' => 'Cierre de caja', 'acciones' => ['registrar']],
         'parametros' => ['etiqueta' => 'Parámetros de cobro', 'acciones' => ['ver', 'registrar']],
         'vigilancia' => ['etiqueta' => 'Vigilancia', 'acciones' => ['ver', 'registrar']],
         'vehiculos' => ['etiqueta' => 'Vehículos', 'acciones' => ['ver', 'registrar', 'anular']],
@@ -34,10 +35,10 @@ class PermisoService
      * el administrador técnico los activa desde la pantalla de permisos.
      */
     public const PREDETERMINADOS = [
-        Rol::PRESIDENTE => ['padron.ver', 'padron.registrar', 'padron.anular', 'auditoria.ver', 'parametros.ver'],
+        Rol::PRESIDENTE => ['padron.ver', 'padron.registrar', 'padron.anular', 'auditoria.ver', 'parametros.ver', 'reportes.ver', 'cobros.aprobar'],
         Rol::SECRETARIO => ['padron.ver', 'padron.registrar', 'padron.anular'],
-        'tesorero' => ['padron.ver', 'parametros.ver', 'parametros.registrar'],
-        'fiscal' => ['padron.ver', 'auditoria.ver', 'parametros.ver'],
+        'tesorero' => ['padron.ver', 'parametros.ver', 'parametros.registrar', 'cobros.ver', 'cobros.anular', 'cajas.registrar', 'reportes.ver'],
+        'fiscal' => ['padron.ver', 'auditoria.ver', 'parametros.ver', 'reportes.ver', 'cobros.aprobar'],
         'vocal' => ['padron.ver'],
         'cobrador' => ['cobros.registrar'],
     ];

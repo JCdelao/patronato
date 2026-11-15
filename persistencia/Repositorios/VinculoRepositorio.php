@@ -36,6 +36,24 @@ class VinculoRepositorio extends Repositorio
     }
 
     /**
+     * Correos de los residentes que viven actualmente en la vivienda, sin repetir
+     *
+     * @return list<string>
+     */
+    public function correosVigentesDe(int $viviendaId): array
+    {
+        return array_values(array_unique(array_map('strval', $this->vigentes()
+            ->where('vivienda_id', $viviendaId)
+            ->join('residentes', 'residentes.id', '=', 'vivienda_residentes.residente_id')
+            ->where('residentes.activo', true)
+            ->whereNotNull('residentes.correo')
+            ->where('residentes.correo', '<>', '')
+            ->orderBy('vivienda_residentes.id')
+            ->pluck('residentes.correo')
+            ->all())));
+    }
+
+    /**
      * Ids de todos los residentes que vivieron en la vivienda
      *
      * @return list<int>

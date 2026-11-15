@@ -4,6 +4,7 @@ namespace Patronato\Persistencia\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * @property int $id
@@ -11,6 +12,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property int $pago_id
  * @property int $cargo_id
  * @property string $monto
+ * @property-read Cargo $cargo
  */
 #[Fillable(['residencial_id', 'pago_id', 'cargo_id', 'monto'])]
 class PagoAplicacion extends Model
@@ -35,5 +37,13 @@ class PagoAplicacion extends Model
         return [
             'monto' => 'decimal:2',
         ];
+    }
+
+    /**
+     * @return BelongsTo<Cargo, $this>
+     */
+    public function cargo(): BelongsTo
+    {
+        return $this->belongsTo(Cargo::class);
     }
 }

@@ -1,5 +1,6 @@
 import { Link, usePage } from '@inertiajs/react';
 import {
+    Ban,
     Building2,
     Car,
     ChartColumn,
@@ -10,10 +11,15 @@ import {
     ShieldCheck,
     SlidersHorizontal,
     Users,
+    Vault,
     Wallet,
 } from 'lucide-react';
+import AnulacionController from '@/actions/Patronato/Presentacion/Controllers/AnulacionController';
+import CajaController from '@/actions/Patronato/Presentacion/Controllers/CajaController';
 import CobroController from '@/actions/Patronato/Presentacion/Controllers/CobroController';
+import PagoController from '@/actions/Patronato/Presentacion/Controllers/PagoController';
 import ParametroCobroController from '@/actions/Patronato/Presentacion/Controllers/ParametroCobroController';
+import ReporteCobrosController from '@/actions/Patronato/Presentacion/Controllers/ReporteCobrosController';
 import AuditoriaController from '@/actions/Patronato/Presentacion/Controllers/AuditoriaController';
 import CuentaController from '@/actions/Patronato/Presentacion/Controllers/CuentaController';
 import ViviendaController from '@/actions/Patronato/Presentacion/Controllers/ViviendaController';
@@ -56,10 +62,22 @@ export function AppSidebar() {
         },
         {
             title: 'Cobros',
-            href: '#',
+            href: PagoController.index(),
             icon: Wallet,
-            disabled: true,
             visible: auth.permisos.includes('cobros.ver'),
+        },
+        {
+            title: 'Anulaciones por aprobar',
+            href: AnulacionController.index(),
+            icon: Ban,
+            badge: auth.anulacionesPendientes,
+            visible: auth.permisos.includes('cobros.aprobar'),
+        },
+        {
+            title: 'Cierre de caja',
+            href: CajaController.index(),
+            icon: Vault,
+            visible: auth.permisos.includes('cajas.registrar'),
         },
         {
             title: 'Parámetros de cobro',
@@ -83,9 +101,8 @@ export function AppSidebar() {
         },
         {
             title: 'Reportes',
-            href: '#',
+            href: ReporteCobrosController.index(),
             icon: ChartColumn,
-            disabled: true,
             visible: auth.permisos.includes('reportes.ver'),
         },
         {

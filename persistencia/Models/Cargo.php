@@ -3,6 +3,7 @@
 namespace Patronato\Persistencia\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
 
 /**
@@ -12,6 +13,7 @@ use Illuminate\Support\Carbon;
  * @property int $concepto_id
  * @property Carbon $periodo
  * @property string $monto
+ * @property-read ConceptoCobro $concepto
  */
 class Cargo extends Model
 {
@@ -33,5 +35,13 @@ class Cargo extends Model
             'periodo' => 'date',
             'monto' => 'decimal:2',
         ];
+    }
+
+    /**
+     * @return BelongsTo<ConceptoCobro, $this>
+     */
+    public function concepto(): BelongsTo
+    {
+        return $this->belongsTo(ConceptoCobro::class, 'concepto_id');
     }
 }

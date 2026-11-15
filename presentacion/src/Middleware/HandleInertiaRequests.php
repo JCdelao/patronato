@@ -4,6 +4,7 @@ namespace Patronato\Presentacion\Middleware;
 
 use Illuminate\Http\Request;
 use Inertia\Middleware;
+use Patronato\Negocio\Services\AnulacionPagoService;
 use Patronato\Negocio\Services\PermisoService;
 
 class HandleInertiaRequests extends Middleware
@@ -39,6 +40,8 @@ class HandleInertiaRequests extends Middleware
                 'permisos' => $request->user() ? app(PermisoService::class)->deUsuario($request->user()) : [],
                 'puedeAdministrarUsuarios' => $request->user()?->puedeAdministrarUsuarios() ?? false,
                 'rol' => $request->user()?->rol?->nombre,
+                // Solicitudes de anulación por aprobar, para el número del menú
+                'anulacionesPendientes' => fn () => $request->user() ? app(AnulacionPagoService::class)->cantidadPendientes($request->user()) : 0,
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];

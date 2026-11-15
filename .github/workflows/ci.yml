@@ -33,7 +33,7 @@ jobs:
         uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962
         with:
           php-version: '8.4'
-          extensions: pdo_pgsql, pdo_sqlite
+          extensions: pdo_pgsql, pdo_sqlite, gd
           tools: composer:v2
           coverage: none
 
@@ -136,6 +136,26 @@ jobs:
       - name: Pruebas HU-19 · Registrar un cobro en efectivo
         if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
         run: php artisan test tests/Feature/Finanzas/CobroEfectivoTest.php
+
+      - name: Pruebas HU-20 · Emitir el comprobante de pago
+        if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
+        run: php artisan test tests/Feature/Finanzas/ComprobantePagoTest.php
+
+      - name: Pruebas HU-21 · Realizar el cierre de caja
+        if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
+        run: php artisan test tests/Feature/Finanzas/CierreCajaTest.php
+
+      - name: Pruebas HU-22 · Consultar los cobros por cobrador
+        if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
+        run: php artisan test tests/Feature/Reportes/ReporteCobrosTest.php
+
+      - name: Pruebas HU-23 · Anular un pago con justificación
+        if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
+        run: php artisan test tests/Feature/Finanzas/AnularPagoTest.php
+
+      - name: Pruebas de los datos de demostración
+        if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
+        run: php artisan test tests/Feature/DemostracionSeederTest.php
 
       - name: Pruebas de la base (perfil, verificación de correo y panel)
         if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}

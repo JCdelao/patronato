@@ -35,11 +35,14 @@ El espacio de nombres sigue la carpeta: `negocio/Services/CobroService.php` es
 - `Contratos/`: acuerdos entre servicios que todavía no están completos.
 - `Acciones/` y `Reglas/`: acciones de Fortify y reglas de contraseña y perfil.
 - `Notificaciones/`: correos que envía el sistema.
+- `Adaptadores/`: envuelven librerías externas, como la de PDF, detrás de una interfaz de `Contratos/`.
+- `Reportes/`: arman los reportes con sus filtros y los exportan a cada formato (PDF, Excel).
 
 **persistencia/**
 
 - `Models/`: los modelos de Eloquent, con sus relaciones y el aislamiento por residencial.
 - `Repositorios/`: todas las consultas a la base de datos.
+- `Excepciones/`: errores de integridad que lanzan los modelos, como editar un cobro de una caja cerrada.
 - `Transaccion.php`: agrupa operaciones que se guardan todas o ninguna.
 
 **base-de-datos/**

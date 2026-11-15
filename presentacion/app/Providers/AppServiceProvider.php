@@ -9,7 +9,11 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
+use Patronato\Negocio\Adaptadores\HojaCalculoOpenSpout;
+use Patronato\Negocio\Adaptadores\PdfDompdf;
 use Patronato\Negocio\Contratos\CargosPendientes;
+use Patronato\Negocio\Contratos\GeneradorHojaCalculo;
+use Patronato\Negocio\Contratos\GeneradorPdf;
 use Patronato\Negocio\Services\PermisoService;
 use Patronato\Negocio\Services\SinCargosPendientes;
 use Patronato\Negocio\Services\TipoViviendaService;
@@ -26,6 +30,10 @@ class AppServiceProvider extends ServiceProvider
     {
         // Se reemplaza por el servicio real cuando exista la generación de cargos
         $this->app->bind(CargosPendientes::class, SinCargosPendientes::class);
+
+        // Una sola instancia: los adaptadores no guardan estado entre documentos
+        $this->app->singleton(GeneradorPdf::class, PdfDompdf::class);
+        $this->app->singleton(GeneradorHojaCalculo::class, HojaCalculoOpenSpout::class);
     }
 
     /**
