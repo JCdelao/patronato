@@ -35,10 +35,10 @@ class PermisoService
      * el administrador técnico los activa desde la pantalla de permisos.
      */
     public const PREDETERMINADOS = [
-        Rol::PRESIDENTE => ['padron.ver', 'padron.registrar', 'padron.anular', 'auditoria.ver', 'parametros.ver', 'reportes.ver'],
+        Rol::PRESIDENTE => ['padron.ver', 'padron.registrar', 'padron.anular', 'auditoria.ver', 'parametros.ver', 'reportes.ver', 'cobros.aprobar'],
         Rol::SECRETARIO => ['padron.ver', 'padron.registrar', 'padron.anular'],
-        'tesorero' => ['padron.ver', 'parametros.ver', 'parametros.registrar', 'cobros.ver', 'cajas.registrar', 'reportes.ver'],
-        'fiscal' => ['padron.ver', 'auditoria.ver', 'parametros.ver', 'reportes.ver'],
+        'tesorero' => ['padron.ver', 'parametros.ver', 'parametros.registrar', 'cobros.ver', 'cobros.anular', 'cajas.registrar', 'reportes.ver'],
+        'fiscal' => ['padron.ver', 'auditoria.ver', 'parametros.ver', 'reportes.ver', 'cobros.aprobar'],
         'vocal' => ['padron.ver'],
         'cobrador' => ['cobros.registrar'],
     ];

@@ -1,10 +1,12 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Patronato\Presentacion\Controllers\AnulacionController;
 use Patronato\Presentacion\Controllers\CajaController;
 use Patronato\Presentacion\Controllers\CobroController;
 use Patronato\Presentacion\Controllers\ComprobanteController;
 use Patronato\Presentacion\Controllers\ConceptoController;
+use Patronato\Presentacion\Controllers\PagoController;
 use Patronato\Presentacion\Controllers\ParametroCobroController;
 
 // Enlace firmado para compartir el comprobante por mensajería; se abre sin sesión
@@ -29,6 +31,23 @@ Route::middleware(['auth', 'verified'])
             ->whereNumber('pago')
             ->middleware('throttle:10,1')
             ->name('comprobantes.enviar');
+
+        Route::middleware("can:permiso,'cobros','ver'")->group(function () {
+            Route::get('pagos', [PagoController::class, 'index'])->name('pagos.index');
+            Route::get('pagos/{pago}', [PagoController::class, 'show'])->whereNumber('pago')->name('pagos.show');
+        });
+
+        Route::post('pagos/{pago}/anulacion', [PagoController::class, 'solicitarAnulacion'])
+            ->whereNumber('pago')
+            ->middleware("can:permiso,'cobros','anular'")
+            ->name('pagos.anulacion');
+
+        // Un segundo directivo aprueba o rechaza; el servicio impide resolver la propia solicitud
+        Route::middleware("can:permiso,'cobros','aprobar'")->group(function () {
+            Route::get('anulaciones', [AnulacionController::class, 'index'])->name('anulaciones.index');
+            Route::post('anulaciones/{solicitud}/aprobar', [AnulacionController::class, 'aprobar'])->whereNumber('solicitud')->name('anulaciones.aprobar');
+            Route::post('anulaciones/{solicitud}/rechazar', [AnulacionController::class, 'rechazar'])->whereNumber('solicitud')->name('anulaciones.rechazar');
+        });
 
         Route::middleware("can:permiso,'cajas','registrar'")->group(function () {
             Route::get('cajas', [CajaController::class, 'index'])->name('cajas.index');

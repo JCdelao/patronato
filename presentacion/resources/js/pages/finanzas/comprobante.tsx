@@ -1,9 +1,10 @@
 import { Form, Head, Link } from '@inertiajs/react';
-import { Copy, Download, Mail, MessageCircle, Plus } from 'lucide-react';
+import { Ban, Copy, Download, Mail, MessageCircle, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import CobroController from '@/actions/Patronato/Presentacion/Controllers/CobroController';
 import ComprobanteController from '@/actions/Patronato/Presentacion/Controllers/ComprobanteController';
 import InputError from '@/components/input-error';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -25,6 +26,9 @@ type Comprobante = {
     monto: string;
     periodos: Periodo[];
     cobrador: string;
+    anulado: boolean;
+    anulado_en: string | null;
+    motivo_anulacion: string | null;
 };
 
 const formatoMonto = (monto: string) =>
@@ -84,6 +88,18 @@ export default function ComprobantePago({
                         {comprobante.residencial}
                     </p>
                 </div>
+
+                {comprobante.anulado && (
+                    <Alert variant="destructive">
+                        <Ban />
+                        <AlertTitle>Pago anulado</AlertTitle>
+                        <AlertDescription>
+                            {comprobante.anulado_en &&
+                                `Anulado el ${comprobante.anulado_en}. `}
+                            Motivo: {comprobante.motivo_anulacion}
+                        </AlertDescription>
+                    </Alert>
+                )}
 
                 <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-3 rounded-xl border p-4">
                     <dt className="text-muted-foreground">Recibo</dt>

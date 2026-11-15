@@ -13,4 +13,6 @@ export type NavItem = {
     disabled?: boolean;
     icon?: LucideIcon | null;
     isActive?: boolean;
+    // Número de pendientes junto a la opción
+    badge?: number;
 };

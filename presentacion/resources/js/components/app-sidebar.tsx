@@ -1,5 +1,6 @@
 import { Link, usePage } from '@inertiajs/react';
 import {
+    Ban,
     Building2,
     Car,
     ChartColumn,
@@ -13,8 +14,10 @@ import {
     Vault,
     Wallet,
 } from 'lucide-react';
+import AnulacionController from '@/actions/Patronato/Presentacion/Controllers/AnulacionController';
 import CajaController from '@/actions/Patronato/Presentacion/Controllers/CajaController';
 import CobroController from '@/actions/Patronato/Presentacion/Controllers/CobroController';
+import PagoController from '@/actions/Patronato/Presentacion/Controllers/PagoController';
 import ParametroCobroController from '@/actions/Patronato/Presentacion/Controllers/ParametroCobroController';
 import ReporteCobrosController from '@/actions/Patronato/Presentacion/Controllers/ReporteCobrosController';
 import AuditoriaController from '@/actions/Patronato/Presentacion/Controllers/AuditoriaController';
@@ -59,10 +62,16 @@ export function AppSidebar() {
         },
         {
             title: 'Cobros',
-            href: '#',
+            href: PagoController.index(),
             icon: Wallet,
-            disabled: true,
             visible: auth.permisos.includes('cobros.ver'),
+        },
+        {
+            title: 'Anulaciones por aprobar',
+            href: AnulacionController.index(),
+            icon: Ban,
+            badge: auth.anulacionesPendientes,
+            visible: auth.permisos.includes('cobros.aprobar'),
         },
         {
             title: 'Cierre de caja',

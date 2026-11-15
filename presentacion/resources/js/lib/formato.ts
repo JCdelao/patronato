@@ -17,3 +17,11 @@ export const formatoFechaHora = (fecha: string) =>
 
 // Convierte un monto a centavos para sumar y restar sin errores de redondeo
 export const centavos = (monto: string) => Math.round(Number(monto) * 100);
+
+// Fecha sin hora (Y-m-d) con el mes en letras
+export const formatoFecha = (fecha: string) =>
+    new Date(`${fecha}T00:00:00`).toLocaleDateString('es-HN', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+    });

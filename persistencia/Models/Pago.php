@@ -22,13 +22,21 @@ use Patronato\Persistencia\Excepciones\CobroDeCajaCerrada;
  * @property string|null $numero_recibo
  * @property int|null $caja_id
  * @property int|null $registrado_por
+ * @property int|null $anulado_por
+ * @property int|null $anulacion_aprobada_por
+ * @property Carbon|null $anulado_en
+ * @property string|null $motivo_anulacion
  * @property Carbon $created_at
  * @property-read Residencial $residencial
  * @property-read Vivienda $vivienda
  * @property-read User|null $cobrador
  * @property-read Collection<int, PagoAplicacion> $aplicaciones
+ * @property-read Caja|null $caja
+ * @property-read User|null $anuladoPor
+ * @property-read User|null $aprobadorAnulacion
+ * @property-read Collection<int, SolicitudAnulacion> $solicitudesAnulacion
  */
-#[Fillable(['residencial_id', 'vivienda_id', 'forma_pago', 'estado', 'origen', 'monto', 'fecha_pago', 'numero_recibo', 'caja_id', 'registrado_por'])]
+#[Fillable(['residencial_id', 'vivienda_id', 'forma_pago', 'estado', 'origen', 'monto', 'fecha_pago', 'numero_recibo', 'caja_id', 'registrado_por', 'anulado_por', 'anulacion_aprobada_por', 'anulado_en', 'motivo_anulacion'])]
 class Pago extends Model
 {
     use PerteneceAResidencial;
@@ -94,6 +102,7 @@ class Pago extends Model
         return [
             'monto' => 'decimal:2',
             'fecha_pago' => 'date',
+            'anulado_en' => 'datetime',
         ];
     }
 
@@ -131,5 +140,45 @@ class Pago extends Model
     public function cobrador(): BelongsTo
     {
         return $this->belongsTo(User::class, 'registrado_por');
+    }
+
+    /**
+     * Caja del cobrador en la que entró el pago en efectivo
+     *
+     * @return BelongsTo<Caja, $this>
+     */
+    public function caja(): BelongsTo
+    {
+        return $this->belongsTo(Caja::class);
+    }
+
+    /**
+     * Directivo que solicitó la anulación
+     *
+     * @return BelongsTo<User, $this>
+     */
+    public function anuladoPor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'anulado_por');
+    }
+
+    /**
+     * Directivo que aprobó la anulación
+     *
+     * @return BelongsTo<User, $this>
+     */
+    public function aprobadorAnulacion(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'anulacion_aprobada_por');
+    }
+
+    /**
+     * Solicitudes de anulación del pago, de la más reciente a la más antigua
+     *
+     * @return HasMany<SolicitudAnulacion, $this>
+     */
+    public function solicitudesAnulacion(): HasMany
+    {
+        return $this->hasMany(SolicitudAnulacion::class)->latest()->latest('id');
     }
 }

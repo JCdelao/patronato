@@ -89,3 +89,24 @@ test('a voided demo payment is approved by someone other than who requested it',
             && $pago->anulacion_aprobada_por !== null
             && $pago->anulado_por !== $pago->anulacion_aprobada_por))->toBeTrue();
 });
+
+test('the demo voiding follows the HU-23 rules and leaves one request to approve', function () {
+    $tesorero = ($this->cuenta)('tesorero@laspalmas.demo');
+    $presidente = ($this->cuenta)('presidente@laspalmas.demo');
+
+    $anulado = DB::table('pagos')->where('estado', 'anulado')->sole();
+
+    expect($anulado->anulado_por)->toBe($tesorero->id)
+        ->and($anulado->anulacion_aprobada_por)->toBe($presidente->id)
+        ->and(DB::table('solicitudes_anulacion')->where('pago_id', $anulado->id)->value('estado'))->toBe('aprobada')
+        ->and(DB::table('pago_aplicaciones')->where('pago_id', $anulado->id)->count())->toBe(2);
+
+    $this->actingAs($presidente)
+        ->get(route('finanzas.anulaciones.index'))
+        ->assertOk()
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->has('solicitudes', 1)
+            ->where('solicitudes.0.solicitada_por', 'Teresa Flores')
+            ->where('solicitudes.0.puede_resolver', true)
+            ->where('auth.anulacionesPendientes', 1));
+});

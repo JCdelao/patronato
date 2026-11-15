@@ -28,6 +28,8 @@
         .periodos td { padding: 8px; border-bottom: 1px solid #d9e2ec; }
         .derecha { text-align: right; }
         .total td { font-weight: bold; border-bottom: none; font-size: 14px; }
+        .anulado { margin-top: 16px; padding: 10px 12px; border: 2px solid #b91c1c; color: #b91c1c; }
+        .anulado strong { font-size: 16px; letter-spacing: 2px; }
         .pie { margin-top: 32px; color: #52606d; font-size: 10px; text-align: center; }
     </style>
 </head>
@@ -52,6 +54,17 @@
             </td>
         </tr>
     </table>
+
+    @if ($comprobante['anulado'])
+        <div class="anulado">
+            <strong>ANULADO</strong>
+            @if ($comprobante['anulado_en'])
+                el {{ CarbonImmutable::parse($comprobante['anulado_en'])->locale('es')->isoFormat('D [de] MMMM [de] YYYY, HH:mm') }}
+            @endif
+            <div>Motivo: {{ $comprobante['motivo_anulacion'] }}</div>
+            <div>Este pago no tiene validez y no reduce el saldo de la vivienda.</div>
+        </div>
+    @endif
 
     <table class="datos">
         <tr><th>Fecha</th><td>{{ $fecha }}, {{ $comprobante['hora'] }}</td></tr>

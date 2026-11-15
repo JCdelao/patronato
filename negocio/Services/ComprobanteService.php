@@ -75,7 +75,9 @@ class ComprobanteService
     /**
      * Datos que muestra el comprobante
      *
-     * @return array{pago_id: int, residencial: string, direccion: string|null, telefono: string|null, numero_recibo: string, fecha: string, hora: string, vivienda: string, monto: string, periodos: list<array{periodo: string, concepto: string, monto: string}>, cobrador: string}
+     * Un pago anulado conserva su comprobante, marcado como anulado con la fecha y el motivo.
+     *
+     * @return array{pago_id: int, residencial: string, direccion: string|null, telefono: string|null, numero_recibo: string, fecha: string, hora: string, vivienda: string, monto: string, periodos: list<array{periodo: string, concepto: string, monto: string}>, cobrador: string, anulado: bool, anulado_en: string|null, motivo_anulacion: string|null}
      */
     public function datos(Pago $pago): array
     {
@@ -102,6 +104,9 @@ class ComprobanteService
             'monto' => $pago->monto,
             'periodos' => $periodos,
             'cobrador' => $pago->cobrador->name ?? 'Sin cobrador',
+            'anulado' => $pago->estado === Pago::ANULADO,
+            'anulado_en' => $pago->anulado_en?->setTimezone(self::ZONA_LOCAL)->format('Y-m-d H:i'),
+            'motivo_anulacion' => $pago->estado === Pago::ANULADO ? $pago->motivo_anulacion : null,
         ];
     }
 

@@ -27,6 +27,8 @@ class DemostracionSeeder extends Seeder
 
     public const ADMIN_PLATAFORMA = 'admin@demo.local';
 
+    private const MOTIVO_ANULACION = 'Recibo emitido a la vivienda equivocada.';
+
     /**
      * Meses con cargos: septiembre, octubre y noviembre de 2026
      */
@@ -68,7 +70,7 @@ class DemostracionSeeder extends Seeder
         $residencial = $this->residencial(self::RESIDENCIAL, 'Col. Las Palmas, Tegucigalpa');
 
         $this->cuenta($residencial, 'admin_tecnico', 'Técnico Las Palmas', 'tecnico@laspalmas.demo');
-        $this->cuenta($residencial, 'presidente', 'Patricia Mejía', 'presidente@laspalmas.demo');
+        $presidente = $this->cuenta($residencial, 'presidente', 'Patricia Mejía', 'presidente@laspalmas.demo');
         $this->cuenta($residencial, 'secretario', 'Sergio Lagos', 'secretario@laspalmas.demo');
         $tesorero = $this->cuenta($residencial, 'tesorero', 'Teresa Flores', 'tesorero@laspalmas.demo');
         $this->cuenta($residencial, 'fiscal', 'Fernando Castro', 'fiscal@laspalmas.demo');
@@ -100,7 +102,7 @@ class DemostracionSeeder extends Seeder
         $this->cobro($residencial, $cerrada, $cobrador, $viviendas['A-01'], '2026-10-05', [$cargos['A-01']['2026-09-01'], $cargos['A-01']['2026-10-01']]);
         $this->cobro($residencial, $cerrada, $cobrador, $viviendas['A-02'], '2026-10-05', [$cargos['A-02']['2026-09-01']]);
         $this->cobro($residencial, $cerrada, $cobrador, $viviendas['B-01'], '2026-10-12', [$cargos['B-01']['2026-09-01']]);
-        $this->cobro($residencial, $cerrada, $cobrador, $viviendas['T1-101'], '2026-10-12', [$cargos['T1-101']['2026-09-01']], anulacionAprobadaPor: $tesorero);
+        $this->cobro($residencial, $cerrada, $cobrador, $viviendas['T1-101'], '2026-10-12', [$cargos['T1-101']['2026-09-01']], anulacion: ['solicitada_por' => $tesorero, 'aprobada_por' => $presidente]);
         $this->cerrar($cerrada, $tesorero, '2550.00', 'Faltaron L 50.00 del cambio; el cobrador los repone en la próxima entrega.');
 
         // Caja abierta de este mes, lista para el cierre de caja
@@ -112,7 +114,10 @@ class DemostracionSeeder extends Seeder
         // Otra cobradora con su caja abierta
         $abierta2 = $this->caja($residencial, $cobrador2, $this->ahora->setDate(2026, 11, 8)->setTime(16, 0));
         $this->cobro($residencial, $abierta2, $cobrador2, $viviendas['T1-102'], '2026-11-08', [$cargos['T1-102']['2026-09-01'], $cargos['T1-102']['2026-10-01'], $cargos['T1-102']['2026-11-01']]);
-        $this->cobro($residencial, $abierta2, $cobrador2, $viviendas['B-02'], '2026-11-12', [$cargos['B-02']['2026-09-01']]);
+        $pagoB02 = $this->cobro($residencial, $abierta2, $cobrador2, $viviendas['B-02'], '2026-11-12', [$cargos['B-02']['2026-09-01']]);
+
+        // Anulación pedida por la tesorera, para que el presidente o el fiscal la resuelvan
+        $this->solicitarAnulacion($residencial, $pagoB02, $tesorero, 'El vecino pagó por transferencia; este cobro en efectivo quedó duplicado.');
     }
 
     private function losPinos(): void
@@ -286,9 +291,13 @@ class DemostracionSeeder extends Seeder
     /**
      * Registra un cobro en efectivo que paga completos los meses indicados
      *
+     * Si se indica la anulación, el pago queda anulado con su solicitud aprobada,
+     * como lo deja la HU-23: un directivo la pide y otro la aprueba.
+     *
      * @param  list<list<array{id: int, monto: string}>>  $meses
+     * @param  array{solicitada_por: int, aprobada_por: int}|null  $anulacion
      */
-    private function cobro(int $residencialId, int $cajaId, int $cobradorId, int $viviendaId, string $fecha, array $meses, ?int $anulacionAprobadaPor = null): void
+    private function cobro(int $residencialId, int $cajaId, int $cobradorId, int $viviendaId, string $fecha, array $meses, ?array $anulacion = null): int
     {
         $cargos = array_merge(...$meses);
         $centavos = array_sum(array_map(fn (array $cargo): int => (int) round((float) $cargo['monto'] * 100), $cargos));
@@ -302,27 +311,36 @@ class DemostracionSeeder extends Seeder
             'residencial_id' => $residencialId,
             'vivienda_id' => $viviendaId,
             'forma_pago' => 'efectivo',
-            'estado' => $anulacionAprobadaPor === null ? 'confirmado' : 'anulado',
+            'estado' => $anulacion === null ? 'confirmado' : 'anulado',
             'origen' => 'sistema',
             'monto' => number_format($centavos / 100, 2, '.', ''),
             'fecha_pago' => $fecha,
             'numero_recibo' => (string) $recibo,
             'caja_id' => $cajaId,
             'registrado_por' => $cobradorId,
-            // El cobrador solicita la anulación y otro directivo la aprueba
-            'anulado_por' => $anulacionAprobadaPor === null ? null : $cobradorId,
-            'anulacion_aprobada_por' => $anulacionAprobadaPor,
-            'anulado_en' => $anulacionAprobadaPor === null ? null : $momento->addHour(),
-            'motivo_anulacion' => $anulacionAprobadaPor === null ? null : 'Recibo emitido a la vivienda equivocada.',
+            'anulado_por' => $anulacion['solicitada_por'] ?? null,
+            'anulacion_aprobada_por' => $anulacion['aprobada_por'] ?? null,
+            'anulado_en' => $anulacion === null ? null : $momento->addDay(),
+            'motivo_anulacion' => $anulacion === null ? null : self::MOTIVO_ANULACION,
             'created_at' => $momento,
             'updated_at' => $momento,
         ]);
 
-        // Un pago anulado no cubre ningún mes
-        if ($anulacionAprobadaPor !== null) {
-            return;
+        if ($anulacion !== null) {
+            DB::table('solicitudes_anulacion')->insert([
+                'residencial_id' => $residencialId,
+                'pago_id' => $pagoId,
+                'solicitada_por' => $anulacion['solicitada_por'],
+                'motivo' => self::MOTIVO_ANULACION,
+                'estado' => 'aprobada',
+                'resuelta_por' => $anulacion['aprobada_por'],
+                'resuelta_en' => $momento->addDay(),
+                'created_at' => $momento->addHours(2),
+                'updated_at' => $momento->addDay(),
+            ]);
         }
 
+        // Las aplicaciones de un pago anulado se conservan como evidencia; solo cuentan las de pagos confirmados
         foreach ($cargos as $cargo) {
             DB::table('pago_aplicaciones')->insert([
                 'residencial_id' => $residencialId,
@@ -332,6 +350,24 @@ class DemostracionSeeder extends Seeder
                 'created_at' => $momento,
             ]);
         }
+
+        return (int) $pagoId;
+    }
+
+    /**
+     * Deja una solicitud de anulación esperando la aprobación de otro directivo
+     */
+    private function solicitarAnulacion(int $residencialId, int $pagoId, int $solicitadaPor, string $motivo): void
+    {
+        DB::table('solicitudes_anulacion')->insert([
+            'residencial_id' => $residencialId,
+            'pago_id' => $pagoId,
+            'solicitada_por' => $solicitadaPor,
+            'motivo' => $motivo,
+            'estado' => 'pendiente',
+            'created_at' => $this->ahora,
+            'updated_at' => $this->ahora,
+        ]);
     }
 
     private function cerrar(int $cajaId, int $tesoreroId, string $entregado, string $justificacion): void

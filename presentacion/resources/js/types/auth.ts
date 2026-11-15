@@ -16,6 +16,7 @@ export type Auth = {
     permisos: string[];
     puedeAdministrarUsuarios: boolean;
     rol: string | null;
+    anulacionesPendientes: number;
 };
 
 export type Passkey = {
