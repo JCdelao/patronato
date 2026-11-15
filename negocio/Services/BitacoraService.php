@@ -50,6 +50,10 @@ class BitacoraService
         'modalidad' => 'Modalidad',
         'vigente_desde' => 'Aplica desde',
         'desglose' => 'Desglose informativo',
+        'fecha_pago' => 'Fecha de pago',
+        'banco' => 'Banco',
+        'numero_referencia' => 'Número de referencia',
+        'cuenta_receptora' => 'Cuenta receptora',
     ];
 
     public function __construct(private AuditoriaRepositorio $auditoria) {}

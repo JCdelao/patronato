@@ -112,6 +112,21 @@ class PagoRepositorio
     }
 
     /**
+     * Indica si el residencial ya tiene un pago vigente con esa referencia en ese banco
+     *
+     * Sigue la regla del índice pagos_referencia_banco_unique: el banco no distingue
+     * mayúsculas y los pagos rechazados o anulados liberan la referencia.
+     */
+    public function existeReferencia(string $banco, string $numeroReferencia): bool
+    {
+        return Pago::query()
+            ->whereRaw('lower(banco) = ?', [mb_strtolower($banco)])
+            ->where('numero_referencia', $numeroReferencia)
+            ->whereNotIn('estado', [Pago::RECHAZADO, Pago::ANULADO])
+            ->exists();
+    }
+
+    /**
      * Vuelve a leer el pago reservándolo hasta terminar la transacción
      */
     public function bloquearRegistro(int $pagoId): ?Pago

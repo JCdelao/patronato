@@ -10,6 +10,7 @@ use Patronato\Presentacion\Controllers\PagoController;
 use Patronato\Presentacion\Controllers\ParametroCobroController;
 use Patronato\Presentacion\Controllers\TarifaEspecialController;
 use Patronato\Presentacion\Controllers\TipoViviendaController;
+use Patronato\Presentacion\Controllers\TransferenciaController;
 
 // Enlace firmado para compartir el comprobante por mensajería; se abre sin sesión
 Route::get('comprobantes/{pago}', [ComprobanteController::class, 'publico'])
@@ -37,6 +38,17 @@ Route::middleware(['auth', 'verified'])
         Route::middleware("can:permiso,'cobros','ver'")->group(function () {
             Route::get('pagos', [PagoController::class, 'index'])->name('pagos.index');
             Route::get('pagos/{pago}', [PagoController::class, 'show'])->whereNumber('pago')->name('pagos.show');
+            Route::get('pagos/{pago}/transferencia/comprobante', [TransferenciaController::class, 'comprobante'])
+                ->whereNumber('pago')
+                ->name('transferencias.comprobante');
+        });
+
+        // Registrar transferencias no da permiso de cobrar en efectivo (cobros.registrar)
+        Route::middleware("can:permiso,'transferencias','registrar'")->group(function () {
+            Route::get('transferencias/registrar', [TransferenciaController::class, 'create'])->name('transferencias.create');
+            Route::post('transferencias', [TransferenciaController::class, 'store'])
+                ->middleware('throttle:30,1')
+                ->name('transferencias.store');
         });
 
         Route::post('pagos/{pago}/anulacion', [PagoController::class, 'solicitarAnulacion'])

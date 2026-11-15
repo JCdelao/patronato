@@ -1,7 +1,8 @@
 import { Form, Head, Link } from '@inertiajs/react';
-import { ArrowLeft, Ban, Clock, FileText } from 'lucide-react';
+import { ArrowLeft, Ban, Clock, FileText, Paperclip } from 'lucide-react';
 import ComprobanteController from '@/actions/Patronato/Presentacion/Controllers/ComprobanteController';
 import PagoController from '@/actions/Patronato/Presentacion/Controllers/PagoController';
+import TransferenciaController from '@/actions/Patronato/Presentacion/Controllers/TransferenciaController';
 import EstadoPago from '@/components/finanzas/estado-pago';
 import InputError from '@/components/input-error';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -31,6 +32,12 @@ type DetallePago = {
     forma_pago: string;
     estado: string;
     cobrador: string | null;
+    transferencia: {
+        banco: string | null;
+        numero_referencia: string | null;
+        cuenta_receptora: string | null;
+        tiene_comprobante: boolean;
+    } | null;
     caja_cerrada: boolean;
     saldo_vivienda: string;
     anulacion: {
@@ -57,9 +64,14 @@ export default function Pago({ pago }: { pago: DetallePago }) {
         (solicitud) => solicitud.estado === 'pendiente',
     );
 
+    // Una transferencia recibe su número de recibo cuando se confirma
+    const titulo = pago.numero_recibo
+        ? `Recibo N.º ${pago.numero_recibo}`
+        : `Transferencia ref. ${pago.transferencia?.numero_referencia ?? ''}`;
+
     return (
         <>
-            <Head title={`Pago N.º ${pago.numero_recibo}`} />
+            <Head title={titulo} />
 
             <div className="mx-auto w-full max-w-2xl space-y-6 p-4 md:p-10">
                 <Link
@@ -73,7 +85,7 @@ export default function Pago({ pago }: { pago: DetallePago }) {
                 <div className="flex flex-wrap items-start justify-between gap-4">
                     <div>
                         <h1 className="text-3xl font-bold tracking-tight">
-                            Recibo N.º {pago.numero_recibo}
+                            {titulo}
                         </h1>
                         <p className="mt-1 text-muted-foreground">
                             Vivienda {pago.vivienda} ·{' '}
@@ -95,6 +107,17 @@ export default function Pago({ pago }: { pago: DetallePago }) {
                                     ` · ${formatoFechaHora(pago.anulacion.anulado_en)}`}
                             </p>
                             <p>Motivo: {pago.anulacion.motivo}</p>
+                        </AlertDescription>
+                    </Alert>
+                )}
+
+                {pago.estado === 'pendiente_verificacion' && (
+                    <Alert>
+                        <Clock />
+                        <AlertTitle>Pendiente de verificación</AlertTitle>
+                        <AlertDescription>
+                            No reduce el saldo de la vivienda hasta que se
+                            confirme que el dinero ingresó a la cuenta.
                         </AlertDescription>
                     </Alert>
                 )}
@@ -128,7 +151,29 @@ export default function Pago({ pago }: { pago: DetallePago }) {
                     <dd className="font-semibold capitalize">
                         {pago.forma_pago}
                     </dd>
-                    <dt className="text-muted-foreground">Cobrador</dt>
+                    {pago.transferencia && (
+                        <>
+                            <dt className="text-muted-foreground">Banco</dt>
+                            <dd className="font-semibold">
+                                {pago.transferencia.banco}
+                            </dd>
+                            <dt className="text-muted-foreground">
+                                Referencia
+                            </dt>
+                            <dd className="font-semibold">
+                                {pago.transferencia.numero_referencia}
+                            </dd>
+                            <dt className="text-muted-foreground">
+                                Cuenta receptora
+                            </dt>
+                            <dd className="font-semibold">
+                                {pago.transferencia.cuenta_receptora}
+                            </dd>
+                        </>
+                    )}
+                    <dt className="text-muted-foreground">
+                        {pago.transferencia ? 'Registró' : 'Cobrador'}
+                    </dt>
                     <dd className="font-semibold">{pago.cobrador ?? '—'}</dd>
                     <dt className="text-muted-foreground">Registrado</dt>
                     <dd className="font-semibold">
@@ -143,12 +188,32 @@ export default function Pago({ pago }: { pago: DetallePago }) {
                     </dd>
                 </dl>
 
-                <Button variant="outline" asChild>
-                    <Link href={ComprobanteController.show.url(pago.id)}>
-                        <FileText />
-                        Ver comprobante
-                    </Link>
-                </Button>
+                <div className="flex flex-wrap gap-3">
+                    {pago.numero_recibo && (
+                        <Button variant="outline" asChild>
+                            <Link
+                                href={ComprobanteController.show.url(pago.id)}
+                            >
+                                <FileText />
+                                Ver comprobante
+                            </Link>
+                        </Button>
+                    )}
+                    {pago.transferencia?.tiene_comprobante && (
+                        <Button variant="outline" asChild>
+                            <a
+                                href={TransferenciaController.comprobante.url(
+                                    pago.id,
+                                )}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                <Paperclip />
+                                Ver comprobante de la transferencia
+                            </a>
+                        </Button>
+                    )}
+                </div>
 
                 {pago.puede_solicitar && (
                     <Form

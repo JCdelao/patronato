@@ -41,7 +41,7 @@ class AnulacionPagoService
     /**
      * Pagos del residencial para la lista de cobros
      *
-     * @return LengthAwarePaginator<int, array{id: int, numero_recibo: string|null, fecha_pago: string, vivienda: string, monto: string, forma_pago: string, estado: string, cobrador: string|null}>
+     * @return LengthAwarePaginator<int, array{id: int, numero_recibo: string|null, fecha_pago: string, vivienda: string, monto: string, forma_pago: string, estado: string, cobrador: string|null, numero_referencia: string|null}>
      */
     public function listado(string $buscar): LengthAwarePaginator
     {
@@ -56,6 +56,7 @@ class AnulacionPagoService
             'forma_pago' => $pago->forma_pago,
             'estado' => $pago->estado,
             'cobrador' => $pago->cobrador?->name,
+            'numero_referencia' => $pago->numero_referencia,
         ]);
     }
 
@@ -78,6 +79,13 @@ class AnulacionPagoService
             'forma_pago' => $pago->forma_pago,
             'estado' => $pago->estado,
             'cobrador' => $pago->cobrador?->name,
+            // Datos de la transferencia; queda sin recibo hasta que se confirme (HU-26)
+            'transferencia' => $pago->forma_pago === Pago::TRANSFERENCIA ? [
+                'banco' => $pago->banco,
+                'numero_referencia' => $pago->numero_referencia,
+                'cuenta_receptora' => $pago->cuenta_receptora,
+                'tiene_comprobante' => $pago->comprobante_path !== null,
+            ] : null,
             'caja_cerrada' => $pago->caja?->estado === Caja::CERRADA,
             'saldo_vivienda' => $this->pagos->saldoDeVivienda($pago->vivienda_id),
             'anulacion' => $pago->estado === Pago::ANULADO ? [

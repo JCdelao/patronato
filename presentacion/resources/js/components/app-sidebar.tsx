@@ -6,6 +6,7 @@ import {
     ChartColumn,
     HandCoins,
     Home,
+    Landmark,
     LayoutGrid,
     ScrollText,
     ShieldCheck,
@@ -20,6 +21,7 @@ import CobroController from '@/actions/Patronato/Presentacion/Controllers/CobroC
 import PagoController from '@/actions/Patronato/Presentacion/Controllers/PagoController';
 import ParametroCobroController from '@/actions/Patronato/Presentacion/Controllers/ParametroCobroController';
 import ReporteCobrosController from '@/actions/Patronato/Presentacion/Controllers/ReporteCobrosController';
+import TransferenciaController from '@/actions/Patronato/Presentacion/Controllers/TransferenciaController';
 import AuditoriaController from '@/actions/Patronato/Presentacion/Controllers/AuditoriaController';
 import CuentaController from '@/actions/Patronato/Presentacion/Controllers/CuentaController';
 import ViviendaController from '@/actions/Patronato/Presentacion/Controllers/ViviendaController';
@@ -59,6 +61,12 @@ export function AppSidebar() {
             href: CobroController.create(),
             icon: HandCoins,
             visible: auth.permisos.includes('cobros.registrar'),
+        },
+        {
+            title: 'Registrar transferencia',
+            href: TransferenciaController.create(),
+            icon: Landmark,
+            visible: auth.permisos.includes('transferencias.registrar'),
         },
         {
             title: 'Cobros',
