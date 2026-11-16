@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Inertia\Middleware;
 use Patronato\Negocio\Services\AnulacionPagoService;
 use Patronato\Negocio\Services\PermisoService;
+use Patronato\Negocio\Services\TransferenciaService;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -42,6 +43,8 @@ class HandleInertiaRequests extends Middleware
                 'rol' => $request->user()?->rol?->nombre,
                 // Solicitudes de anulación por aprobar, para el número del menú
                 'anulacionesPendientes' => fn () => $request->user() ? app(AnulacionPagoService::class)->cantidadPendientes($request->user()) : 0,
+                // Solo una cuenta vinculada a un residente activo ve el portal en el menú (HU-25)
+                'esResidente' => fn () => $request->user() !== null && app(TransferenciaService::class)->esResidente($request->user()),
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];

@@ -22,6 +22,10 @@ use Patronato\Persistencia\Excepciones\CobroDeCajaCerrada;
  * @property string|null $numero_recibo
  * @property int|null $caja_id
  * @property int|null $registrado_por
+ * @property string|null $banco
+ * @property string|null $numero_referencia
+ * @property string|null $cuenta_receptora
+ * @property string|null $comprobante_path
  * @property int|null $anulado_por
  * @property int|null $anulacion_aprobada_por
  * @property Carbon|null $anulado_en
@@ -36,16 +40,34 @@ use Patronato\Persistencia\Excepciones\CobroDeCajaCerrada;
  * @property-read User|null $aprobadorAnulacion
  * @property-read Collection<int, SolicitudAnulacion> $solicitudesAnulacion
  */
-#[Fillable(['residencial_id', 'vivienda_id', 'forma_pago', 'estado', 'origen', 'monto', 'fecha_pago', 'numero_recibo', 'caja_id', 'registrado_por', 'anulado_por', 'anulacion_aprobada_por', 'anulado_en', 'motivo_anulacion'])]
+#[Fillable(['residencial_id', 'vivienda_id', 'forma_pago', 'estado', 'origen', 'monto', 'fecha_pago', 'numero_recibo', 'caja_id', 'registrado_por', 'banco', 'numero_referencia', 'cuenta_receptora', 'comprobante_path', 'anulado_por', 'anulacion_aprobada_por', 'anulado_en', 'motivo_anulacion'])]
 class Pago extends Model
 {
     use PerteneceAResidencial;
 
     public const EFECTIVO = 'efectivo';
 
+    public const TRANSFERENCIA = 'transferencia';
+
     public const CONFIRMADO = 'confirmado';
 
+    public const PENDIENTE_VERIFICACION = 'pendiente_verificacion';
+
+    /**
+     * Transferencia que el vecino reportó desde el portal (HU-25)
+     */
+    public const REPORTADO_POR_VECINO = 'reportado_por_vecino';
+
+    public const RECHAZADO = 'rechazado';
+
     public const ANULADO = 'anulado';
+
+    /**
+     * Origen del registro: el sistema interno o el portal del residente
+     */
+    public const SISTEMA = 'sistema';
+
+    public const PORTAL = 'portal';
 
     /**
      * Campos que puede cambiar una anulación en un cobro de caja cerrada

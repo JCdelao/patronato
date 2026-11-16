@@ -2,6 +2,7 @@
 
 namespace Patronato\Persistencia\Repositorios;
 
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
@@ -109,6 +110,37 @@ class PagoRepositorio
             ->latest('id')
             ->paginate($porPagina)
             ->withQueryString();
+    }
+
+    /**
+     * Indica si el residencial ya tiene un pago vigente con esa referencia en ese banco
+     *
+     * Sigue la regla del índice pagos_referencia_banco_unique: el banco no distingue
+     * mayúsculas y los pagos rechazados o anulados liberan la referencia.
+     */
+    public function existeReferencia(string $banco, string $numeroReferencia): bool
+    {
+        return Pago::query()
+            ->whereRaw('lower(banco) = ?', [mb_strtolower($banco)])
+            ->where('numero_referencia', $numeroReferencia)
+            ->whereNotIn('estado', [Pago::RECHAZADO, Pago::ANULADO])
+            ->exists();
+    }
+
+    /**
+     * Transferencias que la cuenta reportó desde el portal, de la más reciente a la más antigua
+     *
+     * @return Collection<int, Pago>
+     */
+    public function reportesDe(int $usuarioId): Collection
+    {
+        return Pago::query()
+            ->where('origen', Pago::PORTAL)
+            ->where('registrado_por', $usuarioId)
+            ->with('vivienda')
+            ->latest('fecha_pago')
+            ->latest('id')
+            ->get();
     }
 
     /**

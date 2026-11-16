@@ -6,9 +6,12 @@ import {
     ChartColumn,
     HandCoins,
     Home,
+    Landmark,
     LayoutGrid,
     Receipt,
+    ReceiptText,
     ScrollText,
+    Send,
     ShieldCheck,
     SlidersHorizontal,
     Users,
@@ -21,7 +24,9 @@ import CobroController from '@/actions/Patronato/Presentacion/Controllers/CobroC
 import EgresoController from '@/actions/Patronato/Presentacion/Controllers/EgresoController';
 import PagoController from '@/actions/Patronato/Presentacion/Controllers/PagoController';
 import ParametroCobroController from '@/actions/Patronato/Presentacion/Controllers/ParametroCobroController';
+import PortalTransferenciaController from '@/actions/Patronato/Presentacion/Controllers/PortalTransferenciaController';
 import ReporteCobrosController from '@/actions/Patronato/Presentacion/Controllers/ReporteCobrosController';
+import TransferenciaController from '@/actions/Patronato/Presentacion/Controllers/TransferenciaController';
 import AuditoriaController from '@/actions/Patronato/Presentacion/Controllers/AuditoriaController';
 import CuentaController from '@/actions/Patronato/Presentacion/Controllers/CuentaController';
 import ViviendaController from '@/actions/Patronato/Presentacion/Controllers/ViviendaController';
@@ -45,6 +50,19 @@ export function AppSidebar() {
     const opciones: (NavItem & { visible: boolean })[] = [
         { title: 'Panel', href: dashboard(), icon: LayoutGrid, visible: true },
         {
+            title: 'Mis reportes',
+            href: PortalTransferenciaController.index(),
+            icon: ReceiptText,
+            visible: auth.esResidente && auth.permisos.includes('portal.ver'),
+        },
+        {
+            title: 'Reportar transferencia',
+            href: PortalTransferenciaController.create(),
+            icon: Send,
+            visible:
+                auth.esResidente && auth.permisos.includes('portal.registrar'),
+        },
+        {
             title: 'Residenciales',
             href: ResidencialController.index(),
             icon: Building2,
@@ -61,6 +79,12 @@ export function AppSidebar() {
             href: CobroController.create(),
             icon: HandCoins,
             visible: auth.permisos.includes('cobros.registrar'),
+        },
+        {
+            title: 'Registrar transferencia',
+            href: TransferenciaController.create(),
+            icon: Landmark,
+            visible: auth.permisos.includes('transferencias.registrar'),
         },
         {
             title: 'Cobros',
