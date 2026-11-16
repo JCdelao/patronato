@@ -7,8 +7,7 @@ use Illuminate\Support\Collection;
 /**
  * Acuerdo con la generación de cargos para conocer los meses pendientes de una vivienda
  *
- * La implementación real la aporta el servicio que genera los cargos y se registra
- * en AppServiceProvider en lugar de SinCargosPendientes.
+ * La implementación es CargosPendientesService y se registra en AppServiceProvider.
  */
 interface CargosPendientes
 {

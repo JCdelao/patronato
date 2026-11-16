@@ -22,9 +22,14 @@ rm -rf "${app}/storage"
 ln -sfn "${datos}" "${app}/storage"
 
 cd "${app}"
+# Quita la configuración guardada para que las migraciones usen las variables actuales
+php artisan config:clear
 php artisan migrate --force --no-interaction
 php artisan db:seed --class=RolesSeeder --force --no-interaction
 php artisan storage:link --force
 php artisan optimize
+
+# Programador de Laravel en segundo plano: cargos del mes y respaldo diario
+nohup php artisan schedule:work >> "${datos}/logs/programador.log" 2>&1 &
 
 echo "Patronato listo."

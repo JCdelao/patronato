@@ -1,3 +1,5 @@
+import type { EstadoMora } from '@/types/finanzas';
+
 export type TipoResidente = 'propietario' | 'inquilino' | 'familiar';
 
 export type Residente = {
@@ -21,10 +23,12 @@ export type Vivienda = {
     vivienda_padre_id: number | null;
     pertenece_a: string | null;
     cuota_especial: string | null;
+    mora: EstadoMora | null;
     edificio_torre: string | null;
     calle_bloque: string | null;
     numero: string | null;
     estado_ocupacion: 'ocupada' | 'desocupada';
+    conceptos: { id: number; nombre: string }[];
     residentes: Residente[];
 };
 

@@ -7,6 +7,7 @@ use Inertia\Testing\AssertableInertia;
 use Patronato\Negocio\Contratos\CargosNoIntegrados;
 use Patronato\Negocio\Contratos\CargosPendientes;
 use Patronato\Negocio\Services\CobroService;
+use Patronato\Negocio\Services\PeriodoService;
 use Patronato\Negocio\Services\PermisoService;
 use Patronato\Negocio\Services\SinCargosPendientes;
 use Patronato\Persistencia\Models\Auditoria;
@@ -71,6 +72,7 @@ beforeEach(function () {
         'residencial_id' => $residencialId ?? $cobrador->residencial_id,
         'cobrador_id' => $cobrador->id,
         'estado' => 'abierta',
+        'fecha' => app(PeriodoService::class)->hoy()->toDateString(),
         'abierta_en' => now(),
     ]);
 
@@ -331,15 +333,11 @@ test('the amount and the months must match what is pending', function () {
     expect(Pago::query()->count())->toBe(0);
 });
 
-test('a collector without an open box opens a new one with the payment', function () {
-    // HU-21: la caja se abre con el primer cobro
+test('a collector whose box was closed opens a new one with the payment', function () {
     $this->caja->update(['estado' => 'cerrada']);
 
     $this->actingAs($this->cobrador)
-        ->get(route('finanzas.cobros.create'))
-        ->assertInertia(fn (AssertableInertia $page) => $page->where('cajaAbierta', false));
-
-    $this->post(route('finanzas.cobros.store'), ['vivienda_id' => $this->casa->id, 'monto' => '500', 'cargos' => [$this->enero]])
+        ->post(route('finanzas.cobros.store'), ['vivienda_id' => $this->casa->id, 'monto' => '500', 'cargos' => [$this->enero]])
         ->assertSessionHasNoErrors();
 
     $nueva = Caja::query()->where('estado', 'abierta')->sole();
@@ -347,6 +345,91 @@ test('a collector without an open box opens a new one with the payment', functio
     expect($nueva->id)->not->toBe($this->caja->id)
         ->and($nueva->cobrador_id)->toBe($this->cobrador->id)
         ->and(Pago::query()->sole()->caja_id)->toBe($nueva->id);
+});
+
+test('the first payment of the day opens the box of the collector', function () {
+    $this->caja->delete();
+
+    $this->actingAs($this->cobrador)
+        ->get(route('finanzas.cobros.create'))
+        ->assertInertia(fn (AssertableInertia $page) => $page->where('cajaAbierta', false));
+
+    // Un intento rechazado no abre la caja
+    $this->post(route('finanzas.cobros.store'), ['vivienda_id' => $this->casa->id, 'monto' => '600', 'cargos' => [$this->enero]])
+        ->assertSessionHasErrors('monto');
+
+    expect(Caja::query()->count())->toBe(0);
+
+    $this->post(route('finanzas.cobros.store'), ['vivienda_id' => $this->casa->id, 'monto' => '500', 'cargos' => [$this->enero]])
+        ->assertSessionHasNoErrors();
+
+    $caja = Caja::query()->sole();
+    $registro = Auditoria::query()->where('accion', 'caja_abierta')->sole();
+
+    expect($caja->cobrador_id)->toBe($this->cobrador->id)
+        ->and($caja->estado)->toBe('abierta')
+        ->and($caja->fecha->toDateString())->toBe(app(PeriodoService::class)->hoy()->toDateString())
+        ->and(Pago::query()->sole()->caja_id)->toBe($caja->id)
+        ->and($registro->user_id)->toBe($this->cobrador->id)
+        ->and($registro->entidad_id)->toBe($caja->id);
+
+    $this->get(route('finanzas.cobros.create'))
+        ->assertInertia(fn (AssertableInertia $page) => $page->where('cajaAbierta', true));
+});
+
+test('each box lasts one day and the box of a previous day no longer receives payments', function () {
+    $febrero = ($this->cargo)($this->casa, '2026-02-01');
+
+    $this->caja->delete();
+
+    $this->travelTo('2026-11-10 15:00:00');
+    $ayer = ($this->abrirCaja)($this->cobrador);
+
+    // Al día siguiente, la caja de ayer queda abierta esperando su cierre y se abre otra
+    $this->travelTo('2026-11-11 15:00:00');
+
+    $this->actingAs($this->cobrador)
+        ->post(route('finanzas.cobros.store'), ['vivienda_id' => $this->casa->id, 'monto' => '500', 'cargos' => [$this->enero]])
+        ->assertSessionHasNoErrors();
+
+    $hoy = Caja::query()->whereDate('fecha', '2026-11-11')->sole();
+
+    expect(Pago::query()->sole()->caja_id)->toBe($hoy->id)
+        ->and($ayer->fresh()->estado)->toBe('abierta');
+
+    // El segundo cobro del día entra en la misma caja
+    $this->cargos->porVivienda[$this->casa->id] = [$this->cargos->porVivienda[$this->casa->id][1]];
+
+    $this->post(route('finanzas.cobros.store'), ['vivienda_id' => $this->casa->id, 'monto' => '500', 'cargos' => [$febrero]])
+        ->assertSessionHasNoErrors();
+
+    expect(Caja::query()->count())->toBe(2)
+        ->and(Pago::query()->pluck('caja_id')->unique()->all())->toBe([$hoy->id]);
+});
+
+test('anyone who can register payments collects without someone opening a box', function () {
+    $tesorero = User::factory()->create(['residencial_id' => $this->residencial->id, 'rol_id' => ($this->rol)('tesorero')]);
+    app(PermisoService::class)->actualizar(
+        User::factory()->create(['residencial_id' => $this->residencial->id, 'rol_id' => ($this->rol)(Rol::ADMIN_TECNICO)]),
+        Rol::query()->where('codigo', 'tesorero')->sole(),
+        [...app(PermisoService::class)->deRol($this->residencial->id, ($this->rol)('tesorero')), 'cobros.registrar'],
+    );
+
+    $this->actingAs($tesorero)
+        ->post(route('finanzas.cobros.store'), ['vivienda_id' => $this->casa->id, 'monto' => '500', 'cargos' => [$this->enero]])
+        ->assertSessionHasNoErrors();
+
+    expect(Caja::query()->where('cobrador_id', $tesorero->id)->count())->toBe(1);
+});
+
+test('the president and the treasurer can close boxes by default', function () {
+    $permisos = app(PermisoService::class);
+
+    foreach ([Rol::PRESIDENTE => true, 'tesorero' => true, 'cobrador' => false, 'fiscal' => false, Rol::SECRETARIO => false] as $codigo => $puede) {
+        $usuario = User::factory()->create(['residencial_id' => $this->residencial->id, 'rol_id' => ($this->rol)($codigo)]);
+
+        expect($permisos->puede($usuario, 'cajas', 'registrar'))->toBe($puede);
+    }
 });
 
 test('housing units and boxes of another residential cannot be used', function () {

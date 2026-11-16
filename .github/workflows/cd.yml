@@ -85,6 +85,8 @@ jobs:
           package: patronato-${{ env.VERSION }}.zip
           type: zip
           clean: true
+          # Reinicia la app para que inicio.sh aplique las migraciones nuevas
+          restart: true
 
       - name: Comprobar que el sitio responde
         env:
