@@ -3,6 +3,7 @@
 namespace Patronato\Persistencia\Repositorios;
 
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\DB;
 use Patronato\Persistencia\Models\Rol;
 use Patronato\Persistencia\Models\User;
 
@@ -58,6 +59,28 @@ class UsuarioRepositorio extends Repositorio
         return User::query()
             ->where('activo', true)
             ->whereIn('rol_id', Rol::query()->whereIn('codigo', $codigos)->select('id'))
+            ->get();
+    }
+
+    /**
+     * Cuentas activas del residencial cuyo rol tiene el permiso en la matriz
+     *
+     * Solo cuenta lo configurado en rol_permisos: el administrador técnico tiene
+     * todos los permisos por su rol, pero no figura en la matriz.
+     *
+     * @return Collection<int, User>
+     */
+    public function activasConPermiso(int $residencialId, string $modulo, string $accion): Collection
+    {
+        return User::query()
+            ->where('activo', true)
+            ->where('residencial_id', $residencialId)
+            ->whereIn('rol_id', DB::table('rol_permisos')
+                ->where('residencial_id', $residencialId)
+                ->where('modulo', $modulo)
+                ->where('accion', $accion)
+                ->select('rol_id'))
+            ->orderBy('id')
             ->get();
     }
 
