@@ -31,7 +31,7 @@ export type Concepto = {
     proximos: Vigencia[];
 };
 
-export type EstadoEgreso = 'vigente' | 'anulado';
+export type EstadoMovimiento = 'vigente' | 'anulado';
 
 export type FilaEgreso = {
     id: number;
@@ -41,7 +41,7 @@ export type FilaEgreso = {
     proveedor: string | null;
     numero_comprobante: string;
     monto: string;
-    estado: EstadoEgreso;
+    estado: EstadoMovimiento;
 };
 
 export type DetalleEgreso = FilaEgreso & {
@@ -57,7 +57,30 @@ export type DetalleEgreso = FilaEgreso & {
     puede_anular: boolean;
 };
 
-export type CategoriaEgreso = {
+export type OpcionCategoria = {
     id: number;
     nombre: string;
+};
+
+export type FilaIngreso = {
+    id: number;
+    fecha: string;
+    concepto: string;
+    categoria: string;
+    numero_comprobante: string | null;
+    monto: string;
+    estado: EstadoMovimiento;
+    de_cobro: boolean;
+};
+
+export type DetalleIngreso = Omit<FilaIngreso, 'de_cobro'> & {
+    registrado_por: string | null;
+    registrado_en: string;
+    pago: { id: number; numero_recibo: string | null; visible: boolean } | null;
+    anulacion: {
+        motivo: string | null;
+        anulado_por: string | null;
+        anulado_en: string | null;
+    } | null;
+    puede_anular: boolean;
 };

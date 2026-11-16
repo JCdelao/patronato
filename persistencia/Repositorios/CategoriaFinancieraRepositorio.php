@@ -35,6 +35,17 @@ class CategoriaFinancieraRepositorio extends Repositorio
     }
 
     /**
+     * Categoría de un residencial por su nombre exacto; la crea activa si no existe
+     */
+    public function obtenerOCrear(int $residencialId, string $tipo, string $nombre): CategoriaFinanciera
+    {
+        return CategoriaFinanciera::query()->firstOrCreate(
+            ['residencial_id' => $residencialId, 'tipo' => $tipo, 'nombre' => $nombre],
+            ['activa' => true],
+        );
+    }
+
+    /**
      * @param  array<string, mixed>  $datos
      */
     public function crear(array $datos): CategoriaFinanciera

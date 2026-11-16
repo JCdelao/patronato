@@ -4,10 +4,12 @@ use Illuminate\Support\Facades\Route;
 use Patronato\Presentacion\Controllers\AnulacionController;
 use Patronato\Presentacion\Controllers\CajaController;
 use Patronato\Presentacion\Controllers\CategoriaEgresoController;
+use Patronato\Presentacion\Controllers\CategoriaIngresoController;
 use Patronato\Presentacion\Controllers\CobroController;
 use Patronato\Presentacion\Controllers\ComprobanteController;
 use Patronato\Presentacion\Controllers\ConceptoController;
 use Patronato\Presentacion\Controllers\EgresoController;
+use Patronato\Presentacion\Controllers\IngresoController;
 use Patronato\Presentacion\Controllers\PagoController;
 use Patronato\Presentacion\Controllers\ParametroCobroController;
 use Patronato\Presentacion\Controllers\TarifaEspecialController;
@@ -63,19 +65,32 @@ Route::middleware(['auth', 'verified'])
             Route::get('egresos/nuevo', [EgresoController::class, 'create'])->name('egresos.create');
             Route::post('egresos', [EgresoController::class, 'store'])->name('egresos.store');
             Route::post('categorias-egreso', [CategoriaEgresoController::class, 'store'])->name('categorias-egreso.store');
+
+            Route::get('ingresos/nuevo', [IngresoController::class, 'create'])->name('ingresos.create');
+            Route::post('ingresos', [IngresoController::class, 'store'])->name('ingresos.store');
+            Route::post('categorias-ingreso', [CategoriaIngresoController::class, 'store'])->name('categorias-ingreso.store');
         });
 
         Route::middleware("can:permiso,'tesoreria','ver'")->group(function () {
             Route::get('egresos', [EgresoController::class, 'index'])->name('egresos.index');
             Route::get('egresos/{egreso}', [EgresoController::class, 'show'])->whereNumber('egreso')->name('egresos.show');
             Route::get('egresos/{egreso}/factura', [EgresoController::class, 'factura'])->whereNumber('egreso')->name('egresos.factura');
+
+            Route::get('ingresos', [IngresoController::class, 'index'])->name('ingresos.index');
+            Route::get('ingresos/{ingreso}', [IngresoController::class, 'show'])->whereNumber('ingreso')->name('ingresos.show');
         });
 
-        // Un egreso no se borra: se anula con su motivo
+        // Un egreso o un ingreso no se borra: se anula con su motivo
         Route::post('egresos/{egreso}/anular', [EgresoController::class, 'anular'])
             ->whereNumber('egreso')
             ->middleware("can:permiso,'tesoreria','anular'")
             ->name('egresos.anular');
+
+        // El ingreso de un cobro no se anula aquí: se anula el pago
+        Route::post('ingresos/{ingreso}/anular', [IngresoController::class, 'anular'])
+            ->whereNumber('ingreso')
+            ->middleware("can:permiso,'tesoreria','anular'")
+            ->name('ingresos.anular');
 
         Route::get('parametros', [ParametroCobroController::class, 'index'])
             ->middleware("can:permiso,'parametros','ver'")

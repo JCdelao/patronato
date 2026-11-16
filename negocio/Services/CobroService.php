@@ -3,8 +3,10 @@
 namespace Patronato\Negocio\Services;
 
 use Carbon\CarbonImmutable;
+use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Validation\ValidationException;
 use Patronato\Negocio\Contratos\CargosNoIntegrados;
+use Patronato\Negocio\Eventos\PagoConfirmado;
 use Patronato\Persistencia\Models\Pago;
 use Patronato\Persistencia\Models\User;
 use Patronato\Persistencia\Repositorios\PagoRepositorio;
@@ -28,6 +30,7 @@ class CobroService
         private AplicacionPagoService $aplicaciones,
         private ConfiguracionService $configuracion,
         private AuditoriaService $auditoria,
+        private Dispatcher $eventos,
     ) {}
 
     /**
@@ -98,6 +101,9 @@ class CobroService
                     'caja_id' => $caja->id,
                 ],
             ]);
+
+            // Tesorería lo registra como ingreso dentro de esta misma transacción
+            $this->eventos->dispatch(new PagoConfirmado($pago, $cobrador));
 
             return $pago;
         });

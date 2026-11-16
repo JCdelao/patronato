@@ -22,6 +22,22 @@ class CategoriaFinancieraService
         'Otros gastos',
     ];
 
+    /**
+     * Categoría que reciben los cobros de cuotas; no se usa en un ingreso manual
+     */
+    public const CUOTAS = 'Cuotas de mantenimiento';
+
+    /**
+     * Categorías de ingreso con las que empieza cada residencial
+     */
+    public const INGRESOS_PREDETERMINADOS = [
+        self::CUOTAS,
+        'Alquiler de áreas comunes',
+        'Multas',
+        'Donaciones',
+        'Otros ingresos',
+    ];
+
     public function __construct(
         private CategoriaFinancieraRepositorio $categorias,
         private Transaccion $transaccion,
@@ -39,16 +55,39 @@ class CategoriaFinancieraService
     }
 
     /**
-     * Crea las categorías de egreso iniciales de un residencial nuevo
+     * Categorías de ingreso activas que se pueden elegir en un ingreso manual
+     *
+     * @return Collection<int, CategoriaFinanciera>
+     */
+    public function deIngresosManuales(): Collection
+    {
+        return $this->categorias->activasDe(CategoriaFinanciera::INGRESO)
+            ->reject(fn (CategoriaFinanciera $categoria): bool => $categoria->nombre === self::CUOTAS)
+            ->values();
+    }
+
+    /**
+     * Categoría de las cuotas del residencial; la crea si alguien la quitó
+     */
+    public function deCuotas(int $residencialId): CategoriaFinanciera
+    {
+        return $this->categorias->obtenerOCrear($residencialId, CategoriaFinanciera::INGRESO, self::CUOTAS);
+    }
+
+    /**
+     * Crea las categorías de egreso e ingreso iniciales de un residencial nuevo
      */
     public function crearPredeterminadas(int $residencialId): void
     {
-        foreach (self::EGRESOS_PREDETERMINADOS as $nombre) {
-            $this->categorias->crear([
-                'residencial_id' => $residencialId,
-                'tipo' => CategoriaFinanciera::EGRESO,
-                'nombre' => $nombre,
-            ]);
+        $iniciales = [
+            CategoriaFinanciera::EGRESO => self::EGRESOS_PREDETERMINADOS,
+            CategoriaFinanciera::INGRESO => self::INGRESOS_PREDETERMINADOS,
+        ];
+
+        foreach ($iniciales as $tipo => $nombres) {
+            foreach ($nombres as $nombre) {
+                $this->categorias->crear(['residencial_id' => $residencialId, 'tipo' => $tipo, 'nombre' => $nombre]);
+            }
         }
     }
 
@@ -63,14 +102,14 @@ class CategoriaFinancieraService
     }
 
     /**
-     * Registra una categoría de egreso propia del residencial
+     * Registra una categoría propia del residencial
      */
-    public function registrarDeEgreso(User $usuario, string $nombre): CategoriaFinanciera
+    public function registrar(User $usuario, string $tipo, string $nombre): CategoriaFinanciera
     {
-        return $this->transaccion->ejecutar(function () use ($usuario, $nombre) {
+        return $this->transaccion->ejecutar(function () use ($usuario, $tipo, $nombre) {
             $categoria = $this->categorias->crear([
                 'residencial_id' => $usuario->residencial_id,
-                'tipo' => CategoriaFinanciera::EGRESO,
+                'tipo' => $tipo,
                 'nombre' => trim($nombre),
             ]);
 

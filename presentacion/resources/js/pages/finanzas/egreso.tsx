@@ -1,7 +1,7 @@
 import { Form, Head, Link } from '@inertiajs/react';
 import { ArrowLeft, Ban, Paperclip } from 'lucide-react';
 import EgresoController from '@/actions/Patronato/Presentacion/Controllers/EgresoController';
-import EstadoEgreso from '@/components/finanzas/estado-egreso';
+import EstadoMovimiento from '@/components/finanzas/estado-movimiento';
 import InputError from '@/components/input-error';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -41,7 +41,7 @@ export default function Egreso({ egreso }: { egreso: DetalleEgreso }) {
                             {egreso.categoria} · {formatoFecha(egreso.fecha)}
                         </p>
                     </div>
-                    <EstadoEgreso estado={egreso.estado} />
+                    <EstadoMovimiento estado={egreso.estado} />
                 </div>
 
                 {egreso.anulacion && (

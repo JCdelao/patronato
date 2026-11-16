@@ -2,8 +2,10 @@
 
 namespace Patronato\Negocio\Services;
 
+use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Validation\ValidationException;
+use Patronato\Negocio\Eventos\PagoAnulado;
 use Patronato\Persistencia\Models\Caja;
 use Patronato\Persistencia\Models\Pago;
 use Patronato\Persistencia\Models\SolicitudAnulacion;
@@ -36,6 +38,7 @@ class AnulacionPagoService
         private PermisoService $permisos,
         private Transaccion $transaccion,
         private AuditoriaService $auditoria,
+        private Dispatcher $eventos,
     ) {}
 
     /**
@@ -219,6 +222,9 @@ class AnulacionPagoService
                 ],
                 'motivo' => $solicitud->motivo,
             ]);
+
+            // Tesorería anula su ingreso dentro de esta misma transacción
+            $this->eventos->dispatch(new PagoAnulado($pago, $usuario, $solicitud->motivo));
 
             return $pago;
         });

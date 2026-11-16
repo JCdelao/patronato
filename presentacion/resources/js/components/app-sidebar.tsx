@@ -7,6 +7,7 @@ import {
     HandCoins,
     Home,
     LayoutGrid,
+    PiggyBank,
     Receipt,
     ScrollText,
     ShieldCheck,
@@ -19,6 +20,7 @@ import AnulacionController from '@/actions/Patronato/Presentacion/Controllers/An
 import CajaController from '@/actions/Patronato/Presentacion/Controllers/CajaController';
 import CobroController from '@/actions/Patronato/Presentacion/Controllers/CobroController';
 import EgresoController from '@/actions/Patronato/Presentacion/Controllers/EgresoController';
+import IngresoController from '@/actions/Patronato/Presentacion/Controllers/IngresoController';
 import PagoController from '@/actions/Patronato/Presentacion/Controllers/PagoController';
 import ParametroCobroController from '@/actions/Patronato/Presentacion/Controllers/ParametroCobroController';
 import ReporteCobrosController from '@/actions/Patronato/Presentacion/Controllers/ReporteCobrosController';
@@ -80,6 +82,12 @@ export function AppSidebar() {
             href: CajaController.index(),
             icon: Vault,
             visible: auth.permisos.includes('cajas.registrar'),
+        },
+        {
+            title: 'Ingresos',
+            href: IngresoController.index(),
+            icon: PiggyBank,
+            visible: auth.permisos.includes('tesoreria.ver'),
         },
         {
             title: 'Egresos',

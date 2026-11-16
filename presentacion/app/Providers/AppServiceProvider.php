@@ -6,6 +6,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Auth\Access\Response;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
@@ -14,6 +15,10 @@ use Patronato\Negocio\Adaptadores\PdfDompdf;
 use Patronato\Negocio\Contratos\CargosPendientes;
 use Patronato\Negocio\Contratos\GeneradorHojaCalculo;
 use Patronato\Negocio\Contratos\GeneradorPdf;
+use Patronato\Negocio\Eventos\PagoAnulado;
+use Patronato\Negocio\Eventos\PagoConfirmado;
+use Patronato\Negocio\Oyentes\AnularIngresoDeCobro;
+use Patronato\Negocio\Oyentes\RegistrarIngresoDeCobro;
 use Patronato\Negocio\Services\CategoriaFinancieraService;
 use Patronato\Negocio\Services\PermisoService;
 use Patronato\Negocio\Services\SinCargosPendientes;
@@ -44,12 +49,16 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->configureDefaults();
 
-        // Cada residencial nuevo recibe los permisos de sus roles, sus tipos de vivienda y sus categorías de egreso
+        // Cada residencial nuevo recibe los permisos de sus roles, sus tipos de vivienda y sus categorías de egreso e ingreso
         Residencial::created(function (Residencial $residencial) {
             app(PermisoService::class)->asignarPredeterminados($residencial->id);
             app(TipoViviendaService::class)->crearPredeterminados($residencial->id);
             app(CategoriaFinancieraService::class)->crearPredeterminadas($residencial->id);
         });
+
+        // Tesorería escucha a los cobros: cada pago confirmado es un ingreso y su anulación lo anula
+        Event::listen(PagoConfirmado::class, RegistrarIngresoDeCobro::class);
+        Event::listen(PagoAnulado::class, AnularIngresoDeCobro::class);
 
         Gate::define('administrar-plataforma', fn (User $user): bool => $user->esAdminPlataforma());
         Gate::define('administrar-usuarios', fn (User $user): Response => $user->puedeAdministrarUsuarios()
