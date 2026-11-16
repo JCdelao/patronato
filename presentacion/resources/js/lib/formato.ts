@@ -25,3 +25,10 @@ export const formatoFecha = (fecha: string) =>
         month: 'short',
         year: 'numeric',
     });
+
+// Nombre visible de cada forma de pago
+export const FORMAS_PAGO: Record<string, string> = {
+    efectivo: 'Efectivo',
+    transferencia: 'Transferencia',
+    cheque: 'Cheque',
+};

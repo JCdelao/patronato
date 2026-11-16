@@ -60,3 +60,34 @@ export type Concepto = {
     actual: Vigencia | null;
     proximos: Vigencia[];
 };
+
+export type EstadoEgreso = 'vigente' | 'anulado';
+
+export type FilaEgreso = {
+    id: number;
+    fecha: string;
+    concepto: string;
+    categoria: string;
+    proveedor: string | null;
+    numero_comprobante: string;
+    monto: string;
+    estado: EstadoEgreso;
+};
+
+export type DetalleEgreso = FilaEgreso & {
+    forma_pago: string | null;
+    tiene_factura: boolean;
+    registrado_por: string | null;
+    registrado_en: string;
+    anulacion: {
+        motivo: string | null;
+        anulado_por: string | null;
+        anulado_en: string | null;
+    } | null;
+    puede_anular: boolean;
+};
+
+export type CategoriaEgreso = {
+    id: number;
+    nombre: string;
+};

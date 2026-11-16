@@ -15,6 +15,7 @@ use Patronato\Negocio\Contratos\CargosPendientes;
 use Patronato\Negocio\Contratos\GeneradorHojaCalculo;
 use Patronato\Negocio\Contratos\GeneradorPdf;
 use Patronato\Negocio\Services\CargosPendientesService;
+use Patronato\Negocio\Services\CategoriaFinancieraService;
 use Patronato\Negocio\Services\PermisoService;
 use Patronato\Negocio\Services\TipoViviendaService;
 use Patronato\Persistencia\Models\Residencial;
@@ -43,10 +44,11 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->configureDefaults();
 
-        // Cada residencial nuevo recibe los permisos de sus roles, sus tipos de vivienda y el concepto de la cuota
+        // Cada residencial nuevo recibe los permisos de sus roles, sus tipos de vivienda y sus categorías de egreso
         Residencial::created(function (Residencial $residencial) {
             app(PermisoService::class)->asignarPredeterminados($residencial->id);
             app(TipoViviendaService::class)->crearPredeterminados($residencial->id);
+            app(CategoriaFinancieraService::class)->crearPredeterminadas($residencial->id);
         });
 
         Gate::define('administrar-plataforma', fn (User $user): bool => $user->esAdminPlataforma());

@@ -169,6 +169,10 @@ jobs:
         if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
         run: php artisan test tests/Feature/Portal/ReportarTransferenciaTest.php
 
+      - name: Pruebas HU-31 · Registrar egresos
+        if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
+        run: php artisan test tests/Feature/Finanzas/EgresosTest.php
+
       - name: Pruebas de los datos de demostración
         if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
         run: php artisan test tests/Feature/DemostracionSeederTest.php
