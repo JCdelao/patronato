@@ -86,9 +86,6 @@ class AppServiceProvider extends ServiceProvider
         );
 
         // Política mínima de contraseñas
-        Password::defaults(fn (): Password => app()->isProduction()
-            ? Password::min(8)->letters()->numbers()->uncompromised()
-            : Password::min(8)->letters()->numbers(),
-        );
+        Password::defaults(fn (): Password => Password::min(8)->letters()->numbers());
     }
 }
