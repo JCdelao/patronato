@@ -16,6 +16,21 @@ class ResidencialRepositorio extends Repositorio
     }
 
     /**
+     * Residenciales que no están suspendidos
+     *
+     * @return Collection<int, Residencial>
+     */
+    public function activos(): Collection
+    {
+        return Residencial::query()->where('estado', Residencial::ACTIVO)->orderBy('id')->get();
+    }
+
+    public function buscar(int $id): Residencial
+    {
+        return Residencial::query()->findOrFail($id);
+    }
+
+    /**
      * Indica si ya existe un residencial con el nombre, sin importar mayúsculas
      */
     public function existeNombre(string $nombre): bool

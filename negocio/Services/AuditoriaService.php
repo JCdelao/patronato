@@ -29,6 +29,16 @@ class AuditoriaService
     }
 
     /**
+     * Agrega un registro hecho por el sistema, como una tarea programada, sin usuario
+     *
+     * @param  array{valor_anterior?: array<string, mixed>, valor_nuevo?: array<string, mixed>, motivo?: string}  $datos
+     */
+    public function registrarSistema(int $residencialId, string $modulo, string $accion, Model $modelo, array $datos = []): void
+    {
+        $this->registros->registrarSistema($residencialId, $modulo, $accion, $modelo, $datos);
+    }
+
+    /**
      * Audita un intento de abrir un registro de otro residencial
      */
     public function registrarAccesoDenegado(User $usuario, Model $modelo): void

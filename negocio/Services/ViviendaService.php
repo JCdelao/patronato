@@ -8,6 +8,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Validation\ValidationException;
 use Patronato\Persistencia\Models\User;
 use Patronato\Persistencia\Models\Vivienda;
+use Patronato\Persistencia\Repositorios\ConceptoRepositorio;
 use Patronato\Persistencia\Repositorios\ViviendaRepositorio;
 use Patronato\Persistencia\Transaccion;
 
@@ -15,6 +16,7 @@ class ViviendaService
 {
     public function __construct(
         private ViviendaRepositorio $viviendas,
+        private ConceptoRepositorio $conceptos,
         private Transaccion $transaccion,
         private TarifaService $tarifas,
         private AuditoriaService $auditoria,
@@ -43,7 +45,7 @@ class ViviendaService
     /**
      * Registra una vivienda
      *
-     * @param  array{codigo: string, tipo_vivienda_id: int|string, vivienda_padre_id?: int|string|null, edificio_torre?: string|null, calle_bloque?: string|null, numero: string, estado_ocupacion: string}  $datos
+     * @param  array{codigo: string, tipo_vivienda_id: int|string, vivienda_padre_id?: int|string|null, edificio_torre?: string|null, calle_bloque?: string|null, numero: string, estado_ocupacion: string, conceptos?: array<int, int|string>}  $datos
      */
     public function registrar(User $usuario, array $datos): Vivienda
     {
@@ -54,6 +56,8 @@ class ViviendaService
                 'residencial_id' => $usuario->residencial_id,
                 ...$this->datosVivienda($datos),
             ]);
+
+            $this->asignarConceptos($vivienda, $datos);
 
             $this->auditoria->registrar($usuario, 'padron', 'vivienda_registrada', $vivienda, [
                 'valor_nuevo' => $this->resumen($vivienda),
@@ -66,7 +70,7 @@ class ViviendaService
     /**
      * Actualiza los datos de una vivienda
      *
-     * @param  array{codigo: string, tipo_vivienda_id: int|string, vivienda_padre_id?: int|string|null, edificio_torre?: string|null, calle_bloque?: string|null, numero: string, estado_ocupacion: string}  $datos
+     * @param  array{codigo: string, tipo_vivienda_id: int|string, vivienda_padre_id?: int|string|null, edificio_torre?: string|null, calle_bloque?: string|null, numero: string, estado_ocupacion: string, conceptos?: array<int, int|string>}  $datos
      */
     public function actualizar(User $usuario, Vivienda $vivienda, array $datos): void
     {
@@ -76,6 +80,7 @@ class ViviendaService
             $anterior = $this->resumen($vivienda);
 
             $this->viviendas->actualizar($vivienda, $this->datosVivienda($datos));
+            $this->asignarConceptos($vivienda, $datos);
 
             $nuevo = $this->resumen($vivienda);
 
@@ -163,7 +168,7 @@ class ViviendaService
     }
 
     /**
-     * @param  array{codigo: string, tipo_vivienda_id: int|string, vivienda_padre_id?: int|string|null, edificio_torre?: string|null, calle_bloque?: string|null, numero: string, estado_ocupacion: string}  $datos
+     * @param  array{codigo: string, tipo_vivienda_id: int|string, vivienda_padre_id?: int|string|null, edificio_torre?: string|null, calle_bloque?: string|null, numero: string, estado_ocupacion: string, conceptos?: array<int, int|string>}  $datos
      * @return array<string, int|string|null>
      */
     private function datosVivienda(array $datos): array
@@ -177,6 +182,23 @@ class ViviendaService
             'numero' => $datos['numero'],
             'estado_ocupacion' => $datos['estado_ocupacion'],
         ];
+    }
+
+    /**
+     * Guarda los conceptos elegidos de los que se cobran solo a algunas viviendas
+     *
+     * Los conceptos que no aparecen en el formulario, como uno desactivado, se conservan.
+     *
+     * @param  array{conceptos?: array<int, int|string>}  $datos
+     */
+    private function asignarConceptos(Vivienda $vivienda, array $datos): void
+    {
+        $opcionales = $this->conceptos->paraAlgunas()->modelKeys();
+        $elegidos = array_map(intval(...), $datos['conceptos'] ?? []);
+
+        $conservados = array_diff($this->viviendas->conceptosDe($vivienda), $opcionales);
+
+        $this->viviendas->asignarConceptos($vivienda, array_values(array_unique([...$conservados, ...$elegidos])));
     }
 
     /**
@@ -226,6 +248,7 @@ class ViviendaService
             'calle_bloque' => $vivienda->calle_bloque,
             'numero' => $vivienda->numero,
             'estado_ocupacion' => $vivienda->estado_ocupacion,
+            'conceptos' => implode(', ', $this->viviendas->nombresDeConceptos($vivienda)) ?: null,
         ];
     }
 }

@@ -6,6 +6,8 @@ use Patronato\Presentacion\Controllers\CajaController;
 use Patronato\Presentacion\Controllers\CobroController;
 use Patronato\Presentacion\Controllers\ComprobanteController;
 use Patronato\Presentacion\Controllers\ConceptoController;
+use Patronato\Presentacion\Controllers\GeneracionCargosController;
+use Patronato\Presentacion\Controllers\MoraController;
 use Patronato\Presentacion\Controllers\PagoController;
 use Patronato\Presentacion\Controllers\ParametroCobroController;
 use Patronato\Presentacion\Controllers\TarifaEspecialController;
@@ -74,7 +76,14 @@ Route::middleware(['auth', 'verified'])
             Route::post('tipos-vivienda/{tipo}/reactivar', [TipoViviendaController::class, 'reactivar'])->whereNumber('tipo')->name('tipos-vivienda.reactivar');
             Route::delete('tipos-vivienda/{tipo}', [TipoViviendaController::class, 'destroy'])->whereNumber('tipo')->name('tipos-vivienda.destroy');
 
+            Route::post('cargos/generar', [GeneracionCargosController::class, 'generar'])->name('cargos.generar');
+            Route::put('cargos/dia', [GeneracionCargosController::class, 'dia'])->name('cargos.dia');
+
             Route::post('tarifas-especiales', [TarifaEspecialController::class, 'store'])->name('tarifas-especiales.store');
             Route::post('tarifas-especiales/{vivienda}/quitar', [TarifaEspecialController::class, 'quitar'])->whereNumber('vivienda')->name('tarifas-especiales.quitar');
         });
+
+        Route::put('mora', [MoraController::class, 'update'])
+            ->middleware("can:permiso,'mora','registrar'")
+            ->name('mora.update');
     });

@@ -2,6 +2,7 @@ import { Form, Head, router } from '@inertiajs/react';
 import { CircleAlert, Search, X } from 'lucide-react';
 import { useRef, useState } from 'react';
 import CobroController from '@/actions/Patronato/Presentacion/Controllers/CobroController';
+import EstadoMora from '@/components/finanzas/estado-mora';
 import InputError from '@/components/input-error';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -9,11 +10,13 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
+import type { EstadoMora as EstadoMoraVivienda } from '@/types/finanzas';
 
 type OpcionVivienda = {
     id: number;
     codigo: string;
     responsable: string | null;
+    mora: EstadoMoraVivienda;
 };
 
 type CargoPendiente = {
@@ -104,15 +107,11 @@ export default function CobroEfectivo({
                     </p>
                 </div>
 
-                {!cajaAbierta && (
-                    <Alert>
-                        <CircleAlert />
-                        <AlertTitle>No tienes una caja abierta</AlertTitle>
-                        <AlertDescription>
-                            Se abrirá una nueva con tu próximo cobro.
-                        </AlertDescription>
-                    </Alert>
-                )}
+                <p className="text-sm text-muted-foreground">
+                    {cajaAbierta
+                        ? 'Tu caja de hoy está abierta.'
+                        : 'Tu caja de hoy se abrirá con el primer cobro.'}
+                </p>
 
                 {vivienda === null ? (
                     <div className="space-y-3">
@@ -144,8 +143,11 @@ export default function CobroEfectivo({
                                     onClick={() => elegirVivienda(opcion.id)}
                                     className="rounded-xl border p-4 text-left hover:bg-muted"
                                 >
-                                    <span className="block font-semibold">
-                                        {opcion.codigo}
+                                    <span className="flex items-center justify-between gap-2">
+                                        <span className="font-semibold">
+                                            {opcion.codigo}
+                                        </span>
+                                        <EstadoMora mora={opcion.mora} />
                                     </span>
                                     <span className="text-sm text-muted-foreground">
                                         {opcion.responsable ??
@@ -166,6 +168,11 @@ export default function CobroEfectivo({
                                     {vivienda.responsable ??
                                         'Sin responsable de pago'}
                                 </p>
+                                <EstadoMora
+                                    mora={vivienda.mora}
+                                    detalle
+                                    className="mt-2"
+                                />
                             </div>
                             <Button
                                 variant="ghost"
