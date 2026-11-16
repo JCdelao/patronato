@@ -21,6 +21,22 @@ class PeriodoService
     }
 
     /**
+     * Fecha de hoy, en la hora de Honduras
+     */
+    public function hoy(): CarbonImmutable
+    {
+        return CarbonImmutable::now(self::ZONA_LOCAL)->startOfDay();
+    }
+
+    /**
+     * Día del mes de hoy, en la hora de Honduras
+     */
+    public function diaDeHoy(): int
+    {
+        return CarbonImmutable::now(self::ZONA_LOCAL)->day;
+    }
+
+    /**
      * Convierte el mes elegido (AAAA-MM) en el período desde el que rige un monto
      *
      * @throws ValidationException si el mes ya pasó

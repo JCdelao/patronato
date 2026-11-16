@@ -13,6 +13,7 @@ import {
 import { useRef, useState } from 'react';
 import ResidenteController from '@/actions/Patronato/Presentacion/Controllers/ResidenteController';
 import ViviendaController from '@/actions/Patronato/Presentacion/Controllers/ViviendaController';
+import EstadoMora from '@/components/finanzas/estado-mora';
 import AgregarViviendaDialog from '@/components/padron/agregar-vivienda-dialog';
 import ConfirmarDialog from '@/components/padron/confirmar-dialog';
 import HistorialDialog from '@/components/padron/historial-dialog';
@@ -27,6 +28,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
+import type { OpcionConcepto } from '@/types/finanzas';
 import type {
     OpcionTipoVivienda,
     OpcionVivienda,
@@ -62,12 +64,14 @@ export default function Viviendas({
     viviendas,
     opcionesViviendas,
     tiposVivienda,
+    conceptosOpcionales,
     buscar,
     estado,
 }: {
     viviendas: Paginado<Vivienda>;
     opcionesViviendas: OpcionVivienda[];
     tiposVivienda: OpcionTipoVivienda[];
+    conceptosOpcionales: OpcionConcepto[];
     buscar: string;
     estado: 'activas' | 'inactivas';
 }) {
@@ -188,6 +192,24 @@ export default function Viviendas({
                                                 Pertenece a{' '}
                                                 {vivienda.pertenece_a}
                                             </p>
+                                        )}
+                                        {vivienda.conceptos.length > 0 && (
+                                            <p className="text-sm text-muted-foreground">
+                                                Paga aparte:{' '}
+                                                {vivienda.conceptos
+                                                    .map(
+                                                        (concepto) =>
+                                                            concepto.nombre,
+                                                    )
+                                                    .join(', ')}
+                                            </p>
+                                        )}
+                                        {vivienda.mora !== null && (
+                                            <EstadoMora
+                                                mora={vivienda.mora}
+                                                detalle
+                                                className="mt-2 mr-2"
+                                            />
                                         )}
                                         {vivienda.cuota_especial !== null && (
                                             <span className="mt-2 mr-2 inline-block rounded-full bg-secondary px-3 py-0.5 text-sm">
@@ -397,6 +419,7 @@ export default function Viviendas({
                     vivienda={dialogo.vivienda}
                     tipos={tiposVivienda}
                     viviendas={opcionesViviendas}
+                    conceptos={conceptosOpcionales}
                     onClose={cerrar}
                     onGuardado={alGuardar}
                 />

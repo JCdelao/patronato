@@ -1,30 +1,40 @@
 import { Head } from '@inertiajs/react';
 import ParametroCobroController from '@/actions/Patronato/Presentacion/Controllers/ParametroCobroController';
 import ConceptosSeccion from '@/components/finanzas/conceptos-seccion';
+import GeneracionCargosSeccion from '@/components/finanzas/generacion-cargos-seccion';
+import ReglaMoraSeccion from '@/components/finanzas/regla-mora-seccion';
 import TarifasEspecialesSeccion from '@/components/finanzas/tarifas-especiales-seccion';
 import TiposViviendaSeccion from '@/components/finanzas/tipos-vivienda-seccion';
 import { Separator } from '@/components/ui/separator';
 import type {
     Concepto,
+    GeneracionCargos,
+    ReglaMora,
     TarifaEspecial,
     TipoViviendaCuota,
 } from '@/types/finanzas';
 import type { OpcionVivienda } from '@/types/padron';
 
 export default function ParametrosCobro({
+    generacion,
     tipos,
     especiales,
     viviendas,
     conceptos,
+    mora,
     periodoActual,
     puedeEditar,
+    puedeEditarMora,
 }: {
+    generacion: GeneracionCargos;
     tipos: TipoViviendaCuota[];
     especiales: TarifaEspecial[];
     viviendas: OpcionVivienda[];
     conceptos: Concepto[];
+    mora: ReglaMora;
     periodoActual: string;
     puedeEditar: boolean;
+    puedeEditarMora: boolean;
 }) {
     return (
         <>
@@ -39,6 +49,18 @@ export default function ParametrosCobro({
                         Qué se cobra a las viviendas y cuánto
                     </p>
                 </div>
+
+                <GeneracionCargosSeccion
+                    generacion={generacion}
+                    periodoActual={periodoActual}
+                    puedeEditar={puedeEditar}
+                />
+
+                <Separator />
+
+                <ReglaMoraSeccion mora={mora} puedeEditar={puedeEditarMora} />
+
+                <Separator />
 
                 <TiposViviendaSeccion
                     tipos={tipos}

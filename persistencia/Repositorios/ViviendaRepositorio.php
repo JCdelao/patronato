@@ -31,10 +31,24 @@ class ViviendaRepositorio extends Repositorio
                         });
                 });
             })
-            ->with(['tipoVivienda:id,nombre', 'padre:id,codigo', 'vinculosVigentes.residente.vinculosVigentes.vivienda'])
+            ->with(['tipoVivienda:id,nombre', 'padre:id,codigo', 'conceptos:id,nombre', 'vinculosVigentes.residente.vinculosVigentes.vivienda'])
             ->orderBy('codigo')
             ->paginate($porPagina)
             ->withQueryString();
+    }
+
+    /**
+     * Viviendas activas de un residencial, con su tipo
+     *
+     * @return Collection<int, Vivienda>
+     */
+    public function activasDe(int $residencialId): Collection
+    {
+        return Vivienda::query()
+            ->where('residencial_id', $residencialId)
+            ->where('activa', true)
+            ->orderBy('codigo')
+            ->get(['id', 'residencial_id', 'codigo', 'tipo_vivienda_id']);
     }
 
     public function buscar(int $id): ?Vivienda
@@ -48,6 +62,39 @@ class ViviendaRepositorio extends Repositorio
     public function cargarTipoYPadre(Vivienda $vivienda): void
     {
         $vivienda->load(['tipoVivienda:id,nombre', 'padre:id,codigo']);
+    }
+
+    /**
+     * Ids de los conceptos que paga la vivienda aparte de los que se cobran a todas
+     *
+     * @return list<int>
+     */
+    public function conceptosDe(Vivienda $vivienda): array
+    {
+        return array_values($vivienda->conceptos()->orderBy('nombre')->pluck('conceptos_cobro.id')->map(fn ($id): int => (int) $id)->all());
+    }
+
+    /**
+     * Nombres de los conceptos que paga la vivienda aparte de los que se cobran a todas
+     *
+     * @return list<string>
+     */
+    public function nombresDeConceptos(Vivienda $vivienda): array
+    {
+        return array_values($vivienda->conceptos()->orderBy('nombre')->pluck('nombre')->map(fn ($nombre): string => (string) $nombre)->all());
+    }
+
+    /**
+     * Reemplaza los conceptos que paga la vivienda aparte de los que se cobran a todas
+     *
+     * @param  list<int>  $conceptoIds
+     */
+    public function asignarConceptos(Vivienda $vivienda, array $conceptoIds): void
+    {
+        $vivienda->conceptos()->sync(array_fill_keys($conceptoIds, [
+            'residencial_id' => $vivienda->residencial_id,
+            'created_at' => now(),
+        ]));
     }
 
     public function tieneHijas(Vivienda $vivienda): bool

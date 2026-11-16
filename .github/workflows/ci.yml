@@ -127,15 +127,23 @@ jobs:
 
       - name: Pruebas HU-15 · Administrar conceptos de cobro
         if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
-        run: php artisan test tests/Feature/Finanzas/ConceptosTest.php
+        run: php artisan test tests/Feature/Finanzas/ConceptosTest.php tests/Feature/Finanzas/ConceptosPorViviendaTest.php
 
       - name: Pruebas HU-16 · Definir tarifas por tipo de vivienda
         if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
         run: php artisan test tests/Feature/Finanzas/TiposViviendaTest.php tests/Feature/Finanzas/TarifasEspecialesTest.php
 
+      - name: Pruebas HU-17 · Generar los cargos mensuales
+        if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
+        run: php artisan test tests/Feature/Finanzas/GeneracionCargosTest.php
+
+      - name: Pruebas HU-18 · Definir la regla de mora
+        if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
+        run: php artisan test tests/Feature/Finanzas/MoraTest.php
+
       - name: Pruebas HU-19 · Registrar un cobro en efectivo
         if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
-        run: php artisan test tests/Feature/Finanzas/CobroEfectivoTest.php
+        run: php artisan test tests/Feature/Finanzas/CobroEfectivoTest.php tests/Feature/Finanzas/CobroEfectivoIntegracionTest.php
 
       - name: Pruebas HU-20 · Emitir el comprobante de pago
         if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}

@@ -33,6 +33,26 @@ class ConceptoService
     }
 
     /**
+     * Conceptos activos que se cobran solo a algunas viviendas, con su monto de este mes
+     *
+     * Son los que se eligen en el formulario de cada vivienda.
+     *
+     * @return list<array{id: int, nombre: string, monto: string|null}>
+     */
+    public function paraAlgunas(): array
+    {
+        $periodo = $this->periodos->actual();
+
+        return array_values($this->conceptos->paraAlgunas()
+            ->map(fn (ConceptoCobro $concepto): array => [
+                'id' => $concepto->id,
+                'nombre' => $concepto->nombre,
+                'monto' => $this->tarifas->montoVigente($concepto, $periodo)?->monto,
+            ])
+            ->all());
+    }
+
+    /**
      * Motivo por el que no se puede usar el nombre, o null si está libre
      *
      * No se puede repetir otro concepto, sin importar mayúsculas, ni usar el de la cuota mensual.
@@ -51,7 +71,9 @@ class ConceptoService
     /**
      * Registra un concepto de cobro con su monto
      *
-     * @param  array{nombre: string, tipo: string, monto: float|int|string, vigente_desde: string}  $datos
+     * Sin alcance indicado se cobra a todas las viviendas.
+     *
+     * @param  array{nombre: string, tipo: string, alcance?: string, monto: float|int|string, vigente_desde: string}  $datos
      *
      * @throws ValidationException
      */
@@ -64,6 +86,7 @@ class ConceptoService
                 'residencial_id' => $usuario->residencial_id,
                 'nombre' => trim($datos['nombre']),
                 'tipo' => $datos['tipo'],
+                'alcance' => $datos['alcance'] ?? ConceptoCobro::TODAS,
             ]);
 
             $this->tarifas->programarMonto($concepto, $this->monto($datos['monto']), $desde, $usuario->id);
@@ -79,7 +102,9 @@ class ConceptoService
     /**
      * Actualiza un concepto; un monto distinto crea una vigencia nueva
      *
-     * @param  array{nombre: string, tipo: string, monto: float|int|string, vigente_desde: string}  $datos
+     * Sin alcance indicado conserva el que tenía.
+     *
+     * @param  array{nombre: string, tipo: string, alcance?: string, monto: float|int|string, vigente_desde: string}  $datos
      *
      * @throws ValidationException
      */
@@ -91,7 +116,11 @@ class ConceptoService
             $anterior = $this->resumen($concepto);
             $monto = $this->monto($datos['monto']);
 
-            $this->conceptos->actualizar($concepto, ['nombre' => trim($datos['nombre']), 'tipo' => $datos['tipo']]);
+            $this->conceptos->actualizar($concepto, [
+                'nombre' => trim($datos['nombre']),
+                'tipo' => $datos['tipo'],
+                'alcance' => $datos['alcance'] ?? $concepto->alcance,
+            ]);
 
             if ($monto !== $anterior['monto']) {
                 $this->tarifas->programarMonto($concepto, $monto, $desde, $usuario->id);
@@ -163,7 +192,7 @@ class ConceptoService
     }
 
     /**
-     * @return array{nombre: string, tipo: string, monto: string|null, vigente_desde: string|null}
+     * @return array{nombre: string, tipo: string, alcance: string, monto: string|null, vigente_desde: string|null}
      */
     private function resumen(ConceptoCobro $concepto): array
     {
@@ -172,6 +201,7 @@ class ConceptoService
         return [
             'nombre' => $concepto->nombre,
             'tipo' => $concepto->tipo,
+            'alcance' => $concepto->alcance,
             'monto' => $ultimo?->monto,
             'vigente_desde' => $ultimo?->vigente_desde->toDateString(),
         ];

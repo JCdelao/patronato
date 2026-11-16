@@ -14,8 +14,8 @@ use Patronato\Negocio\Adaptadores\PdfDompdf;
 use Patronato\Negocio\Contratos\CargosPendientes;
 use Patronato\Negocio\Contratos\GeneradorHojaCalculo;
 use Patronato\Negocio\Contratos\GeneradorPdf;
+use Patronato\Negocio\Services\CargosPendientesService;
 use Patronato\Negocio\Services\PermisoService;
-use Patronato\Negocio\Services\SinCargosPendientes;
 use Patronato\Negocio\Services\TipoViviendaService;
 use Patronato\Persistencia\Models\Residencial;
 use Patronato\Persistencia\Models\Rol;
@@ -28,8 +28,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        // Se reemplaza por el servicio real cuando exista la generación de cargos
-        $this->app->bind(CargosPendientes::class, SinCargosPendientes::class);
+        // El cobro conoce los meses pendientes a partir de los cargos generados
+        $this->app->bind(CargosPendientes::class, CargosPendientesService::class);
 
         // Una sola instancia: los adaptadores no guardan estado entre documentos
         $this->app->singleton(GeneradorPdf::class, PdfDompdf::class);

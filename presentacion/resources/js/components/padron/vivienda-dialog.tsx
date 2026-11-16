@@ -3,6 +3,7 @@ import { useState } from 'react';
 import ViviendaController from '@/actions/Patronato/Presentacion/Controllers/ViviendaController';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
     Dialog,
     DialogContent,
@@ -19,6 +20,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
+import type { OpcionConcepto } from '@/types/finanzas';
 import type {
     OpcionTipoVivienda,
     OpcionVivienda,
@@ -32,12 +34,14 @@ export default function ViviendaDialog({
     vivienda,
     tipos,
     viviendas,
+    conceptos,
     onClose,
     onGuardado,
 }: {
     vivienda?: Vivienda;
     tipos: OpcionTipoVivienda[];
     viviendas: OpcionVivienda[];
+    conceptos: OpcionConcepto[];
     onClose: () => void;
     onGuardado: () => void;
 }) {
@@ -263,6 +267,48 @@ export default function ViviendaDialog({
                                     />
                                 </div>
                             </div>
+
+                            {conceptos.length > 0 && (
+                                <fieldset className="grid gap-2">
+                                    <legend className="mb-2 text-sm font-medium">
+                                        Conceptos que paga aparte
+                                    </legend>
+                                    {conceptos.map((concepto) => (
+                                        <Label
+                                            key={concepto.id}
+                                            className="flex items-center gap-3 rounded-xl border p-3 font-normal"
+                                        >
+                                            <Checkbox
+                                                name="conceptos[]"
+                                                value={String(concepto.id)}
+                                                defaultChecked={vivienda?.conceptos.some(
+                                                    (asignado) =>
+                                                        asignado.id ===
+                                                        concepto.id,
+                                                )}
+                                            />
+                                            <span className="flex-1">
+                                                {concepto.nombre}
+                                            </span>
+                                            {concepto.monto !== null && (
+                                                <span className="text-muted-foreground">
+                                                    L.{' '}
+                                                    {Number(
+                                                        concepto.monto,
+                                                    ).toLocaleString('es-HN', {
+                                                        minimumFractionDigits: 2,
+                                                    })}
+                                                </span>
+                                            )}
+                                        </Label>
+                                    ))}
+                                    <p className="text-sm text-muted-foreground">
+                                        Se cobran cada mes solo a las viviendas
+                                        marcadas.
+                                    </p>
+                                    <InputError message={errors.conceptos} />
+                                </fieldset>
+                            )}
 
                             <Button className="w-full" disabled={processing}>
                                 {processing && <Spinner />}
