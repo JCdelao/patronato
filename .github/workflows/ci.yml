@@ -143,7 +143,7 @@ jobs:
 
       - name: Pruebas HU-19 · Registrar un cobro en efectivo
         if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
-        run: php artisan test tests/Feature/Finanzas/CobroEfectivoTest.php
+        run: php artisan test tests/Feature/Finanzas/CobroEfectivoTest.php tests/Feature/Finanzas/CobroEfectivoIntegracionTest.php
 
       - name: Pruebas HU-20 · Emitir el comprobante de pago
         if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
