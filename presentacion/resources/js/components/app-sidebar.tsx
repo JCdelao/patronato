@@ -6,6 +6,7 @@ import {
     ChartColumn,
     HandCoins,
     Home,
+    Landmark,
     LayoutGrid,
     PiggyBank,
     Receipt,
@@ -21,6 +22,7 @@ import CajaController from '@/actions/Patronato/Presentacion/Controllers/CajaCon
 import CobroController from '@/actions/Patronato/Presentacion/Controllers/CobroController';
 import EgresoController from '@/actions/Patronato/Presentacion/Controllers/EgresoController';
 import IngresoController from '@/actions/Patronato/Presentacion/Controllers/IngresoController';
+import InformeFinancieroController from '@/actions/Patronato/Presentacion/Controllers/InformeFinancieroController';
 import PagoController from '@/actions/Patronato/Presentacion/Controllers/PagoController';
 import ParametroCobroController from '@/actions/Patronato/Presentacion/Controllers/ParametroCobroController';
 import ReporteCobrosController from '@/actions/Patronato/Presentacion/Controllers/ReporteCobrosController';
@@ -119,6 +121,12 @@ export function AppSidebar() {
             title: 'Reportes',
             href: ReporteCobrosController.index(),
             icon: ChartColumn,
+            visible: auth.permisos.includes('reportes.ver'),
+        },
+        {
+            title: 'Informe financiero',
+            href: InformeFinancieroController.index(),
+            icon: Landmark,
             visible: auth.permisos.includes('reportes.ver'),
         },
         {

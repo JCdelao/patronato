@@ -41,6 +41,27 @@ class ConfiguracionService
     }
 
     /**
+     * Saldo con el que el patronato empezó a registrar en el sistema; ambos null si no se ha registrado
+     *
+     * @return array{monto: string|null, fecha: string|null}
+     */
+    public function apertura(int $residencialId): array
+    {
+        $fila = $this->configuracion->valores($residencialId, ['saldo_apertura', 'fecha_apertura']);
+        $monto = $fila['saldo_apertura'] ?? null;
+        $fecha = $fila['fecha_apertura'] ?? null;
+
+        return $monto === null || $fecha === null
+            ? ['monto' => null, 'fecha' => null]
+            : ['monto' => number_format((float) $monto, 2, '.', ''), 'fecha' => substr((string) $fecha, 0, 10)];
+    }
+
+    public function guardarApertura(int $residencialId, string $monto, string $fecha): void
+    {
+        $this->configuracion->guardar($residencialId, ['saldo_apertura' => $monto, 'fecha_apertura' => $fecha]);
+    }
+
+    /**
      * Crea la configuración inicial de un residencial
      */
     public function crear(int $residencialId): void
