@@ -1,7 +1,8 @@
-import { Head, Link, router } from '@inertiajs/react';
-import { Search } from 'lucide-react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import { Landmark, Search } from 'lucide-react';
 import { useRef } from 'react';
 import PagoController from '@/actions/Patronato/Presentacion/Controllers/PagoController';
+import TransferenciaController from '@/actions/Patronato/Presentacion/Controllers/TransferenciaController';
 import EstadoPago from '@/components/finanzas/estado-pago';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,6 +17,7 @@ type Pago = {
     forma_pago: string;
     estado: string;
     cobrador: string | null;
+    numero_referencia: string | null;
 };
 
 type Paginado<T> = {
@@ -31,6 +33,7 @@ export default function Pagos({
     pagos: Paginado<Pago>;
     buscar: string;
 }) {
+    const { auth } = usePage().props;
     const espera = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
     const alBuscar = (valor: string) => {
@@ -50,13 +53,23 @@ export default function Pagos({
             <Head title="Cobros" />
 
             <div className="mx-auto w-full max-w-4xl space-y-6 p-4 md:p-10">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight">
-                        Cobros
-                    </h1>
-                    <p className="mt-1 text-muted-foreground">
-                        Pagos registrados, incluidos los anulados
-                    </p>
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                    <div>
+                        <h1 className="text-3xl font-bold tracking-tight">
+                            Cobros
+                        </h1>
+                        <p className="mt-1 text-muted-foreground">
+                            Pagos registrados, incluidos los anulados
+                        </p>
+                    </div>
+                    {auth.permisos.includes('transferencias.registrar') && (
+                        <Button asChild>
+                            <Link href={TransferenciaController.create.url()}>
+                                <Landmark />
+                                Registrar transferencia
+                            </Link>
+                        </Button>
+                    )}
                 </div>
 
                 <div className="relative w-full max-w-md">
@@ -87,8 +100,10 @@ export default function Pagos({
                                 >
                                     <span>
                                         <span className="block font-medium">
-                                            Recibo N.º {pago.numero_recibo} ·{' '}
-                                            {pago.vivienda}
+                                            {pago.numero_recibo
+                                                ? `Recibo N.º ${pago.numero_recibo}`
+                                                : `Transferencia ref. ${pago.numero_referencia}`}{' '}
+                                            · {pago.vivienda}
                                         </span>
                                         <span className="text-sm text-muted-foreground">
                                             {formatoFecha(pago.fecha_pago)}

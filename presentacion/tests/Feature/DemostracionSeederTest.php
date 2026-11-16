@@ -3,6 +3,7 @@
 use Database\Seeders\DemostracionSeeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia;
 use Patronato\Persistencia\Models\Caja;
 use Patronato\Persistencia\Models\Residencial;
@@ -11,6 +12,9 @@ use Patronato\Persistencia\Models\User;
 // Datos de demostración para las pruebas manuales; no forman parte de ninguna HU
 
 beforeEach(function () {
+    // El comprobante de la transferencia no se escribe en el disco real
+    Storage::fake('local');
+
     $this->seed(DemostracionSeeder::class);
 
     $this->cuenta = fn (string $correo): User => User::query()->where('email', $correo)->firstOrFail();
@@ -55,7 +59,8 @@ test('the payments cover their months and the closed box has a justified shortfa
         ->filter(fn ($pago) => (float) DB::table('pago_aplicaciones')->where('pago_id', $pago->id)->sum('monto') !== (float) $pago->monto);
 
     expect($sinCuadrar)->toBeEmpty()
-        ->and(DB::table('pagos')->where('residencial_id', $residencial->id)->orderBy('id')->pluck('numero_recibo')->all())
+        // La transferencia pendiente todavía no tiene recibo
+        ->and(DB::table('pagos')->where('residencial_id', $residencial->id)->whereNotNull('numero_recibo')->orderBy('id')->pluck('numero_recibo')->all())
         ->toBe(['1', '2', '3', '4', '5', '6', '7', '8', '9']);
 });
 
@@ -109,4 +114,49 @@ test('the demo voiding follows the HU-23 rules and leaves one request to approve
             ->where('solicitudes.0.solicitada_por', 'Teresa Flores')
             ->where('solicitudes.0.puede_resolver', true)
             ->where('auth.anulacionesPendientes', 1));
+});
+
+test('the demo leaves a transfer pending verification with its receipt', function () {
+    $tesorero = ($this->cuenta)('tesorero@laspalmas.demo');
+
+    $transferencia = DB::table('pagos')->where('forma_pago', 'transferencia')->where('origen', 'sistema')->sole();
+    $saldo = DB::table('v_saldos_vivienda')->where('vivienda_id', $transferencia->vivienda_id)->value('saldo');
+
+    expect($transferencia->estado)->toBe('pendiente_verificacion')
+        ->and($transferencia->numero_recibo)->toBeNull()
+        ->and($transferencia->registrado_por)->toBe($tesorero->id)
+        ->and(DB::table('pago_aplicaciones')->where('pago_id', $transferencia->id)->exists())->toBeFalse()
+        // B-03 no tiene pagos: el saldo sigue siendo el de sus tres meses
+        ->and(number_format((float) $saldo, 2, '.', ''))->toBe('1950.00');
+
+    Storage::disk('local')->assertExists($transferencia->comprobante_path);
+
+    $this->actingAs($tesorero)
+        ->get(route('finanzas.transferencias.comprobante', $transferencia->id))
+        ->assertOk();
+});
+
+test('the demo resident sees the transfer reported from the portal', function () {
+    $vecino = ($this->cuenta)('residente@laspalmas.demo');
+
+    $reporte = DB::table('pagos')->where('origen', 'portal')->sole();
+    $saldo = DB::table('v_saldos_vivienda')->where('vivienda_id', $reporte->vivienda_id)->value('saldo');
+
+    expect($reporte->estado)->toBe('reportado_por_vecino')
+        ->and($reporte->registrado_por)->toBe($vecino->id)
+        ->and($reporte->cuenta_receptora)->toBeNull()
+        ->and(DB::table('residentes')->where('user_id', $vecino->id)->value('nombres'))->toBe('Luis')
+        // A-04 pagó septiembre: siguen pendientes octubre y noviembre
+        ->and(number_format((float) $saldo, 2, '.', ''))->toBe('1300.00');
+
+    Storage::disk('local')->assertExists($reporte->comprobante_path);
+
+    $this->actingAs($vecino)
+        ->get(route('portal.transferencias.index'))
+        ->assertOk()
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->component('portal/transferencias')
+            ->has('reportes', 1)
+            ->where('reportes.0.estado', 'reportado_por_vecino')
+            ->where('reportes.0.vivienda', 'A-04'));
 });
