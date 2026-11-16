@@ -53,9 +53,21 @@ class Pago extends Model
 
     public const PENDIENTE_VERIFICACION = 'pendiente_verificacion';
 
+    /**
+     * Transferencia que el vecino reportó desde el portal (HU-25)
+     */
+    public const REPORTADO_POR_VECINO = 'reportado_por_vecino';
+
     public const RECHAZADO = 'rechazado';
 
     public const ANULADO = 'anulado';
+
+    /**
+     * Origen del registro: el sistema interno o el portal del residente
+     */
+    public const SISTEMA = 'sistema';
+
+    public const PORTAL = 'portal';
 
     /**
      * Campos que puede cambiar una anulación en un cobro de caja cerrada

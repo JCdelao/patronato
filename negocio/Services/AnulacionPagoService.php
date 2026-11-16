@@ -78,6 +78,8 @@ class AnulacionPagoService
             'monto' => $pago->monto,
             'forma_pago' => $pago->forma_pago,
             'estado' => $pago->estado,
+            // El portal indica que lo reportó el vecino (HU-25)
+            'origen' => $pago->origen,
             'cobrador' => $pago->cobrador?->name,
             // Datos de la transferencia; queda sin recibo hasta que se confirme (HU-26)
             'transferencia' => $pago->forma_pago === Pago::TRANSFERENCIA ? [

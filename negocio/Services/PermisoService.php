@@ -8,6 +8,7 @@ use Patronato\Negocio\Permisos\PermisosPorRol;
 use Patronato\Negocio\Permisos\SinPermisos;
 use Patronato\Persistencia\Models\Rol;
 use Patronato\Persistencia\Models\User;
+use Patronato\Persistencia\Repositorios\ResidenteRepositorio;
 use Patronato\Persistencia\Repositorios\RolPermisoRepositorio;
 use Patronato\Persistencia\Repositorios\RolRepositorio;
 use Patronato\Persistencia\Transaccion;
@@ -29,6 +30,8 @@ class PermisoService
         'vehiculos' => ['etiqueta' => 'Vehículos', 'acciones' => ['ver', 'registrar', 'anular']],
         'reportes' => ['etiqueta' => 'Reportes', 'acciones' => ['ver']],
         'auditoria' => ['etiqueta' => 'Auditoría', 'acciones' => ['ver']],
+        // Además del permiso, el portal exige una cuenta vinculada a un residente activo
+        'portal' => ['etiqueta' => 'Portal del residente', 'acciones' => ['ver', 'registrar']],
     ];
 
     /**
@@ -44,6 +47,7 @@ class PermisoService
         'fiscal' => ['padron.ver', 'auditoria.ver', 'parametros.ver', 'reportes.ver', 'cobros.aprobar'],
         'vocal' => ['padron.ver'],
         'cobrador' => ['cobros.registrar'],
+        Rol::RESIDENTE => ['portal.ver', 'portal.registrar'],
     ];
 
     public function __construct(
@@ -51,6 +55,7 @@ class PermisoService
         private RolPermisoRepositorio $matriz,
         private Transaccion $transaccion,
         private AuditoriaService $auditoria,
+        private ResidenteRepositorio $residentes,
     ) {}
 
     /**
@@ -97,6 +102,8 @@ class PermisoService
         return match (true) {
             $usuario->esAdminPlataforma() => 'plataforma.residenciales.index',
             $this->puede($usuario, 'padron', 'ver') => 'padron.viviendas.index',
+            // Un residente desactivado no entra al portal: va al panel
+            $this->puede($usuario, 'portal', 'ver') && $this->residentes->activoDeUsuario($usuario->id) !== null => 'portal.transferencias.index',
             default => 'dashboard',
         };
     }

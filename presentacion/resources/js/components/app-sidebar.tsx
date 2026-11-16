@@ -8,7 +8,9 @@ import {
     Home,
     Landmark,
     LayoutGrid,
+    ReceiptText,
     ScrollText,
+    Send,
     ShieldCheck,
     SlidersHorizontal,
     Users,
@@ -20,6 +22,7 @@ import CajaController from '@/actions/Patronato/Presentacion/Controllers/CajaCon
 import CobroController from '@/actions/Patronato/Presentacion/Controllers/CobroController';
 import PagoController from '@/actions/Patronato/Presentacion/Controllers/PagoController';
 import ParametroCobroController from '@/actions/Patronato/Presentacion/Controllers/ParametroCobroController';
+import PortalTransferenciaController from '@/actions/Patronato/Presentacion/Controllers/PortalTransferenciaController';
 import ReporteCobrosController from '@/actions/Patronato/Presentacion/Controllers/ReporteCobrosController';
 import TransferenciaController from '@/actions/Patronato/Presentacion/Controllers/TransferenciaController';
 import AuditoriaController from '@/actions/Patronato/Presentacion/Controllers/AuditoriaController';
@@ -44,6 +47,19 @@ export function AppSidebar() {
     // Solo se muestran las opciones que el usuario puede usar
     const opciones: (NavItem & { visible: boolean })[] = [
         { title: 'Panel', href: dashboard(), icon: LayoutGrid, visible: true },
+        {
+            title: 'Mis reportes',
+            href: PortalTransferenciaController.index(),
+            icon: ReceiptText,
+            visible: auth.esResidente && auth.permisos.includes('portal.ver'),
+        },
+        {
+            title: 'Reportar transferencia',
+            href: PortalTransferenciaController.create(),
+            icon: Send,
+            visible:
+                auth.esResidente && auth.permisos.includes('portal.registrar'),
+        },
         {
             title: 'Residenciales',
             href: ResidencialController.index(),

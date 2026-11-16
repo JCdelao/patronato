@@ -14,7 +14,8 @@ use Patronato\Persistencia\Models\Residencial;
  *
  * Crea dos residenciales con cuentas de cada rol, viviendas, residentes,
  * conceptos, meses pendientes y cobros en cajas abiertas y cerradas,
- * y una transferencia pendiente de verificación con su comprobante.
+ * una transferencia pendiente de verificación con su comprobante y otra
+ * que un vecino reportó desde el portal con su cuenta de residente.
  * Todas las cuentas usan la contraseña "password".
  *
  * Solo para una base local: php artisan db:seed --class=DemostracionSeeder
@@ -123,6 +124,11 @@ class DemostracionSeeder extends Seeder
 
         // Transferencia registrada por la tesorera, pendiente de verificación
         $this->transferencia($residencial, $tesorero, $viviendas['B-03'], '500.00', '2026-11-13', 'BAC Credomatic', 'FT2611130042', '730-123456-7');
+
+        // Cuenta del propietario de A-04 para el portal, con una transferencia que reportó sin cuenta receptora
+        $vecino = $this->cuenta($residencial, 'residente', 'Luis García', 'residente@laspalmas.demo');
+        DB::table('residentes')->where('residencial_id', $residencial)->where('nombres', 'Luis')->where('apellidos', 'García')->update(['user_id' => $vecino]);
+        $this->transferencia($residencial, $vecino, $viviendas['A-04'], '650.00', '2026-11-14', 'Banco Atlántida', 'ATL2611140017', null, 'reportado_por_vecino', 'portal');
     }
 
     private function losPinos(): void
@@ -379,11 +385,12 @@ class DemostracionSeeder extends Seeder
     }
 
     /**
-     * Registra una transferencia pendiente de verificación con un comprobante PDF
+     * Registra una transferencia por verificar con un comprobante PDF
      *
-     * No tiene recibo ni meses aplicados, así que no reduce el saldo.
+     * No tiene recibo ni meses aplicados, así que no reduce el saldo. La registra
+     * el tesorero o la reporta un vecino desde el portal.
      */
-    private function transferencia(int $residencialId, int $tesoreroId, int $viviendaId, string $monto, string $fecha, string $banco, string $referencia, string $cuenta): void
+    private function transferencia(int $residencialId, int $registradoPor, int $viviendaId, string $monto, string $fecha, string $banco, string $referencia, ?string $cuenta, string $estado = 'pendiente_verificacion', string $origen = 'sistema'): void
     {
         $ruta = "transferencias/{$residencialId}/demostracion-{$referencia}.pdf";
 
@@ -393,11 +400,11 @@ class DemostracionSeeder extends Seeder
             'residencial_id' => $residencialId,
             'vivienda_id' => $viviendaId,
             'forma_pago' => 'transferencia',
-            'estado' => 'pendiente_verificacion',
-            'origen' => 'sistema',
+            'estado' => $estado,
+            'origen' => $origen,
             'monto' => $monto,
             'fecha_pago' => $fecha,
-            'registrado_por' => $tesoreroId,
+            'registrado_por' => $registradoPor,
             'banco' => $banco,
             'numero_referencia' => $referencia,
             'cuenta_receptora' => $cuenta,

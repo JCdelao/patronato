@@ -31,6 +31,7 @@ type DetallePago = {
     monto: string;
     forma_pago: string;
     estado: string;
+    origen: string;
     cobrador: string | null;
     transferencia: {
         banco: string | null;
@@ -111,7 +112,8 @@ export default function Pago({ pago }: { pago: DetallePago }) {
                     </Alert>
                 )}
 
-                {pago.estado === 'pendiente_verificacion' && (
+                {(pago.estado === 'pendiente_verificacion' ||
+                    pago.estado === 'reportado_por_vecino') && (
                     <Alert>
                         <Clock />
                         <AlertTitle>Pendiente de verificación</AlertTitle>
@@ -172,7 +174,11 @@ export default function Pago({ pago }: { pago: DetallePago }) {
                         </>
                     )}
                     <dt className="text-muted-foreground">
-                        {pago.transferencia ? 'Registró' : 'Cobrador'}
+                        {pago.origen === 'portal'
+                            ? 'Reportó'
+                            : pago.transferencia
+                              ? 'Registró'
+                              : 'Cobrador'}
                     </dt>
                     <dd className="font-semibold">{pago.cobrador ?? '—'}</dd>
                     <dt className="text-muted-foreground">Registrado</dt>

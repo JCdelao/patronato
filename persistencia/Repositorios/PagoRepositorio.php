@@ -2,6 +2,7 @@
 
 namespace Patronato\Persistencia\Repositorios;
 
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
@@ -124,6 +125,22 @@ class PagoRepositorio
             ->where('numero_referencia', $numeroReferencia)
             ->whereNotIn('estado', [Pago::RECHAZADO, Pago::ANULADO])
             ->exists();
+    }
+
+    /**
+     * Transferencias que la cuenta reportó desde el portal, de la más reciente a la más antigua
+     *
+     * @return Collection<int, Pago>
+     */
+    public function reportesDe(int $usuarioId): Collection
+    {
+        return Pago::query()
+            ->where('origen', Pago::PORTAL)
+            ->where('registrado_por', $usuarioId)
+            ->with('vivienda')
+            ->latest('fecha_pago')
+            ->latest('id')
+            ->get();
     }
 
     /**

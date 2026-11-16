@@ -119,7 +119,7 @@ test('the demo voiding follows the HU-23 rules and leaves one request to approve
 test('the demo leaves a transfer pending verification with its receipt', function () {
     $tesorero = ($this->cuenta)('tesorero@laspalmas.demo');
 
-    $transferencia = DB::table('pagos')->where('forma_pago', 'transferencia')->sole();
+    $transferencia = DB::table('pagos')->where('forma_pago', 'transferencia')->where('origen', 'sistema')->sole();
     $saldo = DB::table('v_saldos_vivienda')->where('vivienda_id', $transferencia->vivienda_id)->value('saldo');
 
     expect($transferencia->estado)->toBe('pendiente_verificacion')
@@ -134,4 +134,29 @@ test('the demo leaves a transfer pending verification with its receipt', functio
     $this->actingAs($tesorero)
         ->get(route('finanzas.transferencias.comprobante', $transferencia->id))
         ->assertOk();
+});
+
+test('the demo resident sees the transfer reported from the portal', function () {
+    $vecino = ($this->cuenta)('residente@laspalmas.demo');
+
+    $reporte = DB::table('pagos')->where('origen', 'portal')->sole();
+    $saldo = DB::table('v_saldos_vivienda')->where('vivienda_id', $reporte->vivienda_id)->value('saldo');
+
+    expect($reporte->estado)->toBe('reportado_por_vecino')
+        ->and($reporte->registrado_por)->toBe($vecino->id)
+        ->and($reporte->cuenta_receptora)->toBeNull()
+        ->and(DB::table('residentes')->where('user_id', $vecino->id)->value('nombres'))->toBe('Luis')
+        // A-04 pagó septiembre: siguen pendientes octubre y noviembre
+        ->and(number_format((float) $saldo, 2, '.', ''))->toBe('1300.00');
+
+    Storage::disk('local')->assertExists($reporte->comprobante_path);
+
+    $this->actingAs($vecino)
+        ->get(route('portal.transferencias.index'))
+        ->assertOk()
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->component('portal/transferencias')
+            ->has('reportes', 1)
+            ->where('reportes.0.estado', 'reportado_por_vecino')
+            ->where('reportes.0.vivienda', 'A-04'));
 });

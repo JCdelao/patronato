@@ -11,6 +11,7 @@ use Patronato\Presentacion\Controllers\ParametroCobroController;
 use Patronato\Presentacion\Controllers\TarifaEspecialController;
 use Patronato\Presentacion\Controllers\TipoViviendaController;
 use Patronato\Presentacion\Controllers\TransferenciaController;
+use Patronato\Presentacion\Controllers\TransferenciaReportadaController;
 
 // Enlace firmado para compartir el comprobante por mensajería; se abre sin sesión
 Route::get('comprobantes/{pago}', [ComprobanteController::class, 'publico'])
@@ -49,6 +50,14 @@ Route::middleware(['auth', 'verified'])
             Route::post('transferencias', [TransferenciaController::class, 'store'])
                 ->middleware('throttle:30,1')
                 ->name('transferencias.store');
+
+            // Enlace del aviso de un reporte del portal (HU-25); no requiere cobros.ver
+            Route::get('transferencias/reportes/{pago}', [TransferenciaReportadaController::class, 'show'])
+                ->whereNumber('pago')
+                ->name('transferencias.reportes.show');
+            Route::get('transferencias/reportes/{pago}/comprobante', [TransferenciaReportadaController::class, 'comprobante'])
+                ->whereNumber('pago')
+                ->name('transferencias.reportes.comprobante');
         });
 
         Route::post('pagos/{pago}/anulacion', [PagoController::class, 'solicitarAnulacion'])

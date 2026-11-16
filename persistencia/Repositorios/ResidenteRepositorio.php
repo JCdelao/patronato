@@ -59,6 +59,14 @@ class ResidenteRepositorio extends Repositorio
     }
 
     /**
+     * Residente activo vinculado a la cuenta, si tiene uno; sin él no se usa el portal
+     */
+    public function activoDeUsuario(int $usuarioId): ?Residente
+    {
+        return Residente::query()->where('user_id', $usuarioId)->where('activo', true)->first();
+    }
+
+    /**
      * Quita la cuenta al residente que la tenga y se la asigna a otro
      */
     public function asignarCuenta(int $usuarioId, ?int $residenteId): void
