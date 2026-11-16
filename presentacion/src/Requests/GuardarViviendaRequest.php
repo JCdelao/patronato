@@ -6,6 +6,7 @@ use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Patronato\Persistencia\Models\ConceptoCobro;
 use Patronato\Persistencia\Models\Vivienda;
 
 class GuardarViviendaRequest extends FormRequest
@@ -43,6 +44,16 @@ class GuardarViviendaRequest extends FormRequest
             'calle_bloque' => ['nullable', 'string', 'max:60'],
             'numero' => ['required', 'string', 'max:20'],
             'estado_ocupacion' => ['required', Rule::in(['ocupada', 'desocupada'])],
+            // Solo conceptos activos que se cobran a algunas viviendas
+            'conceptos' => ['nullable', 'array'],
+            'conceptos.*' => [
+                'integer',
+                Rule::exists('conceptos_cobro', 'id')
+                    ->where('residencial_id', $residencialId)
+                    ->where('activo', true)
+                    ->where('es_cuota_unificada', false)
+                    ->where('alcance', ConceptoCobro::ALGUNAS),
+            ],
         ];
     }
 
@@ -58,6 +69,7 @@ class GuardarViviendaRequest extends FormRequest
             'tipo_vivienda_id.required' => 'Elige el tipo de vivienda.',
             'tipo_vivienda_id.exists' => 'Elige un tipo de vivienda activo.',
             'vivienda_padre_id.exists' => 'Elige una vivienda activa.',
+            'conceptos.*.exists' => 'Elige conceptos activos que se cobren solo a algunas viviendas.',
         ];
     }
 

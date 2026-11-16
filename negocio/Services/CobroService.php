@@ -34,9 +34,9 @@ class CobroService
     ) {}
 
     /**
-     * Registra un pago en efectivo en la caja abierta del cobrador
+     * Registra un pago en efectivo en la caja del día del cobrador
      *
-     * Si el cobrador no tiene caja abierta, el primer cobro le abre una.
+     * Si el cobrador no tiene caja abierta hoy, el primer cobro le abre una.
      * La caja, el pago, sus aplicaciones y la auditoría se guardan juntos o no se guarda nada.
      *
      * @param  array<int, int>  $cargoIds  meses que se pagan
@@ -50,8 +50,6 @@ class CobroService
         return $this->transaccion->ejecutar(function () use ($cobrador, $residencialId, $viviendaId, $monto, $cargoIds) {
             // Un cobro a la vez por residencial: protege el recibo y los meses pendientes
             $this->recibos->bloquear($residencialId);
-
-            $caja = $this->cajas->bloquearAbiertaDe($cobrador);
 
             try {
                 $pendiente = $this->aplicaciones->pendienteDe($viviendaId, $cargoIds);
@@ -71,8 +69,8 @@ class CobroService
                 throw ValidationException::withMessages(['monto' => 'El patronato no permite abonos parciales: el monto debe cubrir los meses elegidos.']);
             }
 
-            // El primer cobro abre la caja; el bloqueo del residencial evita abrir dos
-            $caja ??= $this->cajas->abrir($cobrador);
+            // El primer cobro del día abre la caja; el bloqueo del residencial evita abrir dos
+            $caja = $this->cajas->delDiaParaCobrar($cobrador);
 
             // El efectivo queda confirmado al registrarse
             $pago = $this->pagos->crear([

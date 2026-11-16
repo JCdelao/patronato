@@ -313,7 +313,7 @@ test('only users with the close box permission can use it', function () {
         $ruta()->assertRedirect(route('login'));
     }
 
-    foreach (['cobrador', 'vocal', 'fiscal', Rol::PRESIDENTE] as $rol) {
+    foreach (['cobrador', 'vocal', 'fiscal', Rol::SECRETARIO] as $rol) {
         $this->actingAs(($this->usuario)($rol));
 
         foreach ($rutas as $ruta) {

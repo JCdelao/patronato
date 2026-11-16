@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 use Patronato\Negocio\Services\ConceptoService;
+use Patronato\Negocio\Services\GeneracionCargosService;
+use Patronato\Negocio\Services\MoraService;
 use Patronato\Negocio\Services\PeriodoService;
 use Patronato\Negocio\Services\PermisoService;
 use Patronato\Negocio\Services\TarifaEspecialService;
@@ -23,6 +25,8 @@ class ParametroCobroController extends Controller
      */
     public function index(
         Request $request,
+        GeneracionCargosService $generacion,
+        MoraService $mora,
         TipoViviendaService $tiposVivienda,
         TarifaEspecialService $tarifasEspeciales,
         ViviendaService $viviendas,
@@ -60,7 +64,19 @@ class ParametroCobroController extends Controller
         $conceptoIds = $catalogo->pluck('id')->all();
         $montos = $tarifas->montosGenerales($conceptoIds);
 
+        $residencialId = (int) $request->user()->residencial_id;
+        $ultimaGeneracion = $generacion->delMesActual($residencialId);
+
         return Inertia::render('finanzas/parametros', [
+            'generacion' => [
+                'dia' => $generacion->dia($residencialId),
+                'ultima' => $ultimaGeneracion === null ? null : [
+                    'fecha' => $ultimaGeneracion->created_at?->toIso8601String(),
+                    'cargos' => $ultimaGeneracion->cargos,
+                    'automatica' => $ultimaGeneracion->automatica,
+                    'usuario' => $ultimaGeneracion->usuario?->name,
+                ],
+            ],
             'tipos' => $tipos->map(fn (TipoVivienda $tipo) => [
                 'id' => $tipo->id,
                 'nombre' => $tipo->nombre,
@@ -72,6 +88,8 @@ class ParametroCobroController extends Controller
                 'id' => $concepto->id,
                 'nombre' => $concepto->nombre,
                 'tipo' => $concepto->tipo,
+                'alcance' => $concepto->alcance,
+                'viviendas_elegidas' => (int) $concepto->getAttribute('viviendas_elegidas'),
                 'activo' => $concepto->activo,
                 'es_cuota_unificada' => $concepto->es_cuota_unificada,
                 'tiene_cargos' => (bool) $concepto->getAttribute('tiene_cargos'),
@@ -79,8 +97,10 @@ class ParametroCobroController extends Controller
             ]),
             'especiales' => collect($especiales)->sortBy('codigo')->values(),
             'viviendas' => $viviendas->activas(),
+            'mora' => $mora->regla($residencialId),
             'periodoActual' => $periodo,
             'puedeEditar' => $permisos->puede($request->user(), 'parametros', 'registrar'),
+            'puedeEditarMora' => $permisos->puede($request->user(), 'mora', 'registrar'),
         ]);
     }
 

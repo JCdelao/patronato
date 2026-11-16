@@ -14,6 +14,7 @@ use Illuminate\Support\Carbon;
  * @property int $residencial_id
  * @property int $cobrador_id
  * @property string $estado
+ * @property Carbon $fecha
  * @property Carbon $abierta_en
  * @property Carbon|null $cerrada_en
  * @property int|null $cerrada_por
@@ -25,7 +26,7 @@ use Illuminate\Support\Carbon;
  * @property-read User|null $cerradaPor
  * @property-read Collection<int, Pago> $pagos
  */
-#[Fillable(['residencial_id', 'cobrador_id', 'estado', 'abierta_en', 'cerrada_en', 'cerrada_por', 'total_registrado', 'monto_entregado', 'justificacion'])]
+#[Fillable(['residencial_id', 'cobrador_id', 'estado', 'fecha', 'abierta_en', 'cerrada_en', 'cerrada_por', 'total_registrado', 'monto_entregado', 'justificacion'])]
 class Caja extends Model
 {
     use PerteneceAResidencial;
@@ -47,6 +48,7 @@ class Caja extends Model
     protected function casts(): array
     {
         return [
+            'fecha' => 'date',
             'abierta_en' => 'datetime',
             'cerrada_en' => 'datetime',
             'total_registrado' => 'decimal:2',

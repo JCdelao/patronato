@@ -9,10 +9,13 @@ use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 use Patronato\Negocio\Services\BitacoraService;
+use Patronato\Negocio\Services\ConceptoService;
+use Patronato\Negocio\Services\MoraService;
 use Patronato\Negocio\Services\ResidenteService;
 use Patronato\Negocio\Services\TarifaEspecialService;
 use Patronato\Negocio\Services\TipoViviendaService;
 use Patronato\Negocio\Services\ViviendaService;
+use Patronato\Persistencia\Models\ConceptoCobro;
 use Patronato\Persistencia\Models\Vivienda;
 use Patronato\Persistencia\Models\ViviendaResidente;
 use Patronato\Presentacion\Requests\GuardarViviendaRequest;
@@ -22,7 +25,7 @@ class ViviendaController extends Controller
     /**
      * Muestra el padrón de viviendas activas o inactivas del residencial
      */
-    public function index(Request $request, ViviendaService $servicio, TipoViviendaService $tipos, TarifaEspecialService $especiales): Response
+    public function index(Request $request, ViviendaService $servicio, TipoViviendaService $tipos, TarifaEspecialService $especiales, MoraService $mora, ConceptoService $conceptos): Response
     {
         $buscar = $request->string('buscar')->trim()->toString();
         $inactivas = $request->string('estado')->toString() === 'inactivas';
@@ -30,9 +33,16 @@ class ViviendaController extends Controller
         $viviendas = $servicio->padron(! $inactivas, $buscar);
         $cuotasEspeciales = $especiales->vigentes((int) $request->user()->residencial_id);
 
+        // Las viviendas inactivas no muestran estado de mora
+        $estados = $inactivas ? [] : $mora->estados(
+            (int) $request->user()->residencial_id,
+            array_map(fn (Vivienda $vivienda): int => $vivienda->id, $viviendas->items()),
+        );
+
         return Inertia::render('padron/viviendas', [
             'viviendas' => $viviendas->through(fn (Vivienda $vivienda) => [
                 'cuota_especial' => $cuotasEspeciales[$vivienda->id] ?? null,
+                'mora' => $estados[$vivienda->id] ?? null,
                 'id' => $vivienda->id,
                 'codigo' => $vivienda->codigo,
                 'tipo_vivienda_id' => $vivienda->tipo_vivienda_id,
@@ -43,6 +53,10 @@ class ViviendaController extends Controller
                 'calle_bloque' => $vivienda->calle_bloque,
                 'numero' => $vivienda->numero,
                 'estado_ocupacion' => $vivienda->estado_ocupacion,
+                'conceptos' => $vivienda->conceptos
+                    ->sortBy('nombre')
+                    ->values()
+                    ->map(fn (ConceptoCobro $concepto) => ['id' => $concepto->id, 'nombre' => $concepto->nombre]),
                 'residentes' => $vivienda->vinculosVigentes
                     ->sortByDesc('es_responsable_pago')
                     ->values()
@@ -65,6 +79,7 @@ class ViviendaController extends Controller
             ]),
             'opcionesViviendas' => $servicio->activas(),
             'tiposVivienda' => $tipos->activos(),
+            'conceptosOpcionales' => $conceptos->paraAlgunas(),
             'buscar' => $buscar,
             'estado' => $inactivas ? 'inactivas' : 'activas',
         ]);
@@ -86,7 +101,7 @@ class ViviendaController extends Controller
      */
     public function store(GuardarViviendaRequest $request, ViviendaService $viviendas): RedirectResponse
     {
-        /** @var array{codigo: string, tipo_vivienda_id: string, vivienda_padre_id?: string|null, edificio_torre?: string|null, calle_bloque?: string|null, numero: string, estado_ocupacion: string} $datos */
+        /** @var array{codigo: string, tipo_vivienda_id: string, vivienda_padre_id?: string|null, edificio_torre?: string|null, calle_bloque?: string|null, numero: string, estado_ocupacion: string, conceptos?: array<int, string>} $datos */
         $datos = $request->validated();
 
         $viviendas->registrar($request->user(), $datos);
@@ -103,7 +118,7 @@ class ViviendaController extends Controller
     {
         abort_unless($vivienda->activa, 404);
 
-        /** @var array{codigo: string, tipo_vivienda_id: string, vivienda_padre_id?: string|null, edificio_torre?: string|null, calle_bloque?: string|null, numero: string, estado_ocupacion: string} $datos */
+        /** @var array{codigo: string, tipo_vivienda_id: string, vivienda_padre_id?: string|null, edificio_torre?: string|null, calle_bloque?: string|null, numero: string, estado_ocupacion: string, conceptos?: array<int, string>} $datos */
         $datos = $request->validated();
 
         $viviendas->actualizar($request->user(), $vivienda, $datos);

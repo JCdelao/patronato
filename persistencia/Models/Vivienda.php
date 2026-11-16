@@ -3,8 +3,10 @@
 namespace Patronato\Persistencia\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
@@ -20,6 +22,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property bool $activa
  * @property-read TipoVivienda $tipoVivienda
  * @property-read Vivienda|null $padre
+ * @property-read Collection<int, ConceptoCobro> $conceptos
  */
 #[Fillable(['residencial_id', 'codigo', 'tipo_vivienda_id', 'vivienda_padre_id', 'edificio_torre', 'calle_bloque', 'numero', 'estado_ocupacion', 'activa'])]
 class Vivienda extends Model
@@ -69,6 +72,16 @@ class Vivienda extends Model
     public function hijas(): HasMany
     {
         return $this->hasMany(Vivienda::class, 'vivienda_padre_id');
+    }
+
+    /**
+     * Conceptos que se cobran solo a algunas viviendas y que esta paga
+     *
+     * @return BelongsToMany<ConceptoCobro, $this>
+     */
+    public function conceptos(): BelongsToMany
+    {
+        return $this->belongsToMany(ConceptoCobro::class, 'concepto_viviendas', 'vivienda_id', 'concepto_id');
     }
 
     /**

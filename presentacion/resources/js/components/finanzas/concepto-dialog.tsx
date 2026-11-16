@@ -105,6 +105,37 @@ export default function ConceptoDialog({
                                 </div>
                             </div>
 
+                            <div className="grid gap-2">
+                                <Label htmlFor="alcance">
+                                    ¿A quién se cobra?
+                                </Label>
+                                <Select
+                                    name="alcance"
+                                    defaultValue={concepto?.alcance ?? 'todas'}
+                                >
+                                    <SelectTrigger
+                                        id="alcance"
+                                        className="w-full"
+                                    >
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="todas">
+                                            A todas las viviendas
+                                        </SelectItem>
+                                        <SelectItem value="algunas">
+                                            Solo a algunas viviendas
+                                        </SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <p className="text-sm text-muted-foreground">
+                                    Si es solo a algunas, como el parqueo de
+                                    vehículos, se marca en el formulario de cada
+                                    vivienda.
+                                </p>
+                                <InputError message={errors.alcance} />
+                            </div>
+
                             <div className="grid gap-4 sm:grid-cols-2">
                                 <div className="grid gap-2">
                                     <Label htmlFor="monto">Monto (L.)</Label>

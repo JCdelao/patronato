@@ -8,22 +8,21 @@ use Patronato\Persistencia\Models\Caja;
 class CajaRepositorio extends Repositorio
 {
     /**
-     * Caja abierta del cobrador; con bloqueo la reserva hasta terminar la transacción
+     * Caja abierta del cobrador en un día; con bloqueo la reserva hasta terminar la transacción
      */
-    public function abiertaDe(int $residencialId, int $cobradorId, bool $bloquear = false): ?Caja
+    public function abiertaDelDia(int $residencialId, int $cobradorId, string $fecha, bool $bloquear = false): ?Caja
     {
         return Caja::query()
             ->where('residencial_id', $residencialId)
             ->where('cobrador_id', $cobradorId)
             ->where('estado', Caja::ABIERTA)
+            ->whereDate('fecha', $fecha)
             ->when($bloquear, fn ($query) => $query->lockForUpdate())
             ->first();
     }
 
     /**
      * Indica si el cobrador tiene una caja abierta en otro residencial
-     *
-     * La base permite una sola caja abierta por cobrador en todo el sistema.
      */
     public function tieneAbiertaFueraDe(int $residencialId, int $cobradorId): bool
     {

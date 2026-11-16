@@ -17,7 +17,7 @@ class ConceptoController extends Controller
      */
     public function store(GuardarConceptoRequest $request, ConceptoService $conceptos): RedirectResponse
     {
-        /** @var array{nombre: string, tipo: string, monto: string, vigente_desde: string} $datos */
+        /** @var array{nombre: string, tipo: string, alcance?: string, monto: string, vigente_desde: string} $datos */
         $datos = $request->validated();
 
         $conceptos->registrar($request->user(), $datos);
@@ -34,7 +34,7 @@ class ConceptoController extends Controller
     {
         $this->editable($concepto);
 
-        /** @var array{nombre: string, tipo: string, monto: string, vigente_desde: string} $datos */
+        /** @var array{nombre: string, tipo: string, alcance?: string, monto: string, vigente_desde: string} $datos */
         $datos = $request->validated();
 
         $conceptos->actualizar($request->user(), $concepto, $datos);

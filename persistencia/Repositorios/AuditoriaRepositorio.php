@@ -35,6 +35,26 @@ class AuditoriaRepositorio
     }
 
     /**
+     * Guarda un registro de la bitácora hecho por el sistema, sin usuario
+     *
+     * @param  array{valor_anterior?: array<string, mixed>, valor_nuevo?: array<string, mixed>, motivo?: string}  $datos
+     */
+    public function registrarSistema(int $residencialId, string $modulo, string $accion, Model $modelo, array $datos = []): void
+    {
+        $id = $modelo->getKey();
+
+        Auditoria::query()->create([
+            'residencial_id' => $residencialId,
+            'user_id' => null,
+            'modulo' => $modulo,
+            'accion' => $accion,
+            'entidad' => $modelo->getTable(),
+            'entidad_id' => is_numeric($id) ? (int) $id : null,
+            ...$datos,
+        ]);
+    }
+
+    /**
      * Registro más reciente de una acción para cada entidad
      *
      * @param  array<int, int>  $ids
