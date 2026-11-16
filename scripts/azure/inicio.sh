@@ -22,6 +22,8 @@ rm -rf "${app}/storage"
 ln -sfn "${datos}" "${app}/storage"
 
 cd "${app}"
+# Quita la configuración guardada para que las migraciones usen las variables actuales
+php artisan config:clear
 php artisan migrate --force --no-interaction
 php artisan db:seed --class=RolesSeeder --force --no-interaction
 php artisan storage:link --force
