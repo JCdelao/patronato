@@ -151,7 +151,7 @@ export default function Transferencia({
                                     <div className="grid gap-4 sm:grid-cols-2">
                                         <div className="grid gap-2">
                                             <Label htmlFor="monto">
-                                                Monto transferido
+                                                Monto transferido (obligatorio)
                                             </Label>
                                             <Input
                                                 id="monto"
@@ -169,6 +169,7 @@ export default function Transferencia({
                                         <div className="grid gap-2">
                                             <Label htmlFor="fecha_pago">
                                                 Fecha de la transferencia
+                                                (obligatoria)
                                             </Label>
                                             <Input
                                                 id="fecha_pago"
@@ -185,7 +186,9 @@ export default function Transferencia({
                                     </div>
 
                                     <div className="grid gap-2">
-                                        <Label htmlFor="banco">Banco</Label>
+                                        <Label htmlFor="banco">
+                                            Banco (obligatorio)
+                                        </Label>
                                         <Input
                                             id="banco"
                                             name="banco"
@@ -197,7 +200,7 @@ export default function Transferencia({
 
                                     <div className="grid gap-2">
                                         <Label htmlFor="numero_referencia">
-                                            Número de referencia
+                                            Número de referencia (obligatorio)
                                         </Label>
                                         <Input
                                             id="numero_referencia"
@@ -212,7 +215,7 @@ export default function Transferencia({
 
                                     <div className="grid gap-2">
                                         <Label htmlFor="cuenta_receptora">
-                                            Cuenta receptora
+                                            Cuenta receptora (obligatoria)
                                         </Label>
                                         <Input
                                             id="cuenta_receptora"
@@ -227,7 +230,7 @@ export default function Transferencia({
 
                                     <div className="grid gap-2">
                                         <Label htmlFor="comprobante">
-                                            Comprobante
+                                            Comprobante (obligatorio)
                                         </Label>
                                         <Input
                                             id="comprobante"
