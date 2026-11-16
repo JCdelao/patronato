@@ -12,7 +12,7 @@ use Patronato\Negocio\Services\PeriodoService;
 use Patronato\Persistencia\Models\CategoriaFinanciera;
 use Patronato\Persistencia\Models\Egreso;
 use Patronato\Persistencia\Models\User;
-use Patronato\Presentacion\Requests\AnularEgresoRequest;
+use Patronato\Presentacion\Requests\AnularMovimientoRequest;
 use Patronato\Presentacion\Requests\RegistrarEgresoRequest;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
@@ -94,7 +94,7 @@ class EgresoController extends Controller
     /**
      * Anula el egreso con su motivo
      */
-    public function anular(AnularEgresoRequest $request, Egreso $egreso): RedirectResponse
+    public function anular(AnularMovimientoRequest $request, Egreso $egreso): RedirectResponse
     {
         /** @var User $usuario */
         $usuario = $request->user();

@@ -37,6 +37,7 @@ El espacio de nombres sigue la carpeta: `negocio/Services/CobroService.php` es
 - `Notificaciones/`: correos que envía el sistema.
 - `Adaptadores/`: envuelven librerías externas, como la de PDF, detrás de una interfaz de `Contratos/`.
 - `Reportes/`: arman los reportes con sus filtros y los exportan a cada formato (PDF, Excel).
+- `Eventos/` y `Oyentes/`: avisos entre módulos, como `PagoConfirmado`, y quienes reaccionan a ellos. Se registran en `AppServiceProvider`.
 
 **persistencia/**
 

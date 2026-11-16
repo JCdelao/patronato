@@ -4,10 +4,14 @@ namespace Patronato\Presentacion\Requests;
 
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
-use Patronato\Negocio\Services\EgresoService;
 
-class AnularEgresoRequest extends FormRequest
+/**
+ * Motivo para anular un egreso o un ingreso; ninguno de los dos se borra
+ */
+class AnularMovimientoRequest extends FormRequest
 {
+    public const MOTIVO_MINIMO = 10;
+
     /**
      * Reglas de validación
      *
@@ -16,7 +20,7 @@ class AnularEgresoRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'motivo' => ['required', 'string', 'min:'.EgresoService::MOTIVO_MINIMO, 'max:1000'],
+            'motivo' => ['required', 'string', 'min:'.self::MOTIVO_MINIMO, 'max:1000'],
         ];
     }
 
@@ -29,7 +33,7 @@ class AnularEgresoRequest extends FormRequest
     {
         return [
             'motivo.required' => 'Escribe el motivo de la anulación.',
-            'motivo.min' => 'Explica el motivo con al menos '.EgresoService::MOTIVO_MINIMO.' caracteres.',
+            'motivo.min' => 'Explica el motivo con al menos '.self::MOTIVO_MINIMO.' caracteres.',
             'motivo.max' => 'El motivo admite hasta 1000 caracteres.',
         ];
     }

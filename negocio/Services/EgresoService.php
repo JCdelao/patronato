@@ -14,8 +14,6 @@ use Throwable;
 
 class EgresoService
 {
-    public const MOTIVO_MINIMO = 10;
-
     private const POR_PAGINA = 25;
 
     /**

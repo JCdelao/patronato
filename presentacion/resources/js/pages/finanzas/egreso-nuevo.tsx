@@ -1,17 +1,11 @@
 import { Form, Head, Link } from '@inertiajs/react';
-import type { Page } from '@inertiajs/core';
 import { ArrowLeft, Plus } from 'lucide-react';
 import { useState } from 'react';
 import CategoriaEgresoController from '@/actions/Patronato/Presentacion/Controllers/CategoriaEgresoController';
 import EgresoController from '@/actions/Patronato/Presentacion/Controllers/EgresoController';
+import NuevaCategoriaDialog from '@/components/finanzas/nueva-categoria-dialog';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogTitle,
-} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -23,35 +17,19 @@ import {
 } from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
 import { FORMAS_PAGO } from '@/lib/formato';
-import type { CategoriaEgreso } from '@/types/finanzas';
+import type { OpcionCategoria } from '@/types/finanzas';
 
 export default function EgresoNuevo({
     categorias,
     formas_pago,
     hoy,
 }: {
-    categorias: CategoriaEgreso[];
+    categorias: OpcionCategoria[];
     formas_pago: string[];
     hoy: string;
 }) {
     const [categoria, setCategoria] = useState('');
     const [nuevaCategoria, setNuevaCategoria] = useState(false);
-
-    // Deja elegida la categoría recién creada, que llega en la lista actualizada
-    const alCrearCategoria = (nombre: string, pagina: Page) => {
-        const lista = pagina.props.categorias as CategoriaEgreso[];
-        const creada = lista.find(
-            (item) =>
-                item.nombre.toLocaleLowerCase() ===
-                nombre.trim().toLocaleLowerCase(),
-        );
-
-        if (creada) {
-            setCategoria(String(creada.id));
-        }
-
-        setNuevaCategoria(false);
-    };
 
     return (
         <>
@@ -248,64 +226,12 @@ export default function EgresoNuevo({
 
             {nuevaCategoria && (
                 <NuevaCategoriaDialog
+                    accion={CategoriaEgresoController.store.form()}
+                    descripcion="Queda disponible para los egresos de este residencial."
                     onClose={() => setNuevaCategoria(false)}
-                    onCreada={alCrearCategoria}
+                    onCreada={(id) => setCategoria(String(id))}
                 />
             )}
         </>
-    );
-}
-
-function NuevaCategoriaDialog({
-    onClose,
-    onCreada,
-}: {
-    onClose: () => void;
-    onCreada: (nombre: string, pagina: Page) => void;
-}) {
-    const [nombre, setNombre] = useState('');
-
-    return (
-        <Dialog open onOpenChange={(abierto) => !abierto && onClose()}>
-            <DialogContent className="rounded-2xl sm:max-w-md">
-                <DialogTitle className="text-2xl font-bold tracking-tight">
-                    Nueva categoría
-                </DialogTitle>
-                <DialogDescription>
-                    Queda disponible para los egresos de este residencial.
-                </DialogDescription>
-                <Form
-                    {...CategoriaEgresoController.store.form()}
-                    options={{ preserveScroll: true, preserveState: true }}
-                    onSuccess={(pagina) => onCreada(nombre, pagina)}
-                    className="grid gap-4"
-                >
-                    {({ processing, errors }) => (
-                        <>
-                            <div className="grid gap-2">
-                                <Label htmlFor="nombre_categoria">Nombre</Label>
-                                <Input
-                                    id="nombre_categoria"
-                                    name="nombre"
-                                    value={nombre}
-                                    onChange={(evento) =>
-                                        setNombre(evento.target.value)
-                                    }
-                                    maxLength={100}
-                                    placeholder="Eventos comunitarios"
-                                    required
-                                    autoFocus
-                                />
-                                <InputError message={errors.nombre} />
-                            </div>
-                            <Button className="w-full" disabled={processing}>
-                                {processing && <Spinner />}
-                                Agregar
-                            </Button>
-                        </>
-                    )}
-                </Form>
-            </DialogContent>
-        </Dialog>
     );
 }

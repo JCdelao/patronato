@@ -2,7 +2,7 @@ import { Head, Link, router, usePage } from '@inertiajs/react';
 import { Plus, Search } from 'lucide-react';
 import { useRef } from 'react';
 import EgresoController from '@/actions/Patronato/Presentacion/Controllers/EgresoController';
-import EstadoEgreso from '@/components/finanzas/estado-egreso';
+import EstadoMovimiento from '@/components/finanzas/estado-movimiento';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { formatoFecha, formatoMonto } from '@/lib/formato';
@@ -101,7 +101,7 @@ export default function Egresos({
                                     </span>
                                     <span className="flex shrink-0 items-center gap-3">
                                         {egreso.estado === 'anulado' && (
-                                            <EstadoEgreso
+                                            <EstadoMovimiento
                                                 estado={egreso.estado}
                                             />
                                         )}

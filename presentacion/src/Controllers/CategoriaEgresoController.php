@@ -5,6 +5,7 @@ namespace Patronato\Presentacion\Controllers;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Patronato\Negocio\Services\CategoriaFinancieraService;
+use Patronato\Persistencia\Models\CategoriaFinanciera;
 use Patronato\Persistencia\Models\User;
 use Patronato\Presentacion\Requests\RegistrarCategoriaEgresoRequest;
 
@@ -18,7 +19,7 @@ class CategoriaEgresoController extends Controller
         /** @var User $usuario */
         $usuario = $request->user();
 
-        $categoria = $categorias->registrarDeEgreso($usuario, (string) $request->input('nombre'));
+        $categoria = $categorias->registrar($usuario, CategoriaFinanciera::EGRESO, (string) $request->input('nombre'));
 
         Inertia::flash('toast', ['type' => 'success', 'message' => "Categoría {$categoria->nombre} agregada."]);
 

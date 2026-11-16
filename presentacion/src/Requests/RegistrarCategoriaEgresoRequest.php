@@ -35,11 +35,19 @@ class RegistrarCategoriaEgresoRequest extends FormRequest
     }
 
     /**
-     * Rechaza un nombre repetido entre las categorías de egreso, sin importar mayúsculas
+     * Tipo de las categorías entre las que no se puede repetir el nombre
+     */
+    protected function tipo(): string
+    {
+        return CategoriaFinanciera::EGRESO;
+    }
+
+    /**
+     * Rechaza un nombre repetido entre las categorías del mismo tipo, sin importar mayúsculas
      */
     private function nombreLibre(string $atributo, mixed $valor, Closure $fallar): void
     {
-        $motivo = app(CategoriaFinancieraService::class)->motivoNombreNoDisponible(CategoriaFinanciera::EGRESO, (string) $valor);
+        $motivo = app(CategoriaFinancieraService::class)->motivoNombreNoDisponible($this->tipo(), (string) $valor);
 
         if ($motivo !== null) {
             $fallar($motivo);
