@@ -6,13 +6,16 @@ use Carbon\CarbonImmutable;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Patronato\Persistencia\Models\Residencial;
 
 /**
  * Datos de demostración para probar el sistema a mano
  *
  * Crea dos residenciales con cuentas de cada rol, viviendas, residentes,
- * conceptos, meses pendientes y cobros en cajas abiertas y cerradas.
+ * conceptos, meses pendientes y cobros en cajas abiertas y cerradas,
+ * una transferencia pendiente de verificación con su comprobante y otra
+ * que un vecino reportó desde el portal con su cuenta de residente.
  * Todas las cuentas usan la contraseña "password".
  *
  * Solo para una base local: php artisan db:seed --class=DemostracionSeeder
@@ -118,6 +121,14 @@ class DemostracionSeeder extends Seeder
 
         // Anulación pedida por la tesorera, para que el presidente o el fiscal la resuelvan
         $this->solicitarAnulacion($residencial, $pagoB02, $tesorero, 'El vecino pagó por transferencia; este cobro en efectivo quedó duplicado.');
+
+        // Transferencia registrada por la tesorera, pendiente de verificación
+        $this->transferencia($residencial, $tesorero, $viviendas['B-03'], '500.00', '2026-11-13', 'BAC Credomatic', 'FT2611130042', '730-123456-7');
+
+        // Cuenta del propietario de A-04 para el portal, con una transferencia que reportó sin cuenta receptora
+        $vecino = $this->cuenta($residencial, 'residente', 'Luis García', 'residente@laspalmas.demo');
+        DB::table('residentes')->where('residencial_id', $residencial)->where('nombres', 'Luis')->where('apellidos', 'García')->update(['user_id' => $vecino]);
+        $this->transferencia($residencial, $vecino, $viviendas['A-04'], '650.00', '2026-11-14', 'Banco Atlántida', 'ATL2611140017', null, 'reportado_por_vecino', 'portal');
     }
 
     private function losPinos(): void
@@ -371,6 +382,69 @@ class DemostracionSeeder extends Seeder
             'created_at' => $this->ahora,
             'updated_at' => $this->ahora,
         ]);
+    }
+
+    /**
+     * Registra una transferencia por verificar con un comprobante PDF
+     *
+     * No tiene recibo ni meses aplicados, así que no reduce el saldo. La registra
+     * el tesorero o la reporta un vecino desde el portal.
+     */
+    private function transferencia(int $residencialId, int $registradoPor, int $viviendaId, string $monto, string $fecha, string $banco, string $referencia, ?string $cuenta, string $estado = 'pendiente_verificacion', string $origen = 'sistema'): void
+    {
+        $ruta = "transferencias/{$residencialId}/demostracion-{$referencia}.pdf";
+
+        Storage::disk('local')->put($ruta, $this->pdfComprobante("Transferencia {$banco} ref. {$referencia} por L {$monto}"));
+
+        DB::table('pagos')->insert([
+            'residencial_id' => $residencialId,
+            'vivienda_id' => $viviendaId,
+            'forma_pago' => 'transferencia',
+            'estado' => $estado,
+            'origen' => $origen,
+            'monto' => $monto,
+            'fecha_pago' => $fecha,
+            'registrado_por' => $registradoPor,
+            'banco' => $banco,
+            'numero_referencia' => $referencia,
+            'cuenta_receptora' => $cuenta,
+            'comprobante_path' => $ruta,
+            'created_at' => $this->ahora,
+            'updated_at' => $this->ahora,
+        ]);
+    }
+
+    /**
+     * PDF de una página con una línea de texto, para el comprobante de prueba
+     */
+    private function pdfComprobante(string $texto): string
+    {
+        $contenido = 'BT /F1 14 Tf 72 720 Td ('.$this->sinTildes($texto).') Tj ET';
+
+        $objetos = [
+            '<< /Type /Catalog /Pages 2 0 R >>',
+            '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
+            '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>',
+            '<< /Length '.strlen($contenido)." >>\nstream\n{$contenido}\nendstream",
+            '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>',
+        ];
+
+        $pdf = "%PDF-1.4\n";
+        $posiciones = [];
+
+        foreach ($objetos as $indice => $objeto) {
+            $posiciones[] = strlen($pdf);
+            $pdf .= ($indice + 1)." 0 obj\n{$objeto}\nendobj\n";
+        }
+
+        $xref = strlen($pdf);
+        $pdf .= 'xref'."\n0 ".(count($objetos) + 1)."\n0000000000 65535 f \n";
+
+        foreach ($posiciones as $posicion) {
+            $pdf .= sprintf("%010d 00000 n \n", $posicion);
+        }
+
+        return $pdf.'trailer'."\n<< /Size ".(count($objetos) + 1)." /Root 1 0 R >>\nstartxref\n{$xref}\n%%EOF\n";
     }
 
     private function cerrar(int $cajaId, int $tesoreroId, string $entregado, string $justificacion): void

@@ -8,6 +8,7 @@ use Patronato\Negocio\Permisos\PermisosPorRol;
 use Patronato\Negocio\Permisos\SinPermisos;
 use Patronato\Persistencia\Models\Rol;
 use Patronato\Persistencia\Models\User;
+use Patronato\Persistencia\Repositorios\ResidenteRepositorio;
 use Patronato\Persistencia\Repositorios\RolPermisoRepositorio;
 use Patronato\Persistencia\Repositorios\RolRepositorio;
 use Patronato\Persistencia\Transaccion;
@@ -21,12 +22,17 @@ class PermisoService
         'padron' => ['etiqueta' => 'Viviendas y residentes', 'acciones' => ['ver', 'registrar', 'anular']],
         'cobros' => ['etiqueta' => 'Cobros', 'acciones' => ['ver', 'registrar', 'verificar', 'aprobar', 'anular']],
         'cajas' => ['etiqueta' => 'Cierre de caja', 'acciones' => ['registrar']],
+        // Separado de cobros.registrar: registrar transferencias no permite cobrar en efectivo.
+        // La verificación de la HU-26 agregará aquí la acción 'verificar'.
+        'transferencias' => ['etiqueta' => 'Transferencias', 'acciones' => ['registrar']],
         'parametros' => ['etiqueta' => 'Parámetros de cobro', 'acciones' => ['ver', 'registrar']],
         'mora' => ['etiqueta' => 'Regla de mora', 'acciones' => ['registrar']],
         'vigilancia' => ['etiqueta' => 'Vigilancia', 'acciones' => ['ver', 'registrar']],
         'vehiculos' => ['etiqueta' => 'Vehículos', 'acciones' => ['ver', 'registrar', 'anular']],
         'reportes' => ['etiqueta' => 'Reportes', 'acciones' => ['ver']],
         'auditoria' => ['etiqueta' => 'Auditoría', 'acciones' => ['ver']],
+        // Además del permiso, el portal exige una cuenta vinculada a un residente activo
+        'portal' => ['etiqueta' => 'Portal del residente', 'acciones' => ['ver', 'registrar']],
     ];
 
     /**
@@ -38,10 +44,11 @@ class PermisoService
     public const PREDETERMINADOS = [
         Rol::PRESIDENTE => ['padron.ver', 'padron.registrar', 'padron.anular', 'auditoria.ver', 'parametros.ver', 'reportes.ver', 'cobros.aprobar', 'mora.registrar', 'cajas.registrar'],
         Rol::SECRETARIO => ['padron.ver', 'padron.registrar', 'padron.anular'],
-        'tesorero' => ['padron.ver', 'parametros.ver', 'parametros.registrar', 'cobros.ver', 'cobros.anular', 'cajas.registrar', 'reportes.ver', 'mora.registrar'],
+        'tesorero' => ['padron.ver', 'parametros.ver', 'parametros.registrar', 'cobros.ver', 'cobros.anular', 'cajas.registrar', 'transferencias.registrar', 'reportes.ver', 'mora.registrar'],
         'fiscal' => ['padron.ver', 'auditoria.ver', 'parametros.ver', 'reportes.ver', 'cobros.aprobar'],
         'vocal' => ['padron.ver'],
         'cobrador' => ['cobros.registrar'],
+        Rol::RESIDENTE => ['portal.ver', 'portal.registrar'],
     ];
 
     public function __construct(
@@ -49,6 +56,7 @@ class PermisoService
         private RolPermisoRepositorio $matriz,
         private Transaccion $transaccion,
         private AuditoriaService $auditoria,
+        private ResidenteRepositorio $residentes,
     ) {}
 
     /**
@@ -95,6 +103,8 @@ class PermisoService
         return match (true) {
             $usuario->esAdminPlataforma() => 'plataforma.residenciales.index',
             $this->puede($usuario, 'padron', 'ver') => 'padron.viviendas.index',
+            // Un residente desactivado no entra al portal: va al panel
+            $this->puede($usuario, 'portal', 'ver') && $this->residentes->activoDeUsuario($usuario->id) !== null => 'portal.transferencias.index',
             default => 'dashboard',
         };
     }
