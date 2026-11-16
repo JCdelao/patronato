@@ -99,6 +99,14 @@ export default function ConceptosSeccion({
                                             <span className="rounded-full bg-secondary px-3 py-0.5 text-sm">
                                                 {TIPOS[concepto.tipo]}
                                             </span>
+                                            {!concepto.es_cuota_unificada && (
+                                                <span className="rounded-full bg-secondary px-3 py-0.5 text-sm">
+                                                    {concepto.alcance ===
+                                                    'algunas'
+                                                        ? `Solo algunas · ${concepto.viviendas_elegidas} ${concepto.viviendas_elegidas === 1 ? 'vivienda' : 'viviendas'}`
+                                                        : 'Todas las viviendas'}
+                                                </span>
+                                            )}
                                             {!concepto.activo && (
                                                 <span className="rounded-full bg-muted px-3 py-0.5 text-sm text-muted-foreground">
                                                     Inactivo

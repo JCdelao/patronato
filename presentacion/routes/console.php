@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schedule;
 use Patronato\Negocio\Services\CuentaService;
+use Patronato\Negocio\Services\GeneracionCargosService;
 use Patronato\Negocio\Services\RespaldoService;
 
 Artisan::command('inspire', function () {
@@ -79,6 +80,25 @@ Artisan::command('respaldos:restaurar {archivo} {--base= : Base de datos donde r
 })->purpose('Restaura un respaldo en la base indicada');
 
 Schedule::command('respaldos:crear')->dailyAt('02:00')->timezone('America/Tegucigalpa');
+
+Artisan::command('cargos:generar', function (GeneracionCargosService $generacion) {
+    $resultado = $generacion->generarPendientes();
+
+    if ($resultado === []) {
+        $this->info('Ningún residencial tenía cargos pendientes de generar.');
+
+        return 0;
+    }
+
+    foreach ($resultado as $residencialId => $creados) {
+        $this->info("Residencial {$residencialId}: {$creados} cargos generados.");
+    }
+
+    return 0;
+})->purpose('Genera los cargos del mes de los residenciales cuyo día ya llegó');
+
+// Cada hora, para ponerse al día si el servidor estuvo apagado el día de generación
+Schedule::command('cargos:generar')->hourly()->withoutOverlapping();
 
 Artisan::command('db:probar', function () {
     try {

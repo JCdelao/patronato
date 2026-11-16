@@ -21,6 +21,7 @@ class GuardarConceptoRequest extends FormRequest
         return [
             'nombre' => ['required', 'string', 'max:100', $this->nombreLibre(...)],
             'tipo' => ['required', Rule::in([ConceptoCobro::RECURRENTE, ConceptoCobro::UNICO])],
+            'alcance' => ['sometimes', 'required', Rule::in([ConceptoCobro::TODAS, ConceptoCobro::ALGUNAS])],
             'monto' => ['required', 'numeric', 'min:0', 'max:9999999.99', 'decimal:0,2'],
             'vigente_desde' => ['required', 'date_format:Y-m'],
         ];
@@ -35,6 +36,7 @@ class GuardarConceptoRequest extends FormRequest
     {
         return [
             'tipo.in' => 'Elige si el concepto es recurrente o único.',
+            'alcance.in' => 'Elige si se cobra a todas las viviendas o solo a algunas.',
             'monto.min' => 'El monto no puede ser negativo.',
             'vigente_desde.date_format' => 'Elige el mes desde el que rige el monto.',
         ];

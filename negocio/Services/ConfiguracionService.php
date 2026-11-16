@@ -41,6 +41,46 @@ class ConfiguracionService
     }
 
     /**
+     * Día del mes en que se generan los cargos; sin configuración guardada es el 1
+     */
+    public function diaGeneracionCargos(int $residencialId): int
+    {
+        $dia = $this->configuracion->valor($residencialId, 'dia_generacion_cargos');
+
+        return is_numeric($dia) ? (int) $dia : 1;
+    }
+
+    public function cambiarDiaGeneracionCargos(int $residencialId, int $dia): void
+    {
+        $this->configuracion->guardar($residencialId, ['dia_generacion_cargos' => $dia]);
+    }
+
+    /**
+     * Días de gracia para pagar cada mes y meses vencidos que se toleran antes de la mora
+     *
+     * Sin configuración guardada ambos valen 0, igual que la tabla.
+     *
+     * @return array{dias_gracia: int, meses_tolerancia: int}
+     */
+    public function reglaMora(int $residencialId): array
+    {
+        $fila = $this->configuracion->valores($residencialId, ['dias_gracia', 'meses_tolerancia']);
+
+        return [
+            'dias_gracia' => (int) ($fila['dias_gracia'] ?? 0),
+            'meses_tolerancia' => (int) ($fila['meses_tolerancia'] ?? 0),
+        ];
+    }
+
+    /**
+     * @param  array{dias_gracia: int, meses_tolerancia: int}  $regla
+     */
+    public function cambiarReglaMora(int $residencialId, array $regla): void
+    {
+        $this->configuracion->guardar($residencialId, $regla);
+    }
+
+    /**
      * Saldo con el que el patronato empezó a registrar en el sistema; ambos null si no se ha registrado
      *
      * @return array{monto: string|null, fecha: string|null}

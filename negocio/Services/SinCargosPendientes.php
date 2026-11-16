@@ -7,8 +7,9 @@ use Patronato\Negocio\Contratos\CargosNoIntegrados;
 use Patronato\Negocio\Contratos\CargosPendientes;
 
 /**
- * Implementación temporal mientras no exista la generación de cargos
+ * Implementación que avisa que la consulta de cargos no está disponible
  *
+ * Ya no se registra en AppServiceProvider; queda para probar el aviso del cobro.
  * No devuelve una lista vacía para no confundir "sin pendientes" con "sin integrar".
  */
 class SinCargosPendientes implements CargosPendientes
