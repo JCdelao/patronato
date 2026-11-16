@@ -7,6 +7,7 @@ import {
     HandCoins,
     Home,
     LayoutGrid,
+    Receipt,
     ScrollText,
     ShieldCheck,
     SlidersHorizontal,
@@ -17,6 +18,7 @@ import {
 import AnulacionController from '@/actions/Patronato/Presentacion/Controllers/AnulacionController';
 import CajaController from '@/actions/Patronato/Presentacion/Controllers/CajaController';
 import CobroController from '@/actions/Patronato/Presentacion/Controllers/CobroController';
+import EgresoController from '@/actions/Patronato/Presentacion/Controllers/EgresoController';
 import PagoController from '@/actions/Patronato/Presentacion/Controllers/PagoController';
 import ParametroCobroController from '@/actions/Patronato/Presentacion/Controllers/ParametroCobroController';
 import ReporteCobrosController from '@/actions/Patronato/Presentacion/Controllers/ReporteCobrosController';
@@ -78,6 +80,12 @@ export function AppSidebar() {
             href: CajaController.index(),
             icon: Vault,
             visible: auth.permisos.includes('cajas.registrar'),
+        },
+        {
+            title: 'Egresos',
+            href: EgresoController.index(),
+            icon: Receipt,
+            visible: auth.permisos.includes('tesoreria.ver'),
         },
         {
             title: 'Parámetros de cobro',
