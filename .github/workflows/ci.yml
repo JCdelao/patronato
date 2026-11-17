@@ -177,6 +177,10 @@ jobs:
         if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
         run: php artisan test tests/Feature/Finanzas/IngresosTest.php
 
+      - name: Pruebas HU-33 · Generar el informe financiero mensual y anual
+        if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
+        run: php artisan test tests/Feature/Reportes/InformeFinancieroTest.php
+
       - name: Pruebas HU-34 · Comparar presupuesto y gasto
         if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
         run: php artisan test tests/Feature/Finanzas/PresupuestoTest.php
