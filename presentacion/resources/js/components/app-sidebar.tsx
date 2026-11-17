@@ -7,6 +7,7 @@ import {
     ChartColumn,
     HandCoins,
     Home,
+    IdCard,
     Landmark,
     LayoutGrid,
     PiggyBank,
@@ -23,6 +24,7 @@ import {
 } from 'lucide-react';
 import AnulacionController from '@/actions/Patronato/Presentacion/Controllers/AnulacionController';
 import CajaController from '@/actions/Patronato/Presentacion/Controllers/CajaController';
+import CarnetController from '@/actions/Patronato/Presentacion/Controllers/CarnetController';
 import CobroController from '@/actions/Patronato/Presentacion/Controllers/CobroController';
 import EgresoController from '@/actions/Patronato/Presentacion/Controllers/EgresoController';
 import IngresoController from '@/actions/Patronato/Presentacion/Controllers/IngresoController';
@@ -36,6 +38,7 @@ import TransferenciaController from '@/actions/Patronato/Presentacion/Controller
 import VerificacionTransferenciaController from '@/actions/Patronato/Presentacion/Controllers/VerificacionTransferenciaController';
 import AuditoriaController from '@/actions/Patronato/Presentacion/Controllers/AuditoriaController';
 import CuentaController from '@/actions/Patronato/Presentacion/Controllers/CuentaController';
+import VehiculoController from '@/actions/Patronato/Presentacion/Controllers/VehiculoController';
 import ViviendaController from '@/actions/Patronato/Presentacion/Controllers/ViviendaController';
 import ResidencialController from '@/actions/Patronato/Presentacion/Controllers/ResidencialController';
 import AppLogo from '@/components/app-logo';
@@ -152,10 +155,15 @@ export function AppSidebar() {
         },
         {
             title: 'Vehículos',
-            href: '#',
+            href: VehiculoController.index(),
             icon: Car,
-            disabled: true,
             visible: auth.permisos.includes('vehiculos.ver'),
+        },
+        {
+            title: 'Carnets',
+            href: CarnetController.index(),
+            icon: IdCard,
+            visible: auth.permisos.includes('carnets.ver'),
         },
         {
             title: 'Reportes',

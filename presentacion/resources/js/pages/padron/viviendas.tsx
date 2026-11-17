@@ -1,5 +1,6 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
+    Car,
     Ellipsis,
     History,
     HousePlus,
@@ -12,6 +13,7 @@ import {
 } from 'lucide-react';
 import { useRef, useState } from 'react';
 import ResidenteController from '@/actions/Patronato/Presentacion/Controllers/ResidenteController';
+import VehiculoController from '@/actions/Patronato/Presentacion/Controllers/VehiculoController';
 import ViviendaController from '@/actions/Patronato/Presentacion/Controllers/ViviendaController';
 import EstadoMora from '@/components/finanzas/estado-mora';
 import AgregarViviendaDialog from '@/components/padron/agregar-vivienda-dialog';
@@ -79,6 +81,9 @@ export default function Viviendas({
     const { auth } = usePage().props;
     const puedeRegistrar = auth.permisos.includes('padron.registrar');
     const puedeAnular = auth.permisos.includes('padron.anular');
+    const puedeRegistrarVehiculos = auth.permisos.includes(
+        'vehiculos.registrar',
+    );
 
     const [dialogo, setDialogo] = useState<Dialogo | null>(null);
     const espera = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -264,6 +269,26 @@ export default function Viviendas({
                                                         >
                                                             <Pencil />
                                                             Editar
+                                                        </DropdownMenuItem>
+                                                    )}
+                                                {!inactivas &&
+                                                    puedeRegistrarVehiculos && (
+                                                        <DropdownMenuItem
+                                                            asChild
+                                                        >
+                                                            <Link
+                                                                href={VehiculoController.index.url(
+                                                                    {
+                                                                        query: {
+                                                                            vivienda:
+                                                                                vivienda.id,
+                                                                        },
+                                                                    },
+                                                                )}
+                                                            >
+                                                                <Car />
+                                                                Agregar vehículo
+                                                            </Link>
                                                         </DropdownMenuItem>
                                                     )}
                                                 {!inactivas && puedeAnular && (

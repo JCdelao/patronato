@@ -38,4 +38,16 @@ class Busqueda
     {
         return '%'.Str::lower(Str::ascii($buscar)).'%';
     }
+
+    /**
+     * Patrón para buscar una placa guardada en su forma única, sin separadores
+     *
+     * Devuelve null si lo buscado no tiene letras ni números.
+     */
+    public static function patronPlaca(string $buscar): ?string
+    {
+        $placa = (string) preg_replace('/[^\pL\pN]/u', '', mb_strtoupper($buscar));
+
+        return $placa === '' ? null : "%{$placa}%";
+    }
 }

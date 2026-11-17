@@ -2,8 +2,10 @@
 
 namespace Patronato\Negocio\Services;
 
+use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Validation\ValidationException;
+use Patronato\Negocio\Eventos\ResidenteDadoDeBaja;
 use Patronato\Persistencia\Models\Residente;
 use Patronato\Persistencia\Models\User;
 use Patronato\Persistencia\Models\ViviendaResidente;
@@ -18,6 +20,7 @@ class ResidenteService
         private VinculoRepositorio $vinculos,
         private Transaccion $transaccion,
         private AuditoriaService $auditoria,
+        private Dispatcher $eventos,
     ) {}
 
     /**
@@ -147,6 +150,9 @@ class ResidenteService
 
             if (! $sigue) {
                 $this->residentes->actualizar($residente, ['activo' => false]);
+
+                // Su carnet se da de baja dentro de esta misma transacción
+                $this->eventos->dispatch(new ResidenteDadoDeBaja($residente, $usuario));
             }
 
             $this->auditoria->registrar($usuario, 'padron', $sigue ? 'residente_retirado_de_vivienda' : 'residente_dado_de_baja', $residente, [
