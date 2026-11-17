@@ -15,6 +15,7 @@ import {
     Send,
     ShieldCheck,
     SlidersHorizontal,
+    Target,
     Users,
     Vault,
     Wallet,
@@ -26,6 +27,7 @@ import EgresoController from '@/actions/Patronato/Presentacion/Controllers/Egres
 import IngresoController from '@/actions/Patronato/Presentacion/Controllers/IngresoController';
 import InformeFinancieroController from '@/actions/Patronato/Presentacion/Controllers/InformeFinancieroController';
 import PagoController from '@/actions/Patronato/Presentacion/Controllers/PagoController';
+import PresupuestoController from '@/actions/Patronato/Presentacion/Controllers/PresupuestoController';
 import ParametroCobroController from '@/actions/Patronato/Presentacion/Controllers/ParametroCobroController';
 import PortalTransferenciaController from '@/actions/Patronato/Presentacion/Controllers/PortalTransferenciaController';
 import ReporteCobrosController from '@/actions/Patronato/Presentacion/Controllers/ReporteCobrosController';
@@ -119,6 +121,12 @@ export function AppSidebar() {
             href: EgresoController.index(),
             icon: Receipt,
             visible: auth.permisos.includes('tesoreria.ver'),
+        },
+        {
+            title: 'Presupuesto',
+            href: PresupuestoController.index(),
+            icon: Target,
+            visible: auth.permisos.includes('reportes.ver'),
         },
         {
             title: 'Parámetros de cobro',

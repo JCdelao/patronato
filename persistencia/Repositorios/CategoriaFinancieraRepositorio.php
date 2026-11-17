@@ -23,6 +23,19 @@ class CategoriaFinancieraRepositorio extends Repositorio
     }
 
     /**
+     * Todas las categorías de un tipo, activas e inactivas, por nombre
+     *
+     * @return Collection<int, CategoriaFinanciera>
+     */
+    public function todasDe(string $tipo): Collection
+    {
+        return CategoriaFinanciera::query()
+            ->where('tipo', $tipo)
+            ->orderBy('nombre')
+            ->get();
+    }
+
+    /**
      * Indica si otra categoría del mismo tipo usa el nombre, sin importar mayúsculas
      */
     public function existeNombre(string $tipo, string $nombre, ?int $exceptoId = null): bool
