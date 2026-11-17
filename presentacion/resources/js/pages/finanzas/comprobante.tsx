@@ -25,6 +25,9 @@ type Comprobante = {
     vivienda: string;
     monto: string;
     periodos: Periodo[];
+    forma_pago: string;
+    referencia: string | null;
+    etiqueta_responsable: string;
     cobrador: string;
     anulado: boolean;
     anulado_en: string | null;
@@ -116,7 +119,21 @@ export default function ComprobantePago({
                     <dd className="font-semibold">
                         L {formatoMonto(comprobante.monto)}
                     </dd>
-                    <dt className="text-muted-foreground">Cobrador</dt>
+                    <dt className="text-muted-foreground">Forma de pago</dt>
+                    <dd className="font-semibold">{comprobante.forma_pago}</dd>
+                    {comprobante.referencia && (
+                        <>
+                            <dt className="text-muted-foreground">
+                                Referencia
+                            </dt>
+                            <dd className="font-semibold">
+                                {comprobante.referencia}
+                            </dd>
+                        </>
+                    )}
+                    <dt className="text-muted-foreground">
+                        {comprobante.etiqueta_responsable}
+                    </dt>
                     <dd className="font-semibold">{comprobante.cobrador}</dd>
                 </dl>
 

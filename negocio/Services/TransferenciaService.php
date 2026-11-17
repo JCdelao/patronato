@@ -26,7 +26,7 @@ use Throwable;
  *
  * Reglas:
  * - La transferencia queda pendiente de verificación: no tiene recibo, no se aplica
- *   a meses y no reduce el saldo hasta que se confirme (HU-26).
+ *   a meses y no reduce el saldo hasta que se confirme (VerificacionTransferenciaService, HU-26).
  * - El residencial no admite dos transferencias vigentes con la misma referencia del
  *   mismo banco; una rechazada o anulada libera la referencia.
  * - El comprobante se guarda en el disco privado y solo se ve con permiso.
@@ -157,7 +157,7 @@ class TransferenciaService
     /**
      * Transferencias que la cuenta reportó desde el portal, con su estado
      *
-     * @return list<array{id: int, fecha_pago: string, registrado_en: string, vivienda: string, monto: string, banco: string|null, numero_referencia: string|null, cuenta_receptora: string|null, estado: string, tiene_comprobante: bool}>
+     * @return list<array{id: int, fecha_pago: string, registrado_en: string, vivienda: string, monto: string, banco: string|null, numero_referencia: string|null, cuenta_receptora: string|null, estado: string, motivo_rechazo: string|null, tiene_comprobante: bool}>
      */
     public function misReportes(User $usuario): array
     {
@@ -173,6 +173,8 @@ class TransferenciaService
             'numero_referencia' => $pago->numero_referencia,
             'cuenta_receptora' => $pago->cuenta_receptora,
             'estado' => $pago->estado,
+            // El vecino ve por qué tesorería la rechazó (HU-26)
+            'motivo_rechazo' => $pago->estado === Pago::RECHAZADO ? $pago->motivo_rechazo : null,
             'tiene_comprobante' => $pago->comprobante_path !== null,
         ])->all());
     }

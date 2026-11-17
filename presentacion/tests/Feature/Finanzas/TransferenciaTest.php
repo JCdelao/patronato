@@ -287,6 +287,10 @@ test('the list and the detail show the pending transfer without a receipt number
                 'numero_referencia' => 'REF-1001',
                 'cuenta_receptora' => '730-123456-7',
                 'tiene_comprobante' => true,
+                // Sin verificar todavía (HU-26)
+                'verificado_por' => null,
+                'verificado_en' => null,
+                'motivo_rechazo' => null,
             ])
             // Pendiente no se anula: si no ingresó, se rechaza al verificarla
             ->where('pago.puede_solicitar', false));
@@ -357,7 +361,7 @@ test('the transfer permission is separate from registering cash payments', funct
     $this->get(route('finanzas.cobros.create'))->assertForbidden();
 });
 
-test('the permissions screen offers the transfers module with only the register action', function () {
+test('the permissions screen offers the transfers module with the register and verify actions', function () {
     $admin = ($this->usuario)(Rol::ADMIN_TECNICO);
 
     $this->actingAs($admin)->get(route('usuarios.permisos.index'))
@@ -366,16 +370,17 @@ test('the permissions screen offers the transfers module with only the register 
             ->where('modulos', fn ($modulos) => collect($modulos)->firstWhere('id', 'transferencias') === [
                 'id' => 'transferencias',
                 'etiqueta' => 'Transferencias',
-                'acciones' => ['registrar'],
+                // La verificación llegó con la HU-26
+                'acciones' => ['registrar', 'verificar'],
             ])
             ->where('roles', fn ($roles) => in_array('transferencias.registrar', collect($roles)->firstWhere('nombre', 'Tesorero')['permisos'], true)));
 
-    // Una acción que el módulo todavía no tiene se rechaza
-    $this->put(route('usuarios.permisos.update', ($this->rol)('tesorero')), ['permisos' => ['transferencias.verificar']])
+    // Una acción que el módulo no tiene se rechaza
+    $this->put(route('usuarios.permisos.update', ($this->rol)('tesorero')), ['permisos' => ['transferencias.aprobar']])
         ->assertSessionHasErrors('permisos.0');
 
     expect(app(PermisoService::class)->puede($admin, 'transferencias', 'registrar'))->toBeTrue()
-        ->and(app(PermisoService::class)->puede($admin, 'transferencias', 'verificar'))->toBeFalse();
+        ->and(app(PermisoService::class)->puede($admin, 'transferencias', 'verificar'))->toBeTrue();
 });
 
 test('the sidebar shows the register option to the treasurer', function () {

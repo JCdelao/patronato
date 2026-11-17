@@ -1,8 +1,16 @@
-import { Form, Head, Link } from '@inertiajs/react';
-import { ArrowLeft, Ban, Clock, FileText, Paperclip } from 'lucide-react';
+import { Form, Head, Link, usePage } from '@inertiajs/react';
+import {
+    ArrowLeft,
+    BadgeCheck,
+    Ban,
+    Clock,
+    FileText,
+    Paperclip,
+} from 'lucide-react';
 import ComprobanteController from '@/actions/Patronato/Presentacion/Controllers/ComprobanteController';
 import PagoController from '@/actions/Patronato/Presentacion/Controllers/PagoController';
 import TransferenciaController from '@/actions/Patronato/Presentacion/Controllers/TransferenciaController';
+import VerificacionTransferenciaController from '@/actions/Patronato/Presentacion/Controllers/VerificacionTransferenciaController';
 import EstadoPago from '@/components/finanzas/estado-pago';
 import InputError from '@/components/input-error';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -38,6 +46,9 @@ type DetallePago = {
         numero_referencia: string | null;
         cuenta_receptora: string | null;
         tiene_comprobante: boolean;
+        verificado_por: string | null;
+        verificado_en: string | null;
+        motivo_rechazo: string | null;
     } | null;
     caja_cerrada: boolean;
     saldo_vivienda: string;
@@ -61,9 +72,14 @@ const claseTexto =
     'rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none';
 
 export default function Pago({ pago }: { pago: DetallePago }) {
+    const { auth } = usePage().props;
     const pendiente = pago.solicitudes.find(
         (solicitud) => solicitud.estado === 'pendiente',
     );
+    const porVerificar =
+        pago.estado === 'pendiente_verificacion' ||
+        pago.estado === 'reportado_por_vecino';
+    const puedeVerificar = auth.permisos.includes('transferencias.verificar');
 
     // Una transferencia recibe su número de recibo cuando se confirma
     const titulo = pago.numero_recibo
@@ -112,14 +128,30 @@ export default function Pago({ pago }: { pago: DetallePago }) {
                     </Alert>
                 )}
 
-                {(pago.estado === 'pendiente_verificacion' ||
-                    pago.estado === 'reportado_por_vecino') && (
+                {porVerificar && (
                     <Alert>
                         <Clock />
                         <AlertTitle>Pendiente de verificación</AlertTitle>
                         <AlertDescription>
                             No reduce el saldo de la vivienda hasta que se
                             confirme que el dinero ingresó a la cuenta.
+                        </AlertDescription>
+                    </Alert>
+                )}
+
+                {pago.estado === 'rechazado' && pago.transferencia && (
+                    <Alert variant="destructive">
+                        <Ban />
+                        <AlertTitle>Transferencia rechazada</AlertTitle>
+                        <AlertDescription>
+                            {pago.transferencia.verificado_por && (
+                                <p>
+                                    Rechazó {pago.transferencia.verificado_por}
+                                    {pago.transferencia.verificado_en &&
+                                        ` · ${formatoFechaHora(pago.transferencia.verificado_en)}`}
+                                </p>
+                            )}
+                            <p>Motivo: {pago.transferencia.motivo_rechazo}</p>
                         </AlertDescription>
                     </Alert>
                 )}
@@ -181,6 +213,19 @@ export default function Pago({ pago }: { pago: DetallePago }) {
                               : 'Cobrador'}
                     </dt>
                     <dd className="font-semibold">{pago.cobrador ?? '—'}</dd>
+                    {pago.estado !== 'rechazado' &&
+                        pago.transferencia?.verificado_por && (
+                            <>
+                                <dt className="text-muted-foreground">
+                                    Verificó
+                                </dt>
+                                <dd className="font-semibold">
+                                    {pago.transferencia.verificado_por}
+                                    {pago.transferencia.verificado_en &&
+                                        ` · ${formatoFechaHora(pago.transferencia.verificado_en)}`}
+                                </dd>
+                            </>
+                        )}
                     <dt className="text-muted-foreground">Registrado</dt>
                     <dd className="font-semibold">
                         {formatoFechaHora(pago.registrado_en)}
@@ -195,6 +240,18 @@ export default function Pago({ pago }: { pago: DetallePago }) {
                 </dl>
 
                 <div className="flex flex-wrap gap-3">
+                    {porVerificar && puedeVerificar && (
+                        <Button asChild>
+                            <Link
+                                href={VerificacionTransferenciaController.show.url(
+                                    pago.id,
+                                )}
+                            >
+                                <BadgeCheck />
+                                Verificar transferencia
+                            </Link>
+                        </Button>
+                    )}
                     {pago.numero_recibo && (
                         <Button variant="outline" asChild>
                             <Link

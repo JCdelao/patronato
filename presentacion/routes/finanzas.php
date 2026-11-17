@@ -19,6 +19,7 @@ use Patronato\Presentacion\Controllers\TarifaEspecialController;
 use Patronato\Presentacion\Controllers\TipoViviendaController;
 use Patronato\Presentacion\Controllers\TransferenciaController;
 use Patronato\Presentacion\Controllers\TransferenciaReportadaController;
+use Patronato\Presentacion\Controllers\VerificacionTransferenciaController;
 
 // Enlace firmado para compartir el comprobante por mensajería; se abre sin sesión
 Route::get('comprobantes/{pago}', [ComprobanteController::class, 'publico'])
@@ -65,6 +66,25 @@ Route::middleware(['auth', 'verified'])
             Route::get('transferencias/reportes/{pago}/comprobante', [TransferenciaReportadaController::class, 'comprobante'])
                 ->whereNumber('pago')
                 ->name('transferencias.reportes.comprobante');
+        });
+
+        // Tesorería confirma o rechaza las transferencias pendientes (HU-26); no requiere cobros.ver
+        Route::middleware("can:permiso,'transferencias','verificar'")->group(function () {
+            Route::get('transferencias/por-verificar', [VerificacionTransferenciaController::class, 'index'])->name('transferencias.verificar.index');
+            Route::get('transferencias/{pago}/verificar', [VerificacionTransferenciaController::class, 'show'])
+                ->whereNumber('pago')
+                ->name('transferencias.verificar.show');
+            Route::get('transferencias/{pago}/verificar/comprobante', [VerificacionTransferenciaController::class, 'comprobante'])
+                ->whereNumber('pago')
+                ->name('transferencias.verificar.comprobante');
+            Route::post('transferencias/{pago}/confirmar', [VerificacionTransferenciaController::class, 'confirmar'])
+                ->whereNumber('pago')
+                ->middleware('throttle:30,1')
+                ->name('transferencias.verificar.confirmar');
+            Route::post('transferencias/{pago}/rechazar', [VerificacionTransferenciaController::class, 'rechazar'])
+                ->whereNumber('pago')
+                ->middleware('throttle:30,1')
+                ->name('transferencias.verificar.rechazar');
         });
 
         Route::post('pagos/{pago}/anulacion', [PagoController::class, 'solicitarAnulacion'])
