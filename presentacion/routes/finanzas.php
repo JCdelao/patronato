@@ -14,6 +14,7 @@ use Patronato\Presentacion\Controllers\IngresoController;
 use Patronato\Presentacion\Controllers\MoraController;
 use Patronato\Presentacion\Controllers\PagoController;
 use Patronato\Presentacion\Controllers\ParametroCobroController;
+use Patronato\Presentacion\Controllers\PresupuestoController;
 use Patronato\Presentacion\Controllers\TarifaEspecialController;
 use Patronato\Presentacion\Controllers\TipoViviendaController;
 use Patronato\Presentacion\Controllers\TransferenciaController;
@@ -114,6 +115,14 @@ Route::middleware(['auth', 'verified'])
             ->whereNumber('ingreso')
             ->middleware("can:permiso,'tesoreria','anular'")
             ->name('ingresos.anular');
+
+        // El presupuesto lo ven quienes ven reportes; solo quien registra egresos lo cambia
+        Route::get('presupuesto', [PresupuestoController::class, 'index'])
+            ->middleware("can:permiso,'reportes','ver'")
+            ->name('presupuesto.index');
+        Route::put('presupuesto', [PresupuestoController::class, 'guardar'])
+            ->middleware("can:permiso,'tesoreria','registrar'")
+            ->name('presupuesto.guardar');
 
         Route::get('parametros', [ParametroCobroController::class, 'index'])
             ->middleware("can:permiso,'parametros','ver'")
