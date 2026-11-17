@@ -16,4 +16,5 @@ require __DIR__.'/identidad.php';
 require __DIR__.'/finanzas.php';
 require __DIR__.'/reportes.php';
 require __DIR__.'/vehiculos.php';
+require __DIR__.'/carnets.php';
 require __DIR__.'/portal.php';

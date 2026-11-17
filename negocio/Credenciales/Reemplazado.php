@@ -1,11 +1,11 @@
 <?php
 
-namespace Patronato\Negocio\Stickers;
+namespace Patronato\Negocio\Credenciales;
 
 /**
- * Sustituido por otro sticker; es final
+ * Sustituido por otra credencial; es final
  */
-final class Reemplazado extends EstadoSticker
+final class Reemplazado extends EstadoCredencial
 {
     public const NOMBRE = 'reemplazado';
 

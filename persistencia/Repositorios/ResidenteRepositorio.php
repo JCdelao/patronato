@@ -10,6 +10,34 @@ use Patronato\Persistencia\Models\Residente;
 class ResidenteRepositorio extends Repositorio
 {
     /**
+     * Residentes activos con sus viviendas y sus carnets, por nombre
+     *
+     * Busca por nombre, identidad, número de carnet o código de vivienda.
+     *
+     * @return LengthAwarePaginator<int, Residente>
+     */
+    public function paginarActivosConCarnets(string $buscar, int $porPagina): LengthAwarePaginator
+    {
+        return Residente::query()
+            ->where('activo', true)
+            ->when($buscar !== '', function (Builder $query) use ($buscar) {
+                $patron = Busqueda::patron($buscar);
+
+                $query->where(function (Builder $query) use ($patron) {
+                    $query->whereRaw(Busqueda::columna("nombres || ' ' || apellidos").' like ?', [$patron])
+                        ->orWhereRaw(Busqueda::columna('identidad').' like ?', [$patron])
+                        ->orWhereHas('carnets', fn (Builder $carnet) => $carnet->whereRaw(Busqueda::columna('numero').' like ?', [$patron]))
+                        ->orWhereHas('vinculosVigentes.vivienda', fn (Builder $vivienda) => $vivienda->whereRaw(Busqueda::columna('codigo').' like ?', [$patron]));
+                });
+            })
+            ->with(['carnets', 'vinculosVigentes.vivienda:id,codigo'])
+            ->orderBy('nombres')
+            ->orderBy('apellidos')
+            ->paginate($porPagina)
+            ->withQueryString();
+    }
+
+    /**
      * Residentes inactivos con las viviendas donde vivieron
      *
      * Busca por nombre, identidad o teléfono.

@@ -1,6 +1,7 @@
 import { Form, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import StickerController from '@/actions/Patronato/Presentacion/Controllers/StickerController';
+import EstadoCredencial from '@/components/credenciales/estado-credencial';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import {
@@ -12,15 +13,15 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
-import EstadoSticker from '@/components/vehiculos/estado-sticker';
 import { formatoFecha } from '@/lib/formato';
-import type { AccionSticker, Sticker, Vehiculo } from '@/types/vehiculos';
-import { STICKER_VIGENTE } from '@/types/vehiculos';
+import type { AccionCredencial } from '@/types/credenciales';
+import { CREDENCIAL_VIGENTE } from '@/types/credenciales';
+import type { Sticker, Vehiculo } from '@/types/vehiculos';
 
 const claseTexto =
     'rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none';
 
-const TEXTO_ACCION: Record<AccionSticker, string> = {
+const TEXTO_ACCION: Record<AccionCredencial, string> = {
     suspender: 'Suspender',
     reactivar: 'Reactivar',
     vencer: 'Marcar como vencido',
@@ -39,10 +40,10 @@ export default function StickersDialog({
     const { auth } = usePage().props;
     const puedeRegistrar = auth.permisos.includes('vehiculos.registrar');
     const puedeAnular = auth.permisos.includes('vehiculos.anular');
-    const [accion, setAccion] = useState<AccionSticker | null>(null);
+    const [accion, setAccion] = useState<AccionCredencial | null>(null);
 
     const vigente = vehiculo.stickers.find((sticker) =>
-        STICKER_VIGENTE.includes(sticker.estado),
+        CREDENCIAL_VIGENTE.includes(sticker.estado),
     );
     const anteriores = vehiculo.stickers.filter(
         (sticker) => sticker.id !== vigente?.id,
@@ -79,7 +80,7 @@ export default function StickersDialog({
                                         ` · ${vigente.motivo}`}
                                 </p>
                             </div>
-                            <EstadoSticker estado={vigente.estado} />
+                            <EstadoCredencial estado={vigente.estado} />
                         </div>
 
                         {disponibles.length > 0 && (
@@ -188,7 +189,7 @@ function HistorialSticker({ sticker }: { sticker: Sticker }) {
                     {sticker.motivo && ` · ${sticker.motivo}`}
                 </p>
             </div>
-            <EstadoSticker estado={sticker.estado} />
+            <EstadoCredencial estado={sticker.estado} />
         </li>
     );
 }
@@ -199,7 +200,7 @@ function FormularioAccion({
     onListo,
 }: {
     sticker: Sticker;
-    accion: AccionSticker;
+    accion: AccionCredencial;
     onListo: () => void;
 }) {
     const definicion =

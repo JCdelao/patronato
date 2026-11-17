@@ -6,6 +6,7 @@ import {
     ChartColumn,
     HandCoins,
     Home,
+    IdCard,
     Landmark,
     LayoutGrid,
     PiggyBank,
@@ -22,6 +23,7 @@ import {
 } from 'lucide-react';
 import AnulacionController from '@/actions/Patronato/Presentacion/Controllers/AnulacionController';
 import CajaController from '@/actions/Patronato/Presentacion/Controllers/CajaController';
+import CarnetController from '@/actions/Patronato/Presentacion/Controllers/CarnetController';
 import CobroController from '@/actions/Patronato/Presentacion/Controllers/CobroController';
 import EgresoController from '@/actions/Patronato/Presentacion/Controllers/EgresoController';
 import IngresoController from '@/actions/Patronato/Presentacion/Controllers/IngresoController';
@@ -147,6 +149,12 @@ export function AppSidebar() {
             href: VehiculoController.index(),
             icon: Car,
             visible: auth.permisos.includes('vehiculos.ver'),
+        },
+        {
+            title: 'Carnets',
+            href: CarnetController.index(),
+            icon: IdCard,
+            visible: auth.permisos.includes('carnets.ver'),
         },
         {
             title: 'Reportes',

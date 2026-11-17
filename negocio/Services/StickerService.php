@@ -4,7 +4,7 @@ namespace Patronato\Negocio\Services;
 
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Validation\ValidationException;
-use Patronato\Negocio\Stickers\EstadoSticker;
+use Patronato\Negocio\Credenciales\EstadoCredencial;
 use Patronato\Persistencia\Models\Sticker;
 use Patronato\Persistencia\Models\User;
 use Patronato\Persistencia\Models\Vehiculo;
@@ -15,16 +15,11 @@ use Patronato\Persistencia\Transaccion;
 /**
  * Stickers numerados de los vehículos y sus cambios de estado
  *
- * Cada estado decide qué acciones admite (patrón State, en negocio/Stickers).
+ * Cada estado decide qué acciones admite (patrón State, en negocio/Credenciales).
  */
 class StickerService
 {
     public const MOTIVO_MINIMO = 10;
-
-    /**
-     * Acciones que cambian el estado sin crear otro sticker
-     */
-    public const CAMBIOS_DE_ESTADO = [EstadoSticker::SUSPENDER, EstadoSticker::REACTIVAR, EstadoSticker::VENCER];
 
     private const NUMERO_OCUPADO = 'Ya hay un sticker activo con ese número en el residencial.';
 
@@ -32,10 +27,10 @@ class StickerService
      * Acción de la bitácora para cada cambio de estado
      */
     private const AUDITORIA = [
-        EstadoSticker::SUSPENDER => 'sticker_suspendido',
-        EstadoSticker::REACTIVAR => 'sticker_reactivado',
-        EstadoSticker::VENCER => 'sticker_vencido',
-        EstadoSticker::DAR_DE_BAJA => 'sticker_dado_de_baja',
+        EstadoCredencial::SUSPENDER => 'sticker_suspendido',
+        EstadoCredencial::REACTIVAR => 'sticker_reactivado',
+        EstadoCredencial::VENCER => 'sticker_vencido',
+        EstadoCredencial::DAR_DE_BAJA => 'sticker_dado_de_baja',
     ];
 
     public function __construct(
@@ -69,7 +64,7 @@ class StickerService
      */
     public function acciones(Sticker $sticker): array
     {
-        return EstadoSticker::de($sticker->estado)->acciones();
+        return EstadoCredencial::de($sticker->estado)->acciones();
     }
 
     /**
@@ -108,7 +103,7 @@ class StickerService
         $numero = $this->normalizarNumero($numero);
 
         return $this->guardandoNumero(fn () => $this->transaccion->ejecutar(function () use ($usuario, $sticker, $numero, $motivo) {
-            $actual = $this->exigirAccion($sticker, EstadoSticker::REEMPLAZAR);
+            $actual = $this->exigirAccion($sticker, EstadoCredencial::REEMPLAZAR);
             $estadoAnterior = $actual->estado;
             $this->exigirVehiculoActivo($actual->vehiculo);
 
@@ -141,7 +136,7 @@ class StickerService
         $this->guardandoNumero(fn () => $this->transaccion->ejecutar(function () use ($usuario, $sticker, $accion, $motivo) {
             $actual = $this->exigirAccion($sticker, $accion);
 
-            if ($accion === EstadoSticker::REACTIVAR && $this->stickers->existeNumeroActivo($actual->numero, $actual->id)) {
+            if ($accion === EstadoCredencial::REACTIVAR && $this->stickers->existeNumeroActivo($actual->numero, $actual->id)) {
                 throw ValidationException::withMessages(['accion' => 'Otro sticker activo ya usa ese número; reemplázalo por uno nuevo.']);
             }
 
@@ -157,7 +152,7 @@ class StickerService
     public function darDeBaja(User $usuario, Sticker $sticker, string $motivo): void
     {
         $this->transaccion->ejecutar(function () use ($usuario, $sticker, $motivo) {
-            $this->transicion($usuario, $this->exigirAccion($sticker, EstadoSticker::DAR_DE_BAJA), EstadoSticker::DAR_DE_BAJA, $motivo);
+            $this->transicion($usuario, $this->exigirAccion($sticker, EstadoCredencial::DAR_DE_BAJA), EstadoCredencial::DAR_DE_BAJA, $motivo);
         });
     }
 
@@ -171,7 +166,7 @@ class StickerService
         $sticker = $this->stickers->bloquearVigenteDe($vehiculo->id);
 
         if ($sticker !== null) {
-            $this->transicion($usuario, $sticker, EstadoSticker::DAR_DE_BAJA, $motivo);
+            $this->transicion($usuario, $sticker, EstadoCredencial::DAR_DE_BAJA, $motivo);
         }
     }
 
@@ -184,7 +179,7 @@ class StickerService
     {
         $actual = $this->stickers->bloquearRegistro($sticker->id);
 
-        if ($actual === null || ! EstadoSticker::de($actual->estado)->permite($accion)) {
+        if ($actual === null || ! EstadoCredencial::de($actual->estado)->permite($accion)) {
             throw ValidationException::withMessages(['accion' => 'El sticker ya no admite ese cambio; actualiza la página.']);
         }
 
@@ -209,7 +204,7 @@ class StickerService
     private function transicion(User $usuario, Sticker $sticker, string $accion, string $motivo): void
     {
         $anterior = $sticker->estado;
-        $siguiente = (string) EstadoSticker::de($anterior)->siguiente($accion);
+        $siguiente = (string) EstadoCredencial::de($anterior)->siguiente($accion);
 
         $this->stickers->actualizar($sticker, ['estado' => $siguiente, 'motivo' => trim($motivo)]);
 

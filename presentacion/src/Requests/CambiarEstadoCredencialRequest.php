@@ -5,20 +5,25 @@ namespace Patronato\Presentacion\Requests;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use Patronato\Negocio\Services\StickerService;
+use Patronato\Negocio\Credenciales\EstadoCredencial;
 
-class CambiarEstadoStickerRequest extends FormRequest
+/**
+ * Suspender, reactivar o marcar como vencido un sticker o un carnet, con su motivo
+ */
+class CambiarEstadoCredencialRequest extends FormRequest
 {
+    public const MOTIVO_MINIMO = 10;
+
     /**
-     * Reglas de validación; el estado actual del sticker decide si admite la acción
+     * Reglas de validación; el estado actual de la credencial decide si admite la acción
      *
      * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
         return [
-            'accion' => ['required', Rule::in(StickerService::CAMBIOS_DE_ESTADO)],
-            'motivo' => ['required', 'string', 'min:'.StickerService::MOTIVO_MINIMO, 'max:1000'],
+            'accion' => ['required', Rule::in(EstadoCredencial::CAMBIOS_DE_ESTADO)],
+            'motivo' => ['required', 'string', 'min:'.self::MOTIVO_MINIMO, 'max:1000'],
         ];
     }
 
@@ -32,7 +37,7 @@ class CambiarEstadoStickerRequest extends FormRequest
         return [
             'accion.in' => 'Elige suspender, reactivar o marcar como vencido.',
             'motivo.required' => 'Escribe el motivo del cambio.',
-            'motivo.min' => 'Explica el motivo con al menos '.StickerService::MOTIVO_MINIMO.' caracteres.',
+            'motivo.min' => 'Explica el motivo con al menos '.self::MOTIVO_MINIMO.' caracteres.',
         ];
     }
 
