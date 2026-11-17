@@ -2,10 +2,14 @@
 
 namespace Patronato\Negocio\Services;
 
+use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Validation\ValidationException;
+use Patronato\Negocio\Eventos\VehiculoDadoDeBaja;
+use Patronato\Negocio\Stickers\EstadoSticker;
 use Patronato\Persistencia\Models\Residente;
+use Patronato\Persistencia\Models\Sticker;
 use Patronato\Persistencia\Models\User;
 use Patronato\Persistencia\Models\Vehiculo;
 use Patronato\Persistencia\Models\VehiculoConductor;
@@ -30,12 +34,13 @@ class VehiculoService
         private VinculoRepositorio $vinculos,
         private Transaccion $transaccion,
         private AuditoriaService $auditoria,
+        private Dispatcher $eventos,
     ) {}
 
     /**
      * Vehículos activos o dados de baja para el listado
      *
-     * @return LengthAwarePaginator<int, array{id: int, vivienda_id: int, vivienda: string, tipo: string, placa: string, marca: string|null, modelo: string|null, color: string|null, activo: bool, conductores: list<array{id: int, nombre: string}>}>
+     * @return LengthAwarePaginator<int, array{id: int, vivienda_id: int, vivienda: string, tipo: string, placa: string, marca: string|null, modelo: string|null, color: string|null, activo: bool, stickers: list<array{id: int, numero: string, estado: string, fecha_emision: string, motivo: string|null, acciones: list<string>}>, conductores: list<array{id: int, nombre: string}>}>
      */
     public function listado(bool $activos, string $buscar): LengthAwarePaginator
     {
@@ -49,6 +54,14 @@ class VehiculoService
             'modelo' => $vehiculo->modelo,
             'color' => $vehiculo->color,
             'activo' => $vehiculo->activo,
+            'stickers' => array_values($vehiculo->stickers->map(fn (Sticker $sticker): array => [
+                'id' => $sticker->id,
+                'numero' => $sticker->numero,
+                'estado' => $sticker->estado,
+                'fecha_emision' => $sticker->fecha_emision->toDateString(),
+                'motivo' => $sticker->motivo,
+                'acciones' => EstadoSticker::de($sticker->estado)->acciones(),
+            ])->all()),
             'conductores' => array_values($vehiculo->conductores
                 ->filter(fn (VehiculoConductor $conductor): bool => $conductor->residente !== null)
                 ->map(fn (VehiculoConductor $conductor): array => [
@@ -186,6 +199,9 @@ class VehiculoService
                 'valor_nuevo' => ['activo' => false],
                 'motivo' => trim($motivo),
             ]);
+
+            // Su sticker se da de baja dentro de esta misma transacción
+            $this->eventos->dispatch(new VehiculoDadoDeBaja($actual, $usuario, trim($motivo)));
         });
     }
 

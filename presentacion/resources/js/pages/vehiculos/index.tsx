@@ -1,5 +1,5 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { Ban, Car, Ellipsis, Pencil, Plus, Search } from 'lucide-react';
+import { Ban, Ellipsis, Pencil, Plus, Search, Tag } from 'lucide-react';
 import { useRef, useState } from 'react';
 import VehiculoController from '@/actions/Patronato/Presentacion/Controllers/VehiculoController';
 import { Button } from '@/components/ui/button';
@@ -11,9 +11,12 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import BajaDialog from '@/components/vehiculos/baja-dialog';
+import EstadoSticker from '@/components/vehiculos/estado-sticker';
+import IconoVehiculo from '@/components/vehiculos/icono-vehiculo';
+import StickersDialog from '@/components/vehiculos/stickers-dialog';
 import VehiculoDialog from '@/components/vehiculos/vehiculo-dialog';
 import type { OpcionVivienda, TipoVehiculo, Vehiculo } from '@/types/vehiculos';
-import { TIPOS_VEHICULO } from '@/types/vehiculos';
+import { STICKER_VIGENTE, TIPOS_VEHICULO } from '@/types/vehiculos';
 
 type Paginado<T> = {
     data: T[];
@@ -23,7 +26,8 @@ type Paginado<T> = {
 
 type Dialogo =
     | { tipo: 'vehiculo'; vehiculo?: Vehiculo }
-    | { tipo: 'baja'; vehiculo: Vehiculo };
+    | { tipo: 'baja'; vehiculo: Vehiculo }
+    | { tipo: 'stickers'; vehiculoId: number };
 
 export default function Vehiculos({
     estado,
@@ -50,6 +54,14 @@ export default function Vehiculos({
     const [dialogo, setDialogo] = useState<Dialogo | null>(
         nuevoPara !== null && puedeRegistrar ? { tipo: 'vehiculo' } : null,
     );
+
+    // Se lee de los datos de la página para ver cada cambio sin cerrar el diálogo
+    const stickersDe =
+        dialogo?.tipo === 'stickers'
+            ? vehiculos.data.find(
+                  (vehiculo) => vehiculo.id === dialogo.vehiculoId,
+              )
+            : undefined;
 
     const consulta = (valor: string) => ({
         ...(activos ? {} : { estado: 'bajas' }),
@@ -149,7 +161,10 @@ export default function Vehiculos({
                                 className="flex items-start justify-between gap-4 p-4"
                             >
                                 <div className="flex min-w-0 gap-3">
-                                    <Car className="mt-0.5 size-5 shrink-0 text-muted-foreground" />
+                                    <IconoVehiculo
+                                        tipo={vehiculo.tipo}
+                                        className="mt-0.5 size-5 shrink-0 text-muted-foreground"
+                                    />
                                     <div className="min-w-0">
                                         <p className="font-semibold tracking-wide">
                                             {vehiculo.placa}
@@ -175,6 +190,7 @@ export default function Vehiculos({
                                                     .join(', ')}
                                             </p>
                                         )}
+                                        <StickerVigente vehiculo={vehiculo} />
                                     </div>
                                 </div>
                                 {activos && (puedeRegistrar || puedeAnular) && (
@@ -189,6 +205,17 @@ export default function Vehiculos({
                                             </Button>
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="end">
+                                            <DropdownMenuItem
+                                                onSelect={() =>
+                                                    setDialogo({
+                                                        tipo: 'stickers',
+                                                        vehiculoId: vehiculo.id,
+                                                    })
+                                                }
+                                            >
+                                                <Tag />
+                                                Stickers
+                                            </DropdownMenuItem>
                                             {puedeRegistrar && (
                                                 <DropdownMenuItem
                                                     onSelect={() =>
@@ -259,6 +286,33 @@ export default function Vehiculos({
                     onClose={() => setDialogo(null)}
                 />
             )}
+            {dialogo?.tipo === 'stickers' && stickersDe && (
+                <StickersDialog
+                    vehiculo={stickersDe}
+                    onClose={() => setDialogo(null)}
+                />
+            )}
         </>
+    );
+}
+
+function StickerVigente({ vehiculo }: { vehiculo: Vehiculo }) {
+    const vigente = vehiculo.stickers.find((sticker) =>
+        STICKER_VIGENTE.includes(sticker.estado),
+    );
+
+    return (
+        <p className="mt-1 flex items-center gap-2 text-sm">
+            {vigente ? (
+                <>
+                    <span>Sticker N.º {vigente.numero}</span>
+                    {vigente.estado !== 'activo' && (
+                        <EstadoSticker estado={vigente.estado} />
+                    )}
+                </>
+            ) : (
+                <span className="text-muted-foreground">Sin sticker</span>
+            )}
+        </p>
     );
 }
