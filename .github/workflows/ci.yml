@@ -185,6 +185,10 @@ jobs:
         if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
         run: php artisan test tests/Feature/Finanzas/PresupuestoTest.php
 
+      - name: Pruebas HU-35 · Registrar vehículos
+        if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
+        run: php artisan test tests/Feature/Vehiculos/VehiculosTest.php
+
       - name: Pruebas de los datos de demostración
         if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
         run: php artisan test tests/Feature/DemostracionSeederTest.php

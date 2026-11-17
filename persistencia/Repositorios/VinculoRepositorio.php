@@ -4,6 +4,7 @@ namespace Patronato\Persistencia\Repositorios;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use Patronato\Persistencia\Models\Residente;
 use Patronato\Persistencia\Models\ViviendaResidente;
 
 /**
@@ -22,6 +23,20 @@ class VinculoRepositorio extends Repositorio
             ->where('residente_id', $residenteId)
             ->when($viviendaId !== null, fn (Builder $query) => $query->where('vivienda_id', $viviendaId))
             ->orderBy('id')
+            ->get();
+    }
+
+    /**
+     * Residentes que viven hoy en la vivienda, por nombre
+     *
+     * @return Collection<int, Residente>
+     */
+    public function residentesVigentesDe(int $viviendaId): Collection
+    {
+        return Residente::query()
+            ->whereHas('vinculosVigentes', fn (Builder $query) => $query->where('vivienda_id', $viviendaId))
+            ->orderBy('nombres')
+            ->orderBy('apellidos')
             ->get();
     }
 

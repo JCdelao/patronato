@@ -23,6 +23,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property-read TipoVivienda $tipoVivienda
  * @property-read Vivienda|null $padre
  * @property-read Collection<int, ConceptoCobro> $conceptos
+ * @property-read Collection<int, Vehiculo> $vehiculos
  */
 #[Fillable(['residencial_id', 'codigo', 'tipo_vivienda_id', 'vivienda_padre_id', 'edificio_torre', 'calle_bloque', 'numero', 'estado_ocupacion', 'activa'])]
 class Vivienda extends Model
@@ -92,5 +93,15 @@ class Vivienda extends Model
     public function vinculosVigentes(): HasMany
     {
         return $this->hasMany(ViviendaResidente::class)->whereNull('fecha_fin');
+    }
+
+    /**
+     * Vehículos de la vivienda, activos y dados de baja
+     *
+     * @return HasMany<Vehiculo, $this>
+     */
+    public function vehiculos(): HasMany
+    {
+        return $this->hasMany(Vehiculo::class);
     }
 }
