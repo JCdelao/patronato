@@ -22,6 +22,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property bool $activo
  * @property-read Vivienda $vivienda
  * @property-read Collection<int, VehiculoConductor> $conductores
+ * @property-read Collection<int, Sticker> $stickers
  */
 #[Fillable(['residencial_id', 'vivienda_id', 'tipo', 'placa', 'marca', 'modelo', 'color', 'activo'])]
 class Vehiculo extends Model
@@ -63,5 +64,15 @@ class Vehiculo extends Model
     public function conductores(): HasMany
     {
         return $this->hasMany(VehiculoConductor::class);
+    }
+
+    /**
+     * Stickers del vehículo, del más reciente al más antiguo
+     *
+     * @return HasMany<Sticker, $this>
+     */
+    public function stickers(): HasMany
+    {
+        return $this->hasMany(Sticker::class)->orderByDesc('id');
     }
 }

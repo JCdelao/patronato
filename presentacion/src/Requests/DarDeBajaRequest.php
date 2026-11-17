@@ -6,7 +6,10 @@ use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Patronato\Negocio\Services\VehiculoService;
 
-class DarDeBajaVehiculoRequest extends FormRequest
+/**
+ * Motivo para dar de baja un vehículo o un sticker; ninguno se borra
+ */
+class DarDeBajaRequest extends FormRequest
 {
     /**
      * Reglas de validación

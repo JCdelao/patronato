@@ -11,7 +11,7 @@ use Patronato\Negocio\Services\VehiculoService;
 use Patronato\Persistencia\Models\User;
 use Patronato\Persistencia\Models\Vehiculo;
 use Patronato\Persistencia\Models\Vivienda;
-use Patronato\Presentacion\Requests\DarDeBajaVehiculoRequest;
+use Patronato\Presentacion\Requests\DarDeBajaRequest;
 use Patronato\Presentacion\Requests\GuardarVehiculoRequest;
 
 class VehiculoController extends Controller
@@ -86,7 +86,7 @@ class VehiculoController extends Controller
     /**
      * Da de baja el vehículo con su motivo
      */
-    public function baja(DarDeBajaVehiculoRequest $request, Vehiculo $vehiculo): RedirectResponse
+    public function baja(DarDeBajaRequest $request, Vehiculo $vehiculo): RedirectResponse
     {
         /** @var User $usuario */
         $usuario = $request->user();

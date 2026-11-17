@@ -32,7 +32,7 @@ class VehiculoRepositorio extends Repositorio
                         ->orWhereHas('vivienda', fn (Builder $vivienda) => $vivienda->whereRaw(Busqueda::columna('codigo').' like ?', [$patron]));
                 });
             })
-            ->with(['vivienda:id,codigo', 'conductores.residente:id,nombres,apellidos'])
+            ->with(['vivienda:id,codigo', 'conductores.residente:id,nombres,apellidos', 'stickers'])
             ->orderBy('placa')
             ->paginate($porPagina)
             ->withQueryString();
