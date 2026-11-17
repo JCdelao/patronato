@@ -34,6 +34,7 @@ import ReporteCobrosController from '@/actions/Patronato/Presentacion/Controller
 import TransferenciaController from '@/actions/Patronato/Presentacion/Controllers/TransferenciaController';
 import AuditoriaController from '@/actions/Patronato/Presentacion/Controllers/AuditoriaController';
 import CuentaController from '@/actions/Patronato/Presentacion/Controllers/CuentaController';
+import VehiculoController from '@/actions/Patronato/Presentacion/Controllers/VehiculoController';
 import ViviendaController from '@/actions/Patronato/Presentacion/Controllers/ViviendaController';
 import ResidencialController from '@/actions/Patronato/Presentacion/Controllers/ResidencialController';
 import AppLogo from '@/components/app-logo';
@@ -143,9 +144,8 @@ export function AppSidebar() {
         },
         {
             title: 'Vehículos',
-            href: '#',
+            href: VehiculoController.index(),
             icon: Car,
-            disabled: true,
             visible: auth.permisos.includes('vehiculos.ver'),
         },
         {
