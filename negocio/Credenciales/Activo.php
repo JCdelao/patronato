@@ -1,11 +1,11 @@
 <?php
 
-namespace Patronato\Negocio\Stickers;
+namespace Patronato\Negocio\Credenciales;
 
 /**
  * Pegado y válido para entrar
  */
-final class Activo extends EstadoSticker
+final class Activo extends EstadoCredencial
 {
     public const NOMBRE = 'activo';
 

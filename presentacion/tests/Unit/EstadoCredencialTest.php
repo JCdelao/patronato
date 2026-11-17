@@ -1,11 +1,11 @@
 <?php
 
-use Patronato\Negocio\Stickers\EstadoSticker;
+use Patronato\Negocio\Credenciales\EstadoCredencial;
 
-// Tabla de transiciones del patrón State de los stickers
+// Tabla de transiciones del patrón State de stickers y carnets
 
-test('each sticker state allows only its own transitions', function (string $estado, array $transiciones) {
-    $objeto = EstadoSticker::de($estado);
+test('each credential state allows only its own transitions', function (string $estado, array $transiciones) {
+    $objeto = EstadoCredencial::de($estado);
 
     $resultado = [];
 
@@ -26,6 +26,6 @@ test('each sticker state allows only its own transitions', function (string $est
     'deactivated' => ['dado_de_baja', []],
 ]);
 
-test('an unknown sticker state is rejected', function () {
-    EstadoSticker::de('perdido');
+test('an unknown credential state is rejected', function () {
+    EstadoCredencial::de('perdido');
 })->throws(InvalidArgumentException::class);

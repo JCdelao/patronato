@@ -17,8 +17,10 @@ use Patronato\Negocio\Contratos\GeneradorHojaCalculo;
 use Patronato\Negocio\Contratos\GeneradorPdf;
 use Patronato\Negocio\Eventos\PagoAnulado;
 use Patronato\Negocio\Eventos\PagoConfirmado;
+use Patronato\Negocio\Eventos\ResidenteDadoDeBaja;
 use Patronato\Negocio\Eventos\VehiculoDadoDeBaja;
 use Patronato\Negocio\Oyentes\AnularIngresoDeCobro;
+use Patronato\Negocio\Oyentes\DarDeBajaCarnetDelResidente;
 use Patronato\Negocio\Oyentes\DarDeBajaStickerDelVehiculo;
 use Patronato\Negocio\Oyentes\RegistrarIngresoDeCobro;
 use Patronato\Negocio\Services\CargosPendientesService;
@@ -64,6 +66,9 @@ class AppServiceProvider extends ServiceProvider
 
         // Un vehículo dado de baja no conserva su sticker
         Event::listen(VehiculoDadoDeBaja::class, DarDeBajaStickerDelVehiculo::class);
+
+        // Un residente dado de baja no conserva su carnet
+        Event::listen(ResidenteDadoDeBaja::class, DarDeBajaCarnetDelResidente::class);
 
         Gate::define('administrar-plataforma', fn (User $user): bool => $user->esAdminPlataforma());
         Gate::define('administrar-usuarios', fn (User $user): Response => $user->puedeAdministrarUsuarios()

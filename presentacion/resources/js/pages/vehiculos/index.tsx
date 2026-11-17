@@ -2,6 +2,7 @@ import { Head, Link, router, usePage } from '@inertiajs/react';
 import { Ban, Ellipsis, Pencil, Plus, Search, Tag } from 'lucide-react';
 import { useRef, useState } from 'react';
 import VehiculoController from '@/actions/Patronato/Presentacion/Controllers/VehiculoController';
+import EstadoCredencial from '@/components/credenciales/estado-credencial';
 import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
@@ -11,12 +12,12 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import BajaDialog from '@/components/vehiculos/baja-dialog';
-import EstadoSticker from '@/components/vehiculos/estado-sticker';
 import IconoVehiculo from '@/components/vehiculos/icono-vehiculo';
 import StickersDialog from '@/components/vehiculos/stickers-dialog';
 import VehiculoDialog from '@/components/vehiculos/vehiculo-dialog';
 import type { OpcionVivienda, TipoVehiculo, Vehiculo } from '@/types/vehiculos';
-import { STICKER_VIGENTE, TIPOS_VEHICULO } from '@/types/vehiculos';
+import { CREDENCIAL_VIGENTE } from '@/types/credenciales';
+import { TIPOS_VEHICULO } from '@/types/vehiculos';
 
 type Paginado<T> = {
     data: T[];
@@ -298,7 +299,7 @@ export default function Vehiculos({
 
 function StickerVigente({ vehiculo }: { vehiculo: Vehiculo }) {
     const vigente = vehiculo.stickers.find((sticker) =>
-        STICKER_VIGENTE.includes(sticker.estado),
+        CREDENCIAL_VIGENTE.includes(sticker.estado),
     );
 
     return (
@@ -307,7 +308,7 @@ function StickerVigente({ vehiculo }: { vehiculo: Vehiculo }) {
                 <>
                     <span>Sticker N.º {vigente.numero}</span>
                     {vigente.estado !== 'activo' && (
-                        <EstadoSticker estado={vigente.estado} />
+                        <EstadoCredencial estado={vigente.estado} />
                     )}
                 </>
             ) : (

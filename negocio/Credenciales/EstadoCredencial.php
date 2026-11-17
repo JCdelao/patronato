@@ -1,15 +1,15 @@
 <?php
 
-namespace Patronato\Negocio\Stickers;
+namespace Patronato\Negocio\Credenciales;
 
 use InvalidArgumentException;
 
 /**
- * Estado de un sticker: sabe qué acciones admite y a qué estado lleva cada una
+ * Estado de una credencial (sticker o carnet): sabe qué acciones admite y a qué estado lleva cada una
  *
- * Cada estado es una clase; las fabrica EstadoSticker::de().
+ * Cada estado es una clase; las fabrica EstadoCredencial::de().
  */
-abstract class EstadoSticker
+abstract class EstadoCredencial
 {
     public const SUSPENDER = 'suspender';
 
@@ -20,6 +20,11 @@ abstract class EstadoSticker
     public const REEMPLAZAR = 'reemplazar';
 
     public const DAR_DE_BAJA = 'dar_de_baja';
+
+    /**
+     * Acciones que cambian el estado sin crear otra credencial
+     */
+    public const CAMBIOS_DE_ESTADO = [self::SUSPENDER, self::REACTIVAR, self::VENCER];
 
     /**
      * Estado al que lleva cada acción admitida
@@ -39,12 +44,12 @@ abstract class EstadoSticker
             Vencido::NOMBRE => new Vencido,
             Reemplazado::NOMBRE => new Reemplazado,
             DadoDeBaja::NOMBRE => new DadoDeBaja,
-            default => throw new InvalidArgumentException("Estado de sticker desconocido: {$estado}"),
+            default => throw new InvalidArgumentException("Estado de credencial desconocido: {$estado}"),
         };
     }
 
     /**
-     * Acciones que se pueden hacer con un sticker en este estado
+     * Acciones que se pueden hacer con una credencial en este estado
      *
      * @return list<string>
      */

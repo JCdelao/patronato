@@ -9,7 +9,7 @@ use Patronato\Persistencia\Models\Sticker;
 use Patronato\Persistencia\Models\User;
 use Patronato\Persistencia\Models\Vehiculo;
 use Patronato\Presentacion\Requests\AsignarStickerRequest;
-use Patronato\Presentacion\Requests\CambiarEstadoStickerRequest;
+use Patronato\Presentacion\Requests\CambiarEstadoCredencialRequest;
 use Patronato\Presentacion\Requests\DarDeBajaRequest;
 use Patronato\Presentacion\Requests\ReemplazarStickerRequest;
 
@@ -44,7 +44,7 @@ class StickerController extends Controller
     /**
      * Suspende, reactiva o marca como vencido el sticker
      */
-    public function cambiarEstado(CambiarEstadoStickerRequest $request, Sticker $sticker): RedirectResponse
+    public function cambiarEstado(CambiarEstadoCredencialRequest $request, Sticker $sticker): RedirectResponse
     {
         $this->stickers->cambiarEstado($this->usuario($request), $sticker, (string) $request->input('accion'), (string) $request->input('motivo'));
 
@@ -65,7 +65,7 @@ class StickerController extends Controller
         return back();
     }
 
-    private function usuario(AsignarStickerRequest|ReemplazarStickerRequest|CambiarEstadoStickerRequest|DarDeBajaRequest $request): User
+    private function usuario(AsignarStickerRequest|ReemplazarStickerRequest|CambiarEstadoCredencialRequest|DarDeBajaRequest $request): User
     {
         /** @var User $usuario */
         $usuario = $request->user();

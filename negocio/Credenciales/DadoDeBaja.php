@@ -1,11 +1,11 @@
 <?php
 
-namespace Patronato\Negocio\Stickers;
+namespace Patronato\Negocio\Credenciales;
 
 /**
  * Retirado definitivamente; es final
  */
-final class DadoDeBaja extends EstadoSticker
+final class DadoDeBaja extends EstadoCredencial
 {
     public const NOMBRE = 'dado_de_baja';
 

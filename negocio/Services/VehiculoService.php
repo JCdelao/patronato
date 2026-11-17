@@ -6,8 +6,8 @@ use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Validation\ValidationException;
+use Patronato\Negocio\Credenciales\EstadoCredencial;
 use Patronato\Negocio\Eventos\VehiculoDadoDeBaja;
-use Patronato\Negocio\Stickers\EstadoSticker;
 use Patronato\Persistencia\Models\Residente;
 use Patronato\Persistencia\Models\Sticker;
 use Patronato\Persistencia\Models\User;
@@ -60,7 +60,7 @@ class VehiculoService
                 'estado' => $sticker->estado,
                 'fecha_emision' => $sticker->fecha_emision->toDateString(),
                 'motivo' => $sticker->motivo,
-                'acciones' => EstadoSticker::de($sticker->estado)->acciones(),
+                'acciones' => EstadoCredencial::de($sticker->estado)->acciones(),
             ])->all()),
             'conductores' => array_values($vehiculo->conductores
                 ->filter(fn (VehiculoConductor $conductor): bool => $conductor->residente !== null)

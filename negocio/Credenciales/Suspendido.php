@@ -1,11 +1,11 @@
 <?php
 
-namespace Patronato\Negocio\Stickers;
+namespace Patronato\Negocio\Credenciales;
 
 /**
  * Retenido por un tiempo; se puede reactivar
  */
-final class Suspendido extends EstadoSticker
+final class Suspendido extends EstadoCredencial
 {
     public const NOMBRE = 'suspendido';
 

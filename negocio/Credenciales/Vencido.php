@@ -1,11 +1,11 @@
 <?php
 
-namespace Patronato\Negocio\Stickers;
+namespace Patronato\Negocio\Credenciales;
 
 /**
  * Terminó su vigencia; se renueva reemplazándolo
  */
-final class Vencido extends EstadoSticker
+final class Vencido extends EstadoCredencial
 {
     public const NOMBRE = 'vencido';
 

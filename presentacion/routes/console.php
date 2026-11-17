@@ -4,6 +4,7 @@ use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schedule;
+use Patronato\Negocio\Services\CarnetService;
 use Patronato\Negocio\Services\CuentaService;
 use Patronato\Negocio\Services\GeneracionCargosService;
 use Patronato\Negocio\Services\RespaldoService;
@@ -99,6 +100,17 @@ Artisan::command('cargos:generar', function (GeneracionCargosService $generacion
 
 // Cada hora, para ponerse al día si el servidor estuvo apagado el día de generación
 Schedule::command('cargos:generar')->hourly()->withoutOverlapping();
+
+Artisan::command('carnets:vencer', function (CarnetService $carnets) {
+    $vencidos = $carnets->vencerVencidos();
+
+    $this->info($vencidos === 0 ? 'Ningún carnet venció hoy.' : "{$vencidos} carnets pasaron a vencidos.");
+
+    return 0;
+})->purpose('Pasa a vencidos los carnets activos cuya vigencia terminó');
+
+// Cada día al empezar, en la hora de Honduras; si el servidor estuvo apagado se pone al día al siguiente
+Schedule::command('carnets:vencer')->dailyAt('00:05')->timezone('America/Tegucigalpa')->withoutOverlapping();
 
 Artisan::command('db:probar', function () {
     try {
