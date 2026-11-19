@@ -34,6 +34,24 @@ class EgresoRepositorio extends Repositorio
     }
 
     /**
+     * Total de los egresos vigentes de un año, por id de categoría
+     *
+     * @return array<int, string>
+     */
+    public function totalesPorCategoriaDelAnio(int $anio): array
+    {
+        return Egreso::query()
+            ->where('estado', Egreso::VIGENTE)
+            ->whereBetween('fecha', ["{$anio}-01-01", "{$anio}-12-31"])
+            ->groupBy('categoria_id')
+            ->selectRaw('categoria_id, sum(monto) as total')
+            ->toBase()
+            ->get()
+            ->mapWithKeys(fn (object $fila): array => [(int) $fila->categoria_id => (string) $fila->total])
+            ->all();
+    }
+
+    /**
      * @param  array<string, mixed>  $datos
      */
     public function crear(array $datos): Egreso

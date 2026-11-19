@@ -3,7 +3,6 @@
 use Database\Seeders\RolesSeeder;
 use Illuminate\Support\Facades\DB;
 use Inertia\Testing\AssertableInertia;
-use OpenSpout\Reader\XLSX\Reader;
 use Patronato\Negocio\Contratos\GeneradorPdf;
 use Patronato\Negocio\Reportes\ReporteCobros;
 use Patronato\Persistencia\Models\Caja;
@@ -12,32 +11,6 @@ use Patronato\Persistencia\Models\Residencial;
 use Patronato\Persistencia\Models\Rol;
 use Patronato\Persistencia\Models\User;
 use Patronato\Persistencia\Models\Vivienda;
-
-/**
- * Lee todas las hojas de un .xlsx como arreglos de valores
- *
- * @return array<string, list<list<mixed>>>
- */
-function leerExcel(string $contenido): array
-{
-    $archivo = tempnam(sys_get_temp_dir(), 'prueba');
-    file_put_contents($archivo, $contenido);
-
-    $lector = new Reader;
-    $lector->open($archivo);
-    $hojas = [];
-
-    foreach ($lector->getSheetIterator() as $hoja) {
-        foreach ($hoja->getRowIterator() as $fila) {
-            $hojas[$hoja->getName()][] = $fila->toArray();
-        }
-    }
-
-    $lector->close();
-    unlink($archivo);
-
-    return $hojas;
-}
 
 beforeEach(function () {
     $this->seed(RolesSeeder::class);

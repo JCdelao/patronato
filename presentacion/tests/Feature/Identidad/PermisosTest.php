@@ -148,5 +148,5 @@ test('each user gets the permission strategy of its role', function () {
         ->and($permisos->estrategia($this->secretario))->toBeInstanceOf(PermisosPorRol::class)
         ->and($permisos->estrategia(User::factory()->create()))->toBeInstanceOf(SinPermisos::class)
         ->and($permisos->deUsuario($this->admin))->toBe($permisos->catalogo())
-        ->and($permisos->deUsuario($this->secretario))->toBe(['padron.anular', 'padron.registrar', 'padron.ver']);
+        ->and($permisos->deUsuario($this->secretario))->toBe(['carnets.anular', 'carnets.registrar', 'carnets.ver', 'padron.anular', 'padron.registrar', 'padron.ver', 'vehiculos.anular', 'vehiculos.registrar', 'vehiculos.ver']);
 });

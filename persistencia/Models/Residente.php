@@ -19,6 +19,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property bool $activo
  * @property-read Collection<int, ViviendaResidente> $vinculos
  * @property-read Collection<int, ViviendaResidente> $vinculosVigentes
+ * @property-read Collection<int, Carnet> $carnets
  */
 #[Fillable(['residencial_id', 'user_id', 'nombres', 'apellidos', 'identidad', 'telefono', 'correo', 'activo'])]
 class Residente extends Model
@@ -60,5 +61,15 @@ class Residente extends Model
     public function vinculosVigentes(): HasMany
     {
         return $this->hasMany(ViviendaResidente::class)->whereNull('fecha_fin');
+    }
+
+    /**
+     * Carnets del residente, del más reciente al más antiguo
+     *
+     * @return HasMany<Carnet, $this>
+     */
+    public function carnets(): HasMany
+    {
+        return $this->hasMany(Carnet::class)->orderByDesc('id');
     }
 }

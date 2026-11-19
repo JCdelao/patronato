@@ -6,6 +6,7 @@ import {
     ChartColumn,
     HandCoins,
     Home,
+    IdCard,
     Landmark,
     LayoutGrid,
     PiggyBank,
@@ -15,22 +16,27 @@ import {
     Send,
     ShieldCheck,
     SlidersHorizontal,
+    Target,
     Users,
     Vault,
     Wallet,
 } from 'lucide-react';
 import AnulacionController from '@/actions/Patronato/Presentacion/Controllers/AnulacionController';
 import CajaController from '@/actions/Patronato/Presentacion/Controllers/CajaController';
+import CarnetController from '@/actions/Patronato/Presentacion/Controllers/CarnetController';
 import CobroController from '@/actions/Patronato/Presentacion/Controllers/CobroController';
 import EgresoController from '@/actions/Patronato/Presentacion/Controllers/EgresoController';
 import IngresoController from '@/actions/Patronato/Presentacion/Controllers/IngresoController';
+import InformeFinancieroController from '@/actions/Patronato/Presentacion/Controllers/InformeFinancieroController';
 import PagoController from '@/actions/Patronato/Presentacion/Controllers/PagoController';
+import PresupuestoController from '@/actions/Patronato/Presentacion/Controllers/PresupuestoController';
 import ParametroCobroController from '@/actions/Patronato/Presentacion/Controllers/ParametroCobroController';
 import PortalTransferenciaController from '@/actions/Patronato/Presentacion/Controllers/PortalTransferenciaController';
 import ReporteCobrosController from '@/actions/Patronato/Presentacion/Controllers/ReporteCobrosController';
 import TransferenciaController from '@/actions/Patronato/Presentacion/Controllers/TransferenciaController';
 import AuditoriaController from '@/actions/Patronato/Presentacion/Controllers/AuditoriaController';
 import CuentaController from '@/actions/Patronato/Presentacion/Controllers/CuentaController';
+import VehiculoController from '@/actions/Patronato/Presentacion/Controllers/VehiculoController';
 import ViviendaController from '@/actions/Patronato/Presentacion/Controllers/ViviendaController';
 import ResidencialController from '@/actions/Patronato/Presentacion/Controllers/ResidencialController';
 import AppLogo from '@/components/app-logo';
@@ -120,6 +126,12 @@ export function AppSidebar() {
             visible: auth.permisos.includes('tesoreria.ver'),
         },
         {
+            title: 'Presupuesto',
+            href: PresupuestoController.index(),
+            icon: Target,
+            visible: auth.permisos.includes('reportes.ver'),
+        },
+        {
             title: 'Parámetros de cobro',
             href: ParametroCobroController.index(),
             icon: SlidersHorizontal,
@@ -134,15 +146,26 @@ export function AppSidebar() {
         },
         {
             title: 'Vehículos',
-            href: '#',
+            href: VehiculoController.index(),
             icon: Car,
-            disabled: true,
             visible: auth.permisos.includes('vehiculos.ver'),
+        },
+        {
+            title: 'Carnets',
+            href: CarnetController.index(),
+            icon: IdCard,
+            visible: auth.permisos.includes('carnets.ver'),
         },
         {
             title: 'Reportes',
             href: ReporteCobrosController.index(),
             icon: ChartColumn,
+            visible: auth.permisos.includes('reportes.ver'),
+        },
+        {
+            title: 'Informe financiero',
+            href: InformeFinancieroController.index(),
+            icon: Landmark,
             visible: auth.permisos.includes('reportes.ver'),
         },
         {
