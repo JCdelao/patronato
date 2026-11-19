@@ -5,6 +5,7 @@ namespace Patronato\Negocio\Adaptadores;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Patronato\Negocio\Contratos\GeneradorPdf;
 
+// Patrón Adapter (estructural): adapta la librería dompdf a la interfaz GeneradorPdf del sistema
 /**
  * Genera los PDF con dompdf, que funciona solo con PHP
  */

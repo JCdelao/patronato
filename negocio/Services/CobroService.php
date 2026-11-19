@@ -33,6 +33,7 @@ class CobroService
         private Dispatcher $eventos,
     ) {}
 
+    // Patrón Facade (estructural): un solo método coordina la caja, el recibo, el pago, sus meses y la auditoría
     /**
      * Registra un pago en efectivo en la caja del día del cobrador
      *
@@ -100,6 +101,7 @@ class CobroService
                 ],
             ]);
 
+            // Patrón Observer (comportamiento): avisa del pago sin conocer a quién lo escucha
             // Tesorería lo registra como ingreso dentro de esta misma transacción
             $this->eventos->dispatch(new PagoConfirmado($pago, $cobrador));
 

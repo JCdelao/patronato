@@ -8,6 +8,7 @@ use Patronato\Persistencia\Models\Caja;
 use Patronato\Persistencia\Models\Pago;
 use Patronato\Persistencia\Repositorios\ReporteCobrosRepositorio;
 
+// Patrón Builder (creacional): el reporte se arma paso a paso y se crea con construir()
 /**
  * Arma el reporte de cobros paso a paso con filtros opcionales
  *

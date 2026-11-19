@@ -5,6 +5,7 @@ namespace Patronato\Negocio\Oyentes;
 use Patronato\Negocio\Eventos\PagoAnulado;
 use Patronato\Negocio\Services\IngresoService;
 
+// Patrón Observer (comportamiento): oyente que reacciona al evento PagoAnulado
 /**
  * Al anularse un pago, su ingreso queda anulado con el mismo motivo
  */

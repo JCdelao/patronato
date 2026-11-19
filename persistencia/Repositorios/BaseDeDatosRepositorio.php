@@ -6,6 +6,7 @@ use Illuminate\Contracts\Process\ProcessResult;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Process;
 
+// Patrón Adapter (estructural): adapta pg_dump y pg_restore a los métodos volcar() y restaurar()
 /**
  * Copia y restauración de la base de PostgreSQL con sus herramientas
  */

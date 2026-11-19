@@ -17,6 +17,7 @@ use Patronato\Persistencia\Repositorios\PagoRepositorio;
  */
 class AplicacionPagoService
 {
+    // Principio D (inversión de dependencias): recibe la interfaz CargosPendientes, no una clase concreta
     public function __construct(
         private CargosPendientes $cargos,
         private PagoRepositorio $pagos,

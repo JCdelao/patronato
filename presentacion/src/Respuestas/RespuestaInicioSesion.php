@@ -10,6 +10,7 @@ use Patronato\Negocio\Services\PermisoService;
 use Patronato\Persistencia\Models\User;
 use Symfony\Component\HttpFoundation\Response;
 
+// Patrón Adapter (estructural): adapta la pantalla de inicio de cada rol a la respuesta que espera Fortify
 class RespuestaInicioSesion implements LoginResponse, TwoFactorLoginResponse
 {
     /**

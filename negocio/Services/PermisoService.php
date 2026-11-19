@@ -76,6 +76,7 @@ class PermisoService
         return $permisos;
     }
 
+    // Patrón Factory Method (creacional): este método decide qué estrategia de permisos crear
     /**
      * Elige la estrategia de permisos según el usuario
      */

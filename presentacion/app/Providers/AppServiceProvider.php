@@ -37,6 +37,7 @@ class AppServiceProvider extends ServiceProvider
         // El cobro conoce los meses pendientes a partir de los cargos generados
         $this->app->bind(CargosPendientes::class, CargosPendientesService::class);
 
+        // Patrón Singleton (creacional): el contenedor crea una sola instancia y la reutiliza
         // Una sola instancia: los adaptadores no guardan estado entre documentos
         $this->app->singleton(GeneradorPdf::class, PdfDompdf::class);
         $this->app->singleton(GeneradorHojaCalculo::class, HojaCalculoOpenSpout::class);
@@ -49,6 +50,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->configureDefaults();
 
+        // Patrón Observer (comportamiento): reacciona cuando se crea un residencial
         // Cada residencial nuevo recibe los permisos de sus roles, sus tipos de vivienda y sus categorías de egreso e ingreso
         Residencial::created(function (Residencial $residencial) {
             app(PermisoService::class)->asignarPredeterminados($residencial->id);
@@ -56,6 +58,7 @@ class AppServiceProvider extends ServiceProvider
             app(CategoriaFinancieraService::class)->crearPredeterminadas($residencial->id);
         });
 
+        // Patrón Observer (comportamiento): los oyentes reaccionan a los eventos del pago
         // Tesorería escucha a los cobros: cada pago confirmado es un ingreso y su anulación lo anula
         Event::listen(PagoConfirmado::class, RegistrarIngresoDeCobro::class);
         Event::listen(PagoAnulado::class, AnularIngresoDeCobro::class);

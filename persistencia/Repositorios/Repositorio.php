@@ -4,6 +4,8 @@ namespace Patronato\Persistencia\Repositorios;
 
 use Illuminate\Database\Eloquent\Model;
 
+// Patrón Repository: las consultas a la base de datos quedan en los repositorios
+// Principio O (abierto/cerrado): un repositorio nuevo hereda estas operaciones sin cambiar esta clase
 /**
  * Operaciones comunes sobre un registro ya cargado
  */

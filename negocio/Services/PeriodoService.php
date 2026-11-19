@@ -5,6 +5,7 @@ namespace Patronato\Negocio\Services;
 use Carbon\CarbonImmutable;
 use Illuminate\Validation\ValidationException;
 
+// Principio S (responsabilidad única): esta clase solo calcula períodos y fechas en hora de Honduras
 /**
  * Períodos de cobro según la hora de Honduras
  */

@@ -32,6 +32,7 @@ class FortifyServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        // Patrón Singleton (creacional): una sola instancia de la respuesta de inicio de sesión
         $this->app->singleton(LoginResponse::class, RespuestaInicioSesion::class);
         $this->app->singleton(TwoFactorLoginResponse::class, RespuestaInicioSesion::class);
         $this->app->bind(FailedPasswordResetLinkRequestResponse::class, RespuestaEnlaceRechazado::class);

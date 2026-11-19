@@ -5,6 +5,7 @@ namespace Patronato\Persistencia\Repositorios;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\Cache;
 
+// Patrón Adapter (estructural): adapta la caché de Laravel a operaciones de intentos y bloqueos
 /**
  * Intentos fallidos y bloqueos de inicio de sesión guardados en caché
  */
