@@ -2,6 +2,7 @@ import { Link, usePage } from '@inertiajs/react';
 import {
     Ban,
     Building2,
+    BadgeCheck,
     Car,
     ChartColumn,
     HandCoins,
@@ -34,6 +35,7 @@ import ParametroCobroController from '@/actions/Patronato/Presentacion/Controlle
 import PortalTransferenciaController from '@/actions/Patronato/Presentacion/Controllers/PortalTransferenciaController';
 import ReporteCobrosController from '@/actions/Patronato/Presentacion/Controllers/ReporteCobrosController';
 import TransferenciaController from '@/actions/Patronato/Presentacion/Controllers/TransferenciaController';
+import VerificacionTransferenciaController from '@/actions/Patronato/Presentacion/Controllers/VerificacionTransferenciaController';
 import AuditoriaController from '@/actions/Patronato/Presentacion/Controllers/AuditoriaController';
 import CuentaController from '@/actions/Patronato/Presentacion/Controllers/CuentaController';
 import VehiculoController from '@/actions/Patronato/Presentacion/Controllers/VehiculoController';
@@ -93,6 +95,13 @@ export function AppSidebar() {
             href: TransferenciaController.create(),
             icon: Landmark,
             visible: auth.permisos.includes('transferencias.registrar'),
+        },
+        {
+            title: 'Transferencias por verificar',
+            href: VerificacionTransferenciaController.index(),
+            icon: BadgeCheck,
+            badge: auth.transferenciasPorVerificar,
+            visible: auth.permisos.includes('transferencias.verificar'),
         },
         {
             title: 'Cobros',

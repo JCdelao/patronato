@@ -2,6 +2,7 @@
 
 namespace Patronato\Persistencia\Repositorios;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -72,6 +73,7 @@ class PagoRepositorio
         return $pago->loadMissing([
             'residencial',
             'cobrador',
+            'verificador',
             'vivienda' => $sinFiltro,
             'aplicaciones' => $sinFiltro,
             'aplicaciones.cargo' => $sinFiltro,
@@ -160,6 +162,7 @@ class PagoRepositorio
             'vivienda',
             'cobrador',
             'caja',
+            'verificador',
             'anuladoPor',
             'aprobadorAnulacion',
             'solicitudesAnulacion' => fn ($query) => $query->with(['solicitante', 'resolutor']),
@@ -182,5 +185,45 @@ class PagoRepositorio
     public function buscarSinResidencial(int $id): ?Pago
     {
         return Pago::query()->withoutGlobalScope('residencial')->find($id);
+    }
+
+    /**
+     * Transferencias del residencial que esperan verificación, de la más antigua a la más reciente
+     *
+     * @return Collection<int, Pago>
+     */
+    public function porVerificar(): Collection
+    {
+        return $this->consultaPorVerificar()
+            ->with(['vivienda', 'cobrador'])
+            ->oldest()
+            ->oldest('id')
+            ->get();
+    }
+
+    /**
+     * Cantidad de transferencias del residencial que esperan verificación
+     */
+    public function cantidadPorVerificar(): int
+    {
+        return $this->consultaPorVerificar()->count();
+    }
+
+    /**
+     * Carga lo que muestra la verificación: vivienda, quien la registró y quien la verificó
+     */
+    public function conVerificacion(Pago $pago): Pago
+    {
+        return $pago->loadMissing(['vivienda', 'cobrador', 'verificador']);
+    }
+
+    /**
+     * @return Builder<Pago>
+     */
+    private function consultaPorVerificar(): Builder
+    {
+        return Pago::query()
+            ->where('forma_pago', Pago::TRANSFERENCIA)
+            ->whereIn('estado', [Pago::PENDIENTE_VERIFICACION, Pago::REPORTADO_POR_VECINO]);
     }
 }

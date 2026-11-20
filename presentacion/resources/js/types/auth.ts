@@ -17,6 +17,7 @@ export type Auth = {
     puedeAdministrarUsuarios: boolean;
     rol: string | null;
     anulacionesPendientes: number;
+    transferenciasPorVerificar: number;
     esResidente: boolean;
 };
 

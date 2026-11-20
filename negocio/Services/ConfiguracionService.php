@@ -41,6 +41,16 @@ class ConfiguracionService
     }
 
     /**
+     * Indica si quien registró una transferencia tiene prohibido confirmarla (HU-26)
+     *
+     * Sin configuración guardada vale falso, igual que el valor predeterminado de la tabla.
+     */
+    public function dobleControlTransferencias(int $residencialId): bool
+    {
+        return (bool) $this->configuracion->valor($residencialId, 'doble_control_transferencias');
+    }
+
+    /**
      * Día del mes en que se generan los cargos; sin configuración guardada es el 1
      */
     public function diaGeneracionCargos(int $residencialId): int

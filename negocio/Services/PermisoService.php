@@ -23,8 +23,8 @@ class PermisoService
         'cobros' => ['etiqueta' => 'Cobros', 'acciones' => ['ver', 'registrar', 'verificar', 'aprobar', 'anular']],
         'cajas' => ['etiqueta' => 'Cierre de caja', 'acciones' => ['registrar']],
         // Separado de cobros.registrar: registrar transferencias no permite cobrar en efectivo.
-        // La verificación de la HU-26 agregará aquí la acción 'verificar'.
-        'transferencias' => ['etiqueta' => 'Transferencias', 'acciones' => ['registrar']],
+        // 'verificar' confirma o rechaza las transferencias pendientes (HU-26).
+        'transferencias' => ['etiqueta' => 'Transferencias', 'acciones' => ['registrar', 'verificar']],
         'parametros' => ['etiqueta' => 'Parámetros de cobro', 'acciones' => ['ver', 'registrar']],
         'mora' => ['etiqueta' => 'Regla de mora', 'acciones' => ['registrar']],
         'tesoreria' => ['etiqueta' => 'Ingresos y egresos', 'acciones' => ['ver', 'registrar', 'anular']],
@@ -44,9 +44,9 @@ class PermisoService
      * el administrador técnico los activa desde la pantalla de permisos.
      */
     public const PREDETERMINADOS = [
-        Rol::PRESIDENTE => ['padron.ver', 'padron.registrar', 'padron.anular', 'auditoria.ver', 'parametros.ver', 'reportes.ver', 'cobros.aprobar', 'mora.registrar', 'cajas.registrar', 'tesoreria.ver', 'vehiculos.ver', 'carnets.ver'],
+        Rol::PRESIDENTE => ['padron.ver', 'padron.registrar', 'padron.anular', 'auditoria.ver', 'parametros.ver', 'reportes.ver', 'cobros.aprobar', 'mora.registrar', 'cajas.registrar', 'tesoreria.ver', 'transferencias.verificar', 'vehiculos.ver', 'carnets.ver'],
         Rol::SECRETARIO => ['padron.ver', 'padron.registrar', 'padron.anular', 'vehiculos.ver', 'vehiculos.registrar', 'vehiculos.anular', 'carnets.ver', 'carnets.registrar', 'carnets.anular'],
-        'tesorero' => ['padron.ver', 'parametros.ver', 'parametros.registrar', 'cobros.ver', 'cobros.anular', 'cajas.registrar', 'transferencias.registrar', 'reportes.ver', 'mora.registrar', 'tesoreria.ver', 'tesoreria.registrar', 'tesoreria.anular'],
+        'tesorero' => ['padron.ver', 'parametros.ver', 'parametros.registrar', 'cobros.ver', 'cobros.anular', 'cajas.registrar', 'transferencias.registrar', 'transferencias.verificar', 'reportes.ver', 'mora.registrar', 'tesoreria.ver', 'tesoreria.registrar', 'tesoreria.anular'],
         'fiscal' => ['padron.ver', 'auditoria.ver', 'parametros.ver', 'reportes.ver', 'cobros.aprobar', 'tesoreria.ver'],
         'vocal' => ['padron.ver'],
         'cobrador' => ['cobros.registrar'],

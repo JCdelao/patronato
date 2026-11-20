@@ -77,11 +77,15 @@ class ComprobanteService
      *
      * Un pago anulado conserva su comprobante, marcado como anulado con la fecha y el motivo.
      *
-     * @return array{pago_id: int, residencial: string, direccion: string|null, telefono: string|null, numero_recibo: string, fecha: string, hora: string, vivienda: string, monto: string, periodos: list<array{periodo: string, concepto: string, monto: string}>, cobrador: string, anulado: bool, anulado_en: string|null, motivo_anulacion: string|null}
+     * En una transferencia, la hora es la de su confirmación y en lugar del cobrador aparece quien la verificó.
+     *
+     * @return array{pago_id: int, residencial: string, direccion: string|null, telefono: string|null, numero_recibo: string, fecha: string, hora: string, vivienda: string, monto: string, periodos: list<array{periodo: string, concepto: string, monto: string}>, forma_pago: string, referencia: string|null, etiqueta_responsable: string, cobrador: string, anulado: bool, anulado_en: string|null, motivo_anulacion: string|null}
      */
     public function datos(Pago $pago): array
     {
         $pago = $this->pagos->conDetalle($pago);
+        $esTransferencia = $pago->forma_pago === Pago::TRANSFERENCIA;
+        $hora = $esTransferencia && $pago->verificado_en !== null ? $pago->verificado_en : $pago->created_at;
 
         $periodos = array_values($pago->aplicaciones
             ->sortBy(fn (PagoAplicacion $aplicacion) => [$aplicacion->cargo->periodo->toDateString(), $aplicacion->cargo_id])
@@ -99,11 +103,14 @@ class ComprobanteService
             'telefono' => $pago->residencial->telefono,
             'numero_recibo' => (string) $pago->numero_recibo,
             'fecha' => $pago->fecha_pago->toDateString(),
-            'hora' => $pago->created_at->setTimezone(self::ZONA_LOCAL)->format('H:i'),
+            'hora' => $hora->setTimezone(self::ZONA_LOCAL)->format('H:i'),
             'vivienda' => $pago->vivienda->codigo,
             'monto' => $pago->monto,
             'periodos' => $periodos,
-            'cobrador' => $pago->cobrador->name ?? 'Sin cobrador',
+            'forma_pago' => $esTransferencia ? 'Transferencia' : 'Efectivo',
+            'referencia' => $esTransferencia ? trim("{$pago->banco} · ref. {$pago->numero_referencia}") : null,
+            'etiqueta_responsable' => $esTransferencia ? 'Verificó' : 'Cobrador',
+            'cobrador' => ($esTransferencia ? $pago->verificador?->name : $pago->cobrador?->name) ?? 'Sin cobrador',
             'anulado' => $pago->estado === Pago::ANULADO,
             'anulado_en' => $pago->anulado_en?->setTimezone(self::ZONA_LOCAL)->format('Y-m-d H:i'),
             'motivo_anulacion' => $pago->estado === Pago::ANULADO ? $pago->motivo_anulacion : null,

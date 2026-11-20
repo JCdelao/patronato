@@ -124,7 +124,8 @@ class IngresoService
             'monto' => $pago->monto,
             'numero_comprobante' => $pago->numero_recibo,
             'estado' => Ingreso::VIGENTE,
-            'registrado_por' => $pago->registrado_por ?? $usuario->id,
+            // Una transferencia entra cuando tesorería la confirma, no cuando se reportó (HU-26)
+            'registrado_por' => $pago->forma_pago === Pago::TRANSFERENCIA ? $usuario->id : ($pago->registrado_por ?? $usuario->id),
         ]);
 
         $this->auditoria->registrar($usuario, 'tesoreria', 'ingreso_registrado', $ingreso, [
