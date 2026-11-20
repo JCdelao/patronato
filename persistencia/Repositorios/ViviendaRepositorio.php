@@ -127,8 +127,28 @@ class ViviendaRepositorio extends Repositorio
      */
     public function activasConResponsable(string $buscar, ?int $viviendaId, int $limite): Collection
     {
+        return $this->conResponsable($buscar, $viviendaId, $limite, soloActivas: true);
+    }
+
+    /**
+     * Viviendas activas e inactivas con su responsable de pago, las activas primero
+     *
+     * Sirve para consultar el historial de una vivienda que ya se dio de baja.
+     *
+     * @return Collection<int, Vivienda>
+     */
+    public function todasConResponsable(string $buscar, ?int $viviendaId, int $limite): Collection
+    {
+        return $this->conResponsable($buscar, $viviendaId, $limite, soloActivas: false);
+    }
+
+    /**
+     * @return Collection<int, Vivienda>
+     */
+    private function conResponsable(string $buscar, ?int $viviendaId, int $limite, bool $soloActivas): Collection
+    {
         return Vivienda::query()
-            ->where('activa', true)
+            ->when($soloActivas, fn (Builder $query) => $query->where('activa', true), fn (Builder $query) => $query->orderByDesc('activa'))
             ->when($viviendaId !== null, fn (Builder $query) => $query->whereKey($viviendaId))
             ->when($viviendaId === null && $buscar !== '', function (Builder $query) use ($buscar) {
                 $patron = Busqueda::patron($buscar);

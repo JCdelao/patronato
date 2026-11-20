@@ -1,5 +1,6 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
+    BookOpenText,
     Car,
     Ellipsis,
     History,
@@ -12,6 +13,7 @@ import {
     UserMinus,
 } from 'lucide-react';
 import { useRef, useState } from 'react';
+import EstadoCuentaController from '@/actions/Patronato/Presentacion/Controllers/EstadoCuentaController';
 import ResidenteController from '@/actions/Patronato/Presentacion/Controllers/ResidenteController';
 import VehiculoController from '@/actions/Patronato/Presentacion/Controllers/VehiculoController';
 import ViviendaController from '@/actions/Patronato/Presentacion/Controllers/ViviendaController';
@@ -84,6 +86,7 @@ export default function Viviendas({
     const puedeRegistrarVehiculos = auth.permisos.includes(
         'vehiculos.registrar',
     );
+    const puedeVerEstadoCuenta = auth.permisos.includes('cobros.ver');
 
     const [dialogo, setDialogo] = useState<Dialogo | null>(null);
     const espera = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -257,6 +260,18 @@ export default function Viviendas({
                                                     <History />
                                                     Historial
                                                 </DropdownMenuItem>
+                                                {puedeVerEstadoCuenta && (
+                                                    <DropdownMenuItem asChild>
+                                                        <Link
+                                                            href={EstadoCuentaController.show.url(
+                                                                vivienda.id,
+                                                            )}
+                                                        >
+                                                            <BookOpenText />
+                                                            Estado de cuenta
+                                                        </Link>
+                                                    </DropdownMenuItem>
+                                                )}
                                                 {!inactivas &&
                                                     puedeRegistrar && (
                                                         <DropdownMenuItem

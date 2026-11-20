@@ -180,6 +180,46 @@ class PagoRepositorio
     }
 
     /**
+     * Totales de la vivienda según la vista oficial de saldos
+     *
+     * saldo = cargos - pagos confirmados + ajustes; por_verificar no entra al saldo.
+     *
+     * @return array{cargos: string, pagos_confirmados: string, ajustes: string, saldo: string, por_verificar: string}
+     */
+    public function totalesDeVivienda(int $viviendaId): array
+    {
+        $fila = DB::table('v_saldos_vivienda')->where('vivienda_id', $viviendaId)->first();
+        $monto = fn (string $columna): string => number_format((float) ($fila->{$columna} ?? 0), 2, '.', '');
+
+        return [
+            'cargos' => $monto('total_cargos'),
+            'pagos_confirmados' => $monto('total_pagos_confirmados'),
+            'ajustes' => $monto('total_ajustes'),
+            'saldo' => $monto('saldo'),
+            'por_verificar' => $monto('total_por_verificar'),
+        ];
+    }
+
+    /**
+     * Pagos de una vivienda en los estados indicados, del más antiguo al más reciente
+     *
+     * Trae los meses a los que se aplicó cada pago y quién lo cobró, verificó o anuló.
+     *
+     * @param  list<string>  $estados
+     * @return Collection<int, Pago>
+     */
+    public function deVivienda(int $viviendaId, array $estados): Collection
+    {
+        return Pago::query()
+            ->with(['aplicaciones.cargo.concepto', 'cobrador:id,name', 'verificador:id,name', 'anuladoPor:id,name'])
+            ->where('vivienda_id', $viviendaId)
+            ->whereIn('estado', $estados)
+            ->orderBy('fecha_pago')
+            ->orderBy('id')
+            ->get();
+    }
+
+    /**
      * Busca un pago sin filtrar por residencial, para el enlace firmado que se abre sin sesión
      */
     public function buscarSinResidencial(int $id): ?Pago

@@ -9,6 +9,7 @@ use Patronato\Presentacion\Controllers\CobroController;
 use Patronato\Presentacion\Controllers\ComprobanteController;
 use Patronato\Presentacion\Controllers\ConceptoController;
 use Patronato\Presentacion\Controllers\EgresoController;
+use Patronato\Presentacion\Controllers\EstadoCuentaController;
 use Patronato\Presentacion\Controllers\GeneracionCargosController;
 use Patronato\Presentacion\Controllers\IngresoController;
 use Patronato\Presentacion\Controllers\MoraController;
@@ -50,6 +51,10 @@ Route::middleware(['auth', 'verified'])
             Route::get('pagos/{pago}/transferencia/comprobante', [TransferenciaController::class, 'comprobante'])
                 ->whereNumber('pago')
                 ->name('transferencias.comprobante');
+
+            // Estado de cuenta de una vivienda, también de las inactivas (HU-27)
+            Route::get('estado-de-cuenta', [EstadoCuentaController::class, 'index'])->name('estado-cuenta.index');
+            Route::get('estado-de-cuenta/{vivienda}', [EstadoCuentaController::class, 'show'])->whereNumber('vivienda')->name('estado-cuenta.show');
         });
 
         // Registrar transferencias no da permiso de cobrar en efectivo (cobros.registrar)

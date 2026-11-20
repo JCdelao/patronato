@@ -3,6 +3,7 @@ import {
     Ban,
     Building2,
     BadgeCheck,
+    BookOpenText,
     Car,
     ChartColumn,
     HandCoins,
@@ -27,6 +28,7 @@ import CajaController from '@/actions/Patronato/Presentacion/Controllers/CajaCon
 import CarnetController from '@/actions/Patronato/Presentacion/Controllers/CarnetController';
 import CobroController from '@/actions/Patronato/Presentacion/Controllers/CobroController';
 import EgresoController from '@/actions/Patronato/Presentacion/Controllers/EgresoController';
+import EstadoCuentaController from '@/actions/Patronato/Presentacion/Controllers/EstadoCuentaController';
 import IngresoController from '@/actions/Patronato/Presentacion/Controllers/IngresoController';
 import InformeFinancieroController from '@/actions/Patronato/Presentacion/Controllers/InformeFinancieroController';
 import PagoController from '@/actions/Patronato/Presentacion/Controllers/PagoController';
@@ -107,6 +109,12 @@ export function AppSidebar() {
             title: 'Cobros',
             href: PagoController.index(),
             icon: Wallet,
+            visible: auth.permisos.includes('cobros.ver'),
+        },
+        {
+            title: 'Estado de cuenta',
+            href: EstadoCuentaController.index(),
+            icon: BookOpenText,
             visible: auth.permisos.includes('cobros.ver'),
         },
         {
