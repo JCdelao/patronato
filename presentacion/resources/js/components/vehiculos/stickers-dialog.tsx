@@ -17,6 +17,7 @@ import { formatoFecha } from '@/lib/formato';
 import type { AccionCredencial } from '@/types/credenciales';
 import { CREDENCIAL_VIGENTE } from '@/types/credenciales';
 import type { Sticker, Vehiculo } from '@/types/vehiculos';
+import { identificador } from '@/types/vehiculos';
 
 const claseTexto =
     'rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none';
@@ -58,7 +59,7 @@ export default function StickersDialog({
         <Dialog open onOpenChange={(abierto) => !abierto && onClose()}>
             <DialogContent className="max-h-[90svh] overflow-y-auto rounded-2xl sm:max-w-lg">
                 <DialogTitle className="text-2xl font-bold tracking-tight">
-                    Stickers de {vehiculo.placa}
+                    Stickers de {identificador(vehiculo)}
                 </DialogTitle>
                 <DialogDescription>
                     Un vehículo tiene un solo sticker a la vez. El número no se

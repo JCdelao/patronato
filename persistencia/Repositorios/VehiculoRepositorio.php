@@ -12,7 +12,7 @@ class VehiculoRepositorio extends Repositorio
     /**
      * Vehículos activos o dados de baja del residencial, ordenados por placa
      *
-     * Busca por placa, marca, modelo, color o código de la vivienda, sin importar mayúsculas ni tildes.
+     * Busca por placa, número de comprobante, marca, modelo, color o código de la vivienda, sin importar mayúsculas ni tildes.
      *
      * @return LengthAwarePaginator<int, Vehiculo>
      */
@@ -25,7 +25,7 @@ class VehiculoRepositorio extends Repositorio
                 $placa = Busqueda::patronPlaca($buscar);
 
                 $query->where(function (Builder $query) use ($patron, $placa) {
-                    $query->when($placa, fn (Builder $query, string $placa) => $query->orWhere('placa', 'like', $placa))
+                    $query->when($placa, fn (Builder $query, string $placa) => $query->orWhere('placa', 'like', $placa)->orWhere('comprobante_numero', 'like', $placa))
                         ->orWhereRaw(Busqueda::columna('marca').' like ?', [$patron])
                         ->orWhereRaw(Busqueda::columna('modelo').' like ?', [$patron])
                         ->orWhereRaw(Busqueda::columna('color').' like ?', [$patron])
@@ -33,7 +33,10 @@ class VehiculoRepositorio extends Repositorio
                 });
             })
             ->with(['vivienda:id,codigo', 'conductores.residente:id,nombres,apellidos', 'stickers'])
+            // Los que no tienen placa todavía van al final, por número de comprobante
+            ->orderByRaw('placa IS NULL')
             ->orderBy('placa')
+            ->orderBy('comprobante_numero')
             ->paginate($porPagina)
             ->withQueryString();
     }
@@ -46,6 +49,18 @@ class VehiculoRepositorio extends Repositorio
         return Vehiculo::query()
             ->where('activo', true)
             ->where('placa', $placa)
+            ->when($exceptoId, fn (Builder $query, int $id) => $query->whereKeyNot($id))
+            ->exists();
+    }
+
+    /**
+     * Indica si otro vehículo activo del residencial usa el número de comprobante, ya en su forma única
+     */
+    public function existeComprobanteActivo(string $numero, ?int $exceptoId = null): bool
+    {
+        return Vehiculo::query()
+            ->where('activo', true)
+            ->where('comprobante_numero', $numero)
             ->when($exceptoId, fn (Builder $query, int $id) => $query->whereKeyNot($id))
             ->exists();
     }

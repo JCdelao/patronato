@@ -18,7 +18,7 @@ import type {
     TipoVehiculo,
     Vehiculo,
 } from '@/types/vehiculos';
-import { TIPOS_VEHICULO } from '@/types/vehiculos';
+import { identificador, TIPOS_VEHICULO } from '@/types/vehiculos';
 
 const claseSelect =
     'h-10 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-xs focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none';
@@ -28,15 +28,27 @@ export default function VehiculoDialog({
     vehiculo,
     viviendas,
     tipos,
+    tiposComprobante,
+    hoy,
     viviendaInicial,
     onClose,
 }: {
     vehiculo?: Vehiculo;
     viviendas: OpcionVivienda[];
     tipos: TipoVehiculo[];
+    tiposComprobante: Record<string, string>;
+    hoy: string;
     viviendaInicial?: number | null;
     onClose: () => void;
 }) {
+    // Uno que ya tiene placa no vuelve a quedar sin ella
+    const puedeSinPlaca = !vehiculo || vehiculo.placa === null;
+    const [sinPlaca, setSinPlaca] = useState(
+        vehiculo ? vehiculo.placa === null : false,
+    );
+    const [tipoComprobante, setTipoComprobante] = useState(
+        vehiculo?.comprobante?.tipo ?? 'permiso_provisional',
+    );
     const [viviendaId, setViviendaId] = useState<number | null>(
         vehiculo?.vivienda_id ?? viviendaInicial ?? null,
     );
@@ -75,7 +87,9 @@ export default function VehiculoDialog({
         <Dialog open onOpenChange={(abierto) => !abierto && onClose()}>
             <DialogContent className="max-h-[90svh] overflow-y-auto rounded-2xl sm:max-w-xl">
                 <DialogTitle className="text-2xl font-bold tracking-tight">
-                    {vehiculo ? `Editar ${vehiculo.placa}` : 'Agregar vehículo'}
+                    {vehiculo
+                        ? `Editar ${identificador(vehiculo)}`
+                        : 'Agregar vehículo'}
                 </DialogTitle>
                 <DialogDescription>
                     {vehiculo
@@ -144,21 +158,174 @@ export default function VehiculoDialog({
                                     </select>
                                     <InputError message={errors.tipo} />
                                 </div>
-                                <div className="grid gap-2">
-                                    <Label htmlFor="placa">Placa</Label>
-                                    <Input
-                                        id="placa"
-                                        name="placa"
-                                        defaultValue={vehiculo?.placa}
-                                        maxLength={20}
-                                        placeholder="HAA 1234"
-                                        className="uppercase"
-                                        required
-                                        autoFocus={!!vehiculo}
-                                    />
-                                    <InputError message={errors.placa} />
-                                </div>
+                                {!sinPlaca && (
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="placa">Placa</Label>
+                                        <Input
+                                            id="placa"
+                                            name="placa"
+                                            defaultValue={vehiculo?.placa ?? ''}
+                                            maxLength={20}
+                                            placeholder="HAA 1234"
+                                            className="uppercase"
+                                            required
+                                            autoFocus={!!vehiculo}
+                                        />
+                                        <InputError message={errors.placa} />
+                                    </div>
+                                )}
                             </div>
+
+                            {puedeSinPlaca && (
+                                <label className="flex items-center gap-2 text-sm">
+                                    <input
+                                        type="checkbox"
+                                        name="sin_placa"
+                                        value="1"
+                                        checked={sinPlaca}
+                                        onChange={(evento) =>
+                                            setSinPlaca(evento.target.checked)
+                                        }
+                                        className="size-4"
+                                    />
+                                    {vehiculo
+                                        ? 'Sigue sin placa (desmarca cuando llegue la placa)'
+                                        : 'Sin placa todavía (en trámite)'}
+                                </label>
+                            )}
+
+                            {sinPlaca && (
+                                <fieldset className="grid gap-4 rounded-xl border p-4">
+                                    <legend className="px-1 text-sm font-medium">
+                                        Comprobante de circulación
+                                    </legend>
+                                    <div className="grid gap-4 sm:grid-cols-2">
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="comprobante_tipo">
+                                                Tipo
+                                            </Label>
+                                            <select
+                                                id="comprobante_tipo"
+                                                name="comprobante_tipo"
+                                                value={tipoComprobante}
+                                                onChange={(evento) =>
+                                                    setTipoComprobante(
+                                                        evento.target.value,
+                                                    )
+                                                }
+                                                className={claseSelect}
+                                            >
+                                                {Object.entries(
+                                                    tiposComprobante,
+                                                ).map(([clave, texto]) => (
+                                                    <option
+                                                        key={clave}
+                                                        value={clave}
+                                                    >
+                                                        {texto}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            <InputError
+                                                message={
+                                                    errors.comprobante_tipo
+                                                }
+                                            />
+                                        </div>
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="comprobante_numero">
+                                                Número
+                                            </Label>
+                                            <Input
+                                                id="comprobante_numero"
+                                                name="comprobante_numero"
+                                                defaultValue={
+                                                    vehiculo?.comprobante
+                                                        ?.numero ?? ''
+                                                }
+                                                maxLength={40}
+                                                required
+                                            />
+                                            <InputError
+                                                message={
+                                                    errors.comprobante_numero
+                                                }
+                                            />
+                                        </div>
+                                    </div>
+                                    {tipoComprobante === 'otro' && (
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="comprobante_descripcion">
+                                                ¿Qué documento es?
+                                            </Label>
+                                            <Input
+                                                id="comprobante_descripcion"
+                                                name="comprobante_descripcion"
+                                                defaultValue={
+                                                    vehiculo?.comprobante
+                                                        ?.descripcion ?? ''
+                                                }
+                                                maxLength={100}
+                                                required
+                                            />
+                                            <InputError
+                                                message={
+                                                    errors.comprobante_descripcion
+                                                }
+                                            />
+                                        </div>
+                                    )}
+                                    <div className="grid gap-4 sm:grid-cols-2">
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="comprobante_vence">
+                                                Vale hasta
+                                            </Label>
+                                            <Input
+                                                id="comprobante_vence"
+                                                name="comprobante_vence"
+                                                type="date"
+                                                min={hoy}
+                                                defaultValue={
+                                                    vehiculo?.comprobante
+                                                        ?.vence ?? ''
+                                                }
+                                                required
+                                            />
+                                            <InputError
+                                                message={
+                                                    errors.comprobante_vence
+                                                }
+                                            />
+                                        </div>
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="comprobante_archivo">
+                                                Foto o PDF
+                                            </Label>
+                                            <Input
+                                                id="comprobante_archivo"
+                                                name="comprobante_archivo"
+                                                type="file"
+                                                accept="application/pdf,image/jpeg,image/png"
+                                                required={
+                                                    !vehiculo?.comprobante
+                                                        ?.tiene_archivo
+                                                }
+                                            />
+                                            <p className="text-xs text-muted-foreground">
+                                                {vehiculo?.comprobante
+                                                    ?.tiene_archivo
+                                                    ? 'Si no adjuntas otro, se conserva el actual.'
+                                                    : 'PDF, JPG o PNG de hasta 5 MB'}
+                                            </p>
+                                            <InputError
+                                                message={
+                                                    errors.comprobante_archivo
+                                                }
+                                            />
+                                        </div>
+                                    </div>
+                                </fieldset>
+                            )}
 
                             <div className="grid gap-4 sm:grid-cols-3">
                                 <div className="grid gap-2">

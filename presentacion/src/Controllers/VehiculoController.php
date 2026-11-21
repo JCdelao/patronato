@@ -13,6 +13,7 @@ use Patronato\Persistencia\Models\Vehiculo;
 use Patronato\Persistencia\Models\Vivienda;
 use Patronato\Presentacion\Requests\DarDeBajaRequest;
 use Patronato\Presentacion\Requests\GuardarVehiculoRequest;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class VehiculoController extends Controller
 {
@@ -32,6 +33,8 @@ class VehiculoController extends Controller
             'vehiculos' => $this->vehiculos->listado($estado === 'activos', $buscar),
             'viviendas' => $this->vehiculos->viviendasActivas(),
             'tipos' => Vehiculo::TIPOS,
+            'tiposComprobante' => Vehiculo::TIPOS_COMPROBANTE,
+            'hoy' => $this->vehiculos->hoy(),
             // Al llegar desde una vivienda, el formulario la trae elegida
             'nuevoPara' => $request->integer('vivienda') ?: null,
         ]);
@@ -53,12 +56,12 @@ class VehiculoController extends Controller
         /** @var User $usuario */
         $usuario = $request->user();
 
-        /** @var array{vivienda_id: int|string, tipo: string, placa: string, marca?: string|null, modelo?: string|null, color?: string|null, conductores?: array<int, int|string>} $datos */
-        $datos = $request->validated();
+        /** @var array{vivienda_id: int|string, tipo: string, sin_placa?: bool|string|null, placa?: string|null, comprobante_tipo?: string|null, comprobante_descripcion?: string|null, comprobante_numero?: string|null, comprobante_vence?: string|null, marca?: string|null, modelo?: string|null, color?: string|null, conductores?: array<int, int|string>} $datos */
+        $datos = $request->safe()->except('comprobante_archivo');
 
-        $vehiculo = $this->vehiculos->registrar($usuario, $datos);
+        $vehiculo = $this->vehiculos->registrar($usuario, $datos, $request->file('comprobante_archivo'));
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => "Vehículo {$vehiculo->placa} registrado."]);
+        Inertia::flash('toast', ['type' => 'success', 'message' => "Vehículo {$vehiculo->identificador()} registrado."]);
 
         return back();
     }
@@ -73,14 +76,26 @@ class VehiculoController extends Controller
         /** @var User $usuario */
         $usuario = $request->user();
 
-        /** @var array{tipo: string, placa: string, marca?: string|null, modelo?: string|null, color?: string|null, conductores?: array<int, int|string>} $datos */
-        $datos = $request->validated();
+        /** @var array{tipo: string, sin_placa?: bool|string|null, placa?: string|null, comprobante_tipo?: string|null, comprobante_descripcion?: string|null, comprobante_numero?: string|null, comprobante_vence?: string|null, marca?: string|null, modelo?: string|null, color?: string|null, conductores?: array<int, int|string>} $datos */
+        $datos = $request->safe()->except('comprobante_archivo');
 
-        $this->vehiculos->actualizar($usuario, $vehiculo, $datos);
+        $this->vehiculos->actualizar($usuario, $vehiculo, $datos, $request->file('comprobante_archivo'));
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Vehículo actualizado.']);
 
         return back();
+    }
+
+    /**
+     * Abre el comprobante de circulación de un vehículo sin placa
+     */
+    public function comprobante(Vehiculo $vehiculo): BinaryFileResponse
+    {
+        $ruta = $this->vehiculos->rutaComprobante($vehiculo);
+
+        abort_if($ruta === null, 404);
+
+        return response()->file($ruta);
     }
 
     /**
@@ -93,7 +108,7 @@ class VehiculoController extends Controller
 
         $this->vehiculos->darDeBaja($usuario, $vehiculo, (string) $request->input('motivo'));
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => "Vehículo {$vehiculo->placa} dado de baja."]);
+        Inertia::flash('toast', ['type' => 'success', 'message' => "Vehículo {$vehiculo->identificador()} dado de baja."]);
 
         return back();
     }

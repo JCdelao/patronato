@@ -12,6 +12,11 @@ Route::middleware(['auth', 'verified'])
             ->middleware("can:permiso,'vehiculos','ver'")
             ->name('index');
 
+        Route::get('{vehiculo}/comprobante', [VehiculoController::class, 'comprobante'])
+            ->whereNumber('vehiculo')
+            ->middleware("can:permiso,'vehiculos','ver'")
+            ->name('comprobante');
+
         Route::middleware("can:permiso,'vehiculos','registrar'")->group(function () {
             Route::get('conductores/{vivienda}', [VehiculoController::class, 'conductores'])->whereNumber('vivienda')->name('conductores');
             Route::post('/', [VehiculoController::class, 'store'])->name('store');
