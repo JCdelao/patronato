@@ -7,6 +7,7 @@ use Inertia\Middleware;
 use Patronato\Negocio\Services\AnulacionPagoService;
 use Patronato\Negocio\Services\PermisoService;
 use Patronato\Negocio\Services\TransferenciaService;
+use Patronato\Negocio\Services\TurnoService;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -45,6 +46,8 @@ class HandleInertiaRequests extends Middleware
                 'anulacionesPendientes' => fn () => $request->user() ? app(AnulacionPagoService::class)->cantidadPendientes($request->user()) : 0,
                 // Solo una cuenta vinculada a un residente activo ve el portal en el menú (HU-25)
                 'esResidente' => fn () => $request->user() !== null && app(TransferenciaService::class)->esResidente($request->user()),
+                // Solo una cuenta vinculada a un guardia activo ve sus turnos en el menú
+                'esGuardia' => fn () => $request->user() !== null && app(TurnoService::class)->guardiaDe($request->user()) !== null,
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];

@@ -18,6 +18,7 @@ export type Auth = {
     rol: string | null;
     anulacionesPendientes: number;
     esResidente: boolean;
+    esGuardia: boolean;
 };
 
 export type Passkey = {

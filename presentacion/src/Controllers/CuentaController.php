@@ -24,10 +24,11 @@ class CuentaController extends Controller
         $actor = $request->user();
         $credenciales = $request->session()->get('credenciales');
         $residentesDisponibles = $residentes->paraCuentas();
+        $guardiasDisponibles = $cuentas->guardiasParaCuentas();
 
         return Inertia::render('identidad/usuarios', [
             'cuentas' => $cuentas->delResidencial((int) $actor->residencial_id)
-                ->map(function (User $cuenta) use ($actor, $residentesDisponibles) {
+                ->map(function (User $cuenta) use ($actor, $residentesDisponibles, $guardiasDisponibles) {
                     $residente = collect($residentesDisponibles)->firstWhere('user_id', $cuenta->id);
 
                     return [
@@ -39,6 +40,7 @@ class CuentaController extends Controller
                         'activo' => $cuenta->activo,
                         'residente_id' => $residente['id'] ?? null,
                         'vivienda' => $residente['vivienda'] ?? null,
+                        'guardia_id' => collect($guardiasDisponibles)->firstWhere('user_id', $cuenta->id)['id'] ?? null,
                         'editable' => $this->esEditable($actor, $cuenta),
                     ];
                 }),
@@ -48,6 +50,7 @@ class CuentaController extends Controller
                 'nombre' => $rol->nombre,
             ])->values(),
             'residentes' => $residentesDisponibles,
+            'guardias' => $guardiasDisponibles,
             'parametros' => $configuracion->seguridad($actor->residencial_id),
             'puedeConfigurarAccesos' => $actor->can('configurar-accesos'),
             'credenciales' => is_string($credenciales) ? Crypt::decrypt($credenciales) : null,
@@ -59,7 +62,7 @@ class CuentaController extends Controller
      */
     public function store(GuardarCuentaRequest $request, CuentaService $cuentas): RedirectResponse
     {
-        /** @var array{name: string, email: string, rol_id: string, residente_id?: string|null} $datos */
+        /** @var array{name: string, email: string, rol_id: string, residente_id?: string|null, guardia_id?: string|null} $datos */
         $datos = $request->validated();
 
         $cuenta = $cuentas->crear($request->user(), $datos);
@@ -88,7 +91,7 @@ class CuentaController extends Controller
     {
         abort_unless($this->esEditable($request->user(), $cuenta), 403, 'Esta cuenta no se puede modificar desde aquí');
 
-        /** @var array{name: string, email: string, rol_id: string, residente_id?: string|null} $datos */
+        /** @var array{name: string, email: string, rol_id: string, residente_id?: string|null, guardia_id?: string|null} $datos */
         $datos = $request->validated();
 
         $cuentas->actualizar($request->user(), $cuenta, $datos);

@@ -197,6 +197,22 @@ jobs:
         if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
         run: php artisan test tests/Feature/Carnets/CarnetsTest.php
 
+      - name: Pruebas HU-38 · Registrar guardias
+        if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
+        run: php artisan test tests/Feature/Vigilancia/GuardiasTest.php
+
+      - name: Pruebas HU-39 · Programar turnos
+        if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
+        run: php artisan test tests/Feature/Vigilancia/TurnosTest.php
+
+      - name: Pruebas HU-40 · Entregar el turno
+        if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
+        run: php artisan test tests/Feature/Vigilancia/EntregaTurnoTest.php
+
+      - name: Pruebas HU-41 · Registrar incidencias
+        if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
+        run: php artisan test tests/Feature/Vigilancia/IncidenciasTest.php
+
       - name: Pruebas de los datos de demostración
         if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
         run: php artisan test tests/Feature/DemostracionSeederTest.php

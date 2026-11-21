@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import type {
     Cuenta,
     ParametrosAcceso,
+    GuardiaOpcion,
     ResidenteOpcion,
     RolOpcion,
 } from '@/types/identidad';
@@ -25,6 +26,7 @@ export default function Usuarios({
     cuentas,
     roles,
     residentes,
+    guardias,
     parametros,
     puedeConfigurarAccesos,
     credenciales,
@@ -32,6 +34,7 @@ export default function Usuarios({
     cuentas: Cuenta[];
     roles: RolOpcion[];
     residentes: ResidenteOpcion[];
+    guardias: GuardiaOpcion[];
     parametros: ParametrosAcceso;
     puedeConfigurarAccesos: boolean;
     credenciales: { correo: string; password_temporal: string } | null;
@@ -42,7 +45,9 @@ export default function Usuarios({
 
     const alGuardar = () => {
         cerrar();
-        router.reload({ only: ['cuentas', 'residentes', 'parametros'] });
+        router.reload({
+            only: ['cuentas', 'residentes', 'guardias', 'parametros'],
+        });
     };
 
     return (
@@ -176,6 +181,7 @@ export default function Usuarios({
                     cuenta={dialogo.cuenta}
                     roles={roles}
                     residentes={residentes}
+                    guardias={guardias}
                     onClose={cerrar}
                     onGuardado={alGuardar}
                 />

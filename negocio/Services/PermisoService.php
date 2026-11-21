@@ -28,7 +28,12 @@ class PermisoService
         'parametros' => ['etiqueta' => 'Parámetros de cobro', 'acciones' => ['ver', 'registrar']],
         'mora' => ['etiqueta' => 'Regla de mora', 'acciones' => ['registrar']],
         'tesoreria' => ['etiqueta' => 'Ingresos y egresos', 'acciones' => ['ver', 'registrar', 'anular']],
-        'vigilancia' => ['etiqueta' => 'Vigilancia', 'acciones' => ['ver', 'registrar']],
+        'guardias' => ['etiqueta' => 'Guardias', 'acciones' => ['ver', 'registrar']],
+        'turnos' => ['etiqueta' => 'Programación de turnos', 'acciones' => ['ver', 'registrar']],
+        'tipos_incidencia' => ['etiqueta' => 'Tipos de incidencia', 'acciones' => ['registrar']],
+        // Para el guardia: además del permiso, exigen una cuenta vinculada a un guardia activo
+        'entrega_turnos' => ['etiqueta' => 'Iniciar y entregar sus turnos', 'acciones' => ['registrar']],
+        'incidencias' => ['etiqueta' => 'Incidencias', 'acciones' => ['ver', 'registrar']],
         'vehiculos' => ['etiqueta' => 'Vehículos', 'acciones' => ['ver', 'registrar', 'anular']],
         'carnets' => ['etiqueta' => 'Carnets', 'acciones' => ['ver', 'registrar', 'anular']],
         'reportes' => ['etiqueta' => 'Reportes', 'acciones' => ['ver']],
@@ -44,13 +49,13 @@ class PermisoService
      * el administrador técnico los activa desde la pantalla de permisos.
      */
     public const PREDETERMINADOS = [
-        Rol::PRESIDENTE => ['padron.ver', 'padron.registrar', 'padron.anular', 'auditoria.ver', 'parametros.ver', 'reportes.ver', 'cobros.aprobar', 'mora.registrar', 'cajas.registrar', 'tesoreria.ver', 'vehiculos.ver', 'carnets.ver'],
+        Rol::PRESIDENTE => ['padron.ver', 'padron.registrar', 'padron.anular', 'auditoria.ver', 'parametros.ver', 'reportes.ver', 'cobros.aprobar', 'mora.registrar', 'cajas.registrar', 'tesoreria.ver', 'vehiculos.ver', 'carnets.ver', 'guardias.ver', 'guardias.registrar', 'turnos.ver', 'turnos.registrar', 'tipos_incidencia.registrar', 'incidencias.ver'],
         Rol::SECRETARIO => ['padron.ver', 'padron.registrar', 'padron.anular', 'vehiculos.ver', 'vehiculos.registrar', 'vehiculos.anular', 'carnets.ver', 'carnets.registrar', 'carnets.anular'],
         'tesorero' => ['padron.ver', 'parametros.ver', 'parametros.registrar', 'cobros.ver', 'cobros.anular', 'cajas.registrar', 'transferencias.registrar', 'reportes.ver', 'mora.registrar', 'tesoreria.ver', 'tesoreria.registrar', 'tesoreria.anular'],
         'fiscal' => ['padron.ver', 'auditoria.ver', 'parametros.ver', 'reportes.ver', 'cobros.aprobar', 'tesoreria.ver'],
         'vocal' => ['padron.ver'],
         'cobrador' => ['cobros.registrar'],
-        'guardia' => ['vehiculos.ver', 'carnets.ver'],
+        Rol::GUARDIA => ['vehiculos.ver', 'carnets.ver', 'entrega_turnos.registrar', 'incidencias.registrar'],
         Rol::RESIDENTE => ['portal.ver', 'portal.registrar'],
     ];
 

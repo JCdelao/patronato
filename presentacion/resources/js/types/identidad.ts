@@ -7,6 +7,7 @@ export type Cuenta = {
     activo: boolean;
     residente_id: number | null;
     vivienda: string | null;
+    guardia_id: number | null;
     editable: boolean;
 };
 
@@ -20,6 +21,12 @@ export type ResidenteOpcion = {
     id: number;
     nombre: string;
     vivienda: string | null;
+    user_id: number | null;
+};
+
+export type GuardiaOpcion = {
+    id: number;
+    nombre: string;
     user_id: number | null;
 };
 

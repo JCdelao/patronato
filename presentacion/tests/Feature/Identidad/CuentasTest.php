@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Notification;
 use Inertia\Testing\AssertableInertia;
 use Patronato\Negocio\Notificaciones\CuentaCreada;
 use Patronato\Persistencia\Models\Auditoria;
+use Patronato\Persistencia\Models\Guardia;
 use Patronato\Persistencia\Models\Residencial;
 use Patronato\Persistencia\Models\Residente;
 use Patronato\Persistencia\Models\Rol;
@@ -199,6 +200,71 @@ test('changing the role away from resident releases the link', function () {
 
     expect($residente->refresh()->user_id)->toBeNull()
         ->and($cuenta->refresh()->rol?->codigo)->toBe('cobrador');
+});
+
+function guardiaDe(Residencial $residencial, string $nombre = 'Carlos Mejía', bool $activo = true): Guardia
+{
+    return Guardia::query()->create([
+        'residencial_id' => $residencial->id,
+        'nombre' => $nombre,
+        'identidad' => fake()->unique()->numerify('0801-####-#####'),
+        'telefono' => '9999-0000',
+        'turno' => 'dia',
+        'activo' => $activo,
+    ]);
+}
+
+test('an account with the guard role must be linked to an available active guard', function () {
+    $datos = ($this->datos)(['rol_id' => ($this->rol)(Rol::GUARDIA)]);
+
+    $this->post(route('usuarios.store'), $datos)->assertSessionHasErrors('guardia_id');
+
+    foreach ([guardiaDe($this->otro), guardiaDe($this->residencial, 'Inactivo', false)] as $ajeno) {
+        $this->post(route('usuarios.store'), [...$datos, 'guardia_id' => $ajeno->id])
+            ->assertSessionHasErrors('guardia_id');
+    }
+
+    $guardia = guardiaDe($this->residencial);
+
+    $this->post(route('usuarios.store'), [...$datos, 'guardia_id' => $guardia->id])
+        ->assertSessionHasNoErrors();
+
+    $cuenta = User::query()->where('email', 'luis@laspalmas.test')->sole();
+
+    expect($guardia->refresh()->user_id)->toBe($cuenta->id);
+
+    $this->get(route('usuarios.index'))->assertInertia(fn (AssertableInertia $page) => $page
+        ->where('cuentas.1.guardia_id', $guardia->id)
+        ->where('guardias.0.user_id', $cuenta->id));
+
+    $this->post(route('usuarios.store'), [...$datos, 'email' => 'otra@laspalmas.test', 'guardia_id' => $guardia->id])
+        ->assertSessionHasErrors('guardia_id');
+
+    // Con el guardia vinculado, la cuenta ve sus turnos
+    $cuenta->forceFill(['debe_cambiar_password' => false])->save();
+
+    $this->actingAs($cuenta)->get(route('vigilancia.turnos.mios'))->assertOk();
+});
+
+test('an existing guard account can be linked later and changing the role releases it', function () {
+    $cuenta = User::factory()->create([
+        'residencial_id' => $this->residencial->id,
+        'rol_id' => ($this->rol)(Rol::GUARDIA),
+        'email' => 'jose@laspalmas.test',
+    ]);
+    $guardia = guardiaDe($this->residencial);
+
+    $this->put(route('usuarios.update', $cuenta->id), [
+        'name' => 'José', 'email' => 'jose@laspalmas.test', 'rol_id' => ($this->rol)(Rol::GUARDIA), 'guardia_id' => $guardia->id,
+    ])->assertSessionHasNoErrors();
+
+    expect($guardia->refresh()->user_id)->toBe($cuenta->id);
+
+    $this->put(route('usuarios.update', $cuenta->id), [
+        'name' => 'José', 'email' => 'jose@laspalmas.test', 'rol_id' => ($this->rol)('cobrador'), 'guardia_id' => $guardia->id,
+    ])->assertSessionHasNoErrors();
+
+    expect($guardia->refresh()->user_id)->toBeNull();
 });
 
 test('an account can be edited keeping its email when unchanged', function () {
