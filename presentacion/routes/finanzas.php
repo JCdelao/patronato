@@ -114,6 +114,8 @@ Route::middleware(['auth', 'verified'])
             Route::get('egresos/nuevo', [EgresoController::class, 'create'])->name('egresos.create');
             Route::post('egresos', [EgresoController::class, 'store'])->name('egresos.store');
             Route::post('categorias-egreso', [CategoriaEgresoController::class, 'store'])->name('categorias-egreso.store');
+            Route::post('categorias-egreso/{categoria}/quitar', [CategoriaEgresoController::class, 'quitar'])->whereNumber('categoria')->name('categorias-egreso.quitar');
+            Route::post('categorias-egreso/{categoria}/reactivar', [CategoriaEgresoController::class, 'reactivar'])->whereNumber('categoria')->name('categorias-egreso.reactivar');
 
             Route::get('ingresos/nuevo', [IngresoController::class, 'create'])->name('ingresos.create');
             Route::post('ingresos', [IngresoController::class, 'store'])->name('ingresos.store');

@@ -193,6 +193,10 @@ jobs:
         if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
         run: php artisan test tests/Feature/Finanzas/PresupuestoTest.php
 
+      - name: Pruebas E08 · Categorías desde el presupuesto
+        if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
+        run: php artisan test tests/Feature/Finanzas/CategoriasPresupuestoTest.php
+
       - name: Pruebas HU-35 · Registrar vehículos
         if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
         run: php artisan test tests/Feature/Vehiculos/VehiculosTest.php
