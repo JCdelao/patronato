@@ -54,12 +54,13 @@ class PresupuestoService
      *
      * Aparecen las categorías activas y las inactivas que tienen presupuesto o gasto ese año.
      *
-     * @return array{anio: int, categorias: list<array{categoria_id: int, categoria: string, activa: bool, presupuestado: string|null, ejecutado: string, porcentaje: float|null, estado: string}>, total_presupuestado: string, total_ejecutado: string, porcentaje_total: float|null}
+     * @return array{anio: int, categorias: list<array{categoria_id: int, categoria: string, activa: bool, en_uso: bool, presupuestado: string|null, ejecutado: string, porcentaje: float|null, estado: string}>, total_presupuestado: string, total_ejecutado: string, porcentaje_total: float|null, inactivas: list<array{id: int, nombre: string}>}
      */
     public function comparacion(int $anio): array
     {
         $presupuestos = $this->presupuestos->delAnio($anio);
         $ejecutado = $this->egresos->totalesPorCategoriaDelAnio($anio);
+        $enUso = array_flip($this->categorias->idsEnUso());
         $filas = [];
         $totalPresupuestado = 0;
         $totalEjecutado = 0;
@@ -80,6 +81,8 @@ class PresupuestoService
                 'categoria_id' => $categoria->id,
                 'categoria' => $categoria->nombre,
                 'activa' => $categoria->activa,
+                // Al quitarla: si ya tiene historial se desactiva, si no se borra
+                'en_uso' => isset($enUso[$categoria->id]),
                 'presupuestado' => $planeado === null ? null : AplicacionPagoService::monto($planeado),
                 'ejecutado' => AplicacionPagoService::monto($gasto),
                 'porcentaje' => $this->porcentaje($gasto, $planeado),
@@ -93,6 +96,9 @@ class PresupuestoService
             'total_presupuestado' => AplicacionPagoService::monto($totalPresupuestado),
             'total_ejecutado' => AplicacionPagoService::monto($totalEjecutado),
             'porcentaje_total' => $this->porcentaje($totalEjecutado, $totalPresupuestado),
+            'inactivas' => array_values($this->categorias->inactivasDe(CategoriaFinanciera::EGRESO)
+                ->map(fn (CategoriaFinanciera $categoria): array => ['id' => $categoria->id, 'nombre' => $categoria->nombre])
+                ->all()),
         ];
     }
 
