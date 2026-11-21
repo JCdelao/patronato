@@ -5,6 +5,7 @@ namespace Patronato\Negocio\Oyentes;
 use Patronato\Negocio\Eventos\PagoConfirmado;
 use Patronato\Negocio\Services\IngresoService;
 
+// Patrón Observer (comportamiento): oyente que reacciona al evento PagoConfirmado
 /**
  * Cada pago confirmado entra como ingreso de cuotas
  */

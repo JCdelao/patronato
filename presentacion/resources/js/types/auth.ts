@@ -19,6 +19,7 @@ export type Auth = {
     anulacionesPendientes: number;
     transferenciasPorVerificar: number;
     esResidente: boolean;
+    esGuardia: boolean;
 };
 
 export type Passkey = {

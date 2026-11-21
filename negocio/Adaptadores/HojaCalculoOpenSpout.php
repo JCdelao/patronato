@@ -8,6 +8,7 @@ use OpenSpout\Writer\XLSX\Writer;
 use Patronato\Negocio\Contratos\GeneradorHojaCalculo;
 use RuntimeException;
 
+// Patrón Adapter (estructural): adapta la librería OpenSpout a la interfaz GeneradorHojaCalculo del sistema
 /**
  * Escribe los libros de Excel con OpenSpout, fila por fila y con poca memoria
  */

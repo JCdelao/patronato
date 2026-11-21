@@ -29,6 +29,7 @@ trait PerteneceAResidencial
         });
     }
 
+    // Patrón Proxy (estructural): revisa el residencial antes de entregar el registro al controlador
     /**
      * Busca el modelo de la URL y deniega el de otro residencial
      *

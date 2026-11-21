@@ -36,6 +36,7 @@ class Auditoria extends Model
      */
     public $timestamps = false;
 
+    // Patrón Observer (comportamiento): reacciona cuando alguien intenta cambiar o borrar la bitácora
     /**
      * La bitácora solo admite registros nuevos
      */

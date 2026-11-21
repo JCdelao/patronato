@@ -16,3 +16,10 @@ export type NavItem = {
     // Número de pendientes junto a la opción
     badge?: number;
 };
+
+// Opciones de un mismo tema que se despliegan juntas
+export type NavGroup = {
+    title: string;
+    icon: LucideIcon;
+    items: NavItem[];
+};

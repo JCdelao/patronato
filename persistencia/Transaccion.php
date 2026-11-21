@@ -5,6 +5,7 @@ namespace Patronato\Persistencia;
 use Closure;
 use Illuminate\Support\Facades\DB;
 
+// Patrón Facade (estructural): un solo método, ejecutar(), oculta el manejo de transacciones de la base
 /**
  * Agrupa varias operaciones para que se guarden todas o ninguna
  */

@@ -19,18 +19,25 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
-import type { Cuenta, ResidenteOpcion, RolOpcion } from '@/types/identidad';
+import type {
+    Cuenta,
+    GuardiaOpcion,
+    ResidenteOpcion,
+    RolOpcion,
+} from '@/types/identidad';
 
 export default function CuentaDialog({
     cuenta,
     roles,
     residentes,
+    guardias,
     onClose,
     onGuardado,
 }: {
     cuenta?: Cuenta;
     roles: RolOpcion[];
     residentes: ResidenteOpcion[];
+    guardias: GuardiaOpcion[];
     onClose: () => void;
     onGuardado: () => void;
 }) {
@@ -40,13 +47,17 @@ export default function CuentaDialog({
         ? CuentaController.update.form(cuenta.id)
         : CuentaController.store.form();
 
-    const esResidente =
-        roles.find((rol) => rol.id.toString() === rolId)?.codigo ===
-        'residente';
+    const codigo = roles.find((rol) => rol.id.toString() === rolId)?.codigo;
+    const esResidente = codigo === 'residente';
+    const esGuardia = codigo === 'guardia';
 
     const disponibles = residentes.filter(
         (residente) =>
             residente.user_id === null || residente.user_id === cuenta?.id,
+    );
+
+    const guardiasDisponibles = guardias.filter(
+        (guardia) => guardia.user_id === null || guardia.user_id === cuenta?.id,
     );
 
     return (
@@ -151,6 +162,41 @@ export default function CuentaDialog({
                                         </SelectContent>
                                     </Select>
                                     <InputError message={errors.residente_id} />
+                                </div>
+                            )}
+
+                            {esGuardia && (
+                                <div className="grid gap-2">
+                                    <Label htmlFor="guardia_id">Guardia</Label>
+                                    <Select
+                                        name="guardia_id"
+                                        defaultValue={cuenta?.guardia_id?.toString()}
+                                    >
+                                        <SelectTrigger
+                                            id="guardia_id"
+                                            className="w-full"
+                                        >
+                                            <SelectValue placeholder="Seleccionar" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {guardiasDisponibles.map(
+                                                (guardia) => (
+                                                    <SelectItem
+                                                        key={guardia.id}
+                                                        value={guardia.id.toString()}
+                                                    >
+                                                        {guardia.nombre}
+                                                    </SelectItem>
+                                                ),
+                                            )}
+                                        </SelectContent>
+                                    </Select>
+                                    <p className="text-sm text-muted-foreground">
+                                        Con la cuenta, el guardia ve sus turnos
+                                        y reporta incidencias. Si no aparece,
+                                        regístralo primero en Guardias.
+                                    </p>
+                                    <InputError message={errors.guardia_id} />
                                 </div>
                             )}
 

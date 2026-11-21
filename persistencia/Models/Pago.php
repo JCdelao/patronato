@@ -83,6 +83,7 @@ class Pago extends Model
      */
     protected $table = 'pagos';
 
+    // Patrón Observer (comportamiento): reacciona cuando se intenta cambiar o borrar un pago
     /**
      * Los cobros de una caja cerrada no se editan ni se borran; solo se anulan
      */

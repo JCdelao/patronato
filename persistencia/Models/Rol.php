@@ -19,6 +19,8 @@ class Rol extends Model
 
     public const SECRETARIO = 'secretario';
 
+    public const GUARDIA = 'guardia';
+
     public const RESIDENTE = 'residente';
 
     /**

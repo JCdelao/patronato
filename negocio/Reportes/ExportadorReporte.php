@@ -2,6 +2,7 @@
 
 namespace Patronato\Negocio\Reportes;
 
+// Patrón Strategy (comportamiento): ExportadorPdf y ExportadorExcel son dos formas intercambiables de exportar
 /**
  * Convierte el reporte de cobros en un archivo descargable
  *

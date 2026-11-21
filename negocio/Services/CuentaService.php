@@ -5,8 +5,10 @@ namespace Patronato\Negocio\Services;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Str;
 use Patronato\Negocio\Notificaciones\CuentaCreada;
+use Patronato\Persistencia\Models\Guardia;
 use Patronato\Persistencia\Models\Rol;
 use Patronato\Persistencia\Models\User;
+use Patronato\Persistencia\Repositorios\GuardiaRepositorio;
 use Patronato\Persistencia\Repositorios\RolRepositorio;
 use Patronato\Persistencia\Repositorios\UsuarioRepositorio;
 use Patronato\Persistencia\Transaccion;
@@ -20,6 +22,7 @@ class CuentaService
         private Transaccion $transaccion,
         private AuditoriaService $auditoria,
         private ResidenteService $residentes,
+        private GuardiaRepositorio $guardias,
     ) {}
 
     public function porCorreo(string $correo): ?User
@@ -81,9 +84,34 @@ class CuentaService
     }
 
     /**
+     * Indica si el rol es el de guardia
+     */
+    public function esRolGuardia(int $rolId): bool
+    {
+        return $this->roles->codigoDe($rolId) === Rol::GUARDIA;
+    }
+
+    /**
+     * Guardias activos que pueden recibir una cuenta
+     *
+     * @return array<int, array{id: int, nombre: string, user_id: int|null}>
+     */
+    public function guardiasParaCuentas(): array
+    {
+        return $this->guardias->activos()
+            ->map(fn (Guardia $guardia) => [
+                'id' => $guardia->id,
+                'nombre' => $guardia->nombre,
+                'user_id' => $guardia->user_id,
+            ])
+            ->values()
+            ->all();
+    }
+
+    /**
      * Crea una cuenta del residencial y le envía la contraseña temporal
      *
-     * @param  array{name: string, email: string, rol_id: int|string, residente_id?: int|string|null}  $datos
+     * @param  array{name: string, email: string, rol_id: int|string, residente_id?: int|string|null, guardia_id?: int|string|null}  $datos
      * @return array{usuario: User, password_temporal: string, correo_enviado: bool}
      */
     public function crear(User $actor, array $datos): array
@@ -92,9 +120,34 @@ class CuentaService
             $cuenta = $this->crearConPasswordTemporal((int) $actor->residencial_id, $datos['name'], $datos['email'], (int) $datos['rol_id']);
 
             $this->residentes->vincularCuenta($cuenta['usuario']->id, $this->residenteDe($datos));
+            $this->guardias->asignarCuenta($cuenta['usuario']->id, $this->guardiaDe($datos));
 
             $this->auditoria->registrar($actor, 'identidad', 'cuenta_creada', $cuenta['usuario'], [
                 'valor_nuevo' => ['email' => $datos['email'], 'rol_id' => (int) $datos['rol_id']],
+            ]);
+
+            return $cuenta;
+        });
+
+        return [...$cuenta, 'correo_enviado' => $this->enviarPasswordTemporal($cuenta['usuario'], $cuenta['password_temporal'])];
+    }
+
+    /**
+     * Crea la cuenta de un guardia con el rol guardia y le envía la contraseña temporal
+     *
+     * @param  callable(User): void  $vincular  enlaza la cuenta con el guardia en la misma transacción
+     * @return array{usuario: User, password_temporal: string, correo_enviado: bool}
+     */
+    public function crearDeGuardia(User $actor, string $nombre, string $correo, callable $vincular): array
+    {
+        $cuenta = $this->transaccion->ejecutar(function () use ($actor, $nombre, $correo, $vincular) {
+            $rolId = $this->roles->porCodigo(Rol::GUARDIA)->id;
+            $cuenta = $this->crearConPasswordTemporal((int) $actor->residencial_id, $nombre, $correo, $rolId);
+
+            $vincular($cuenta['usuario']);
+
+            $this->auditoria->registrar($actor, 'identidad', 'cuenta_creada', $cuenta['usuario'], [
+                'valor_nuevo' => ['email' => $correo, 'rol_id' => $rolId],
             ]);
 
             return $cuenta;
@@ -125,7 +178,7 @@ class CuentaService
     }
 
     /**
-     * @param  array{name: string, email: string, rol_id: int|string, residente_id?: int|string|null}  $datos
+     * @param  array{name: string, email: string, rol_id: int|string, residente_id?: int|string|null, guardia_id?: int|string|null}  $datos
      */
     public function actualizar(User $actor, User $cuenta, array $datos): void
     {
@@ -139,6 +192,7 @@ class CuentaService
             ]);
 
             $this->residentes->vincularCuenta($cuenta->id, $this->residenteDe($datos));
+            $this->guardias->asignarCuenta($cuenta->id, $this->guardiaDe($datos));
 
             $this->auditoria->registrar($actor, 'identidad', 'cuenta_editada', $cuenta, [
                 'valor_anterior' => $anterior,
@@ -257,5 +311,13 @@ class CuentaService
     private function residenteDe(array $datos): ?int
     {
         return $this->esRolResidente((int) $datos['rol_id']) && ! empty($datos['residente_id']) ? (int) $datos['residente_id'] : null;
+    }
+
+    /**
+     * @param  array{rol_id: int|string, guardia_id?: int|string|null}  $datos
+     */
+    private function guardiaDe(array $datos): ?int
+    {
+        return $this->esRolGuardia((int) $datos['rol_id']) && ! empty($datos['guardia_id']) ? (int) $datos['guardia_id'] : null;
     }
 }

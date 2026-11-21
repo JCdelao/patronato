@@ -130,6 +130,7 @@ class TarifaRepositorio extends Repositorio
             ->first();
     }
 
+    // Patrón Builder (creacional): la consulta se arma paso a paso según el alcance
     /**
      * Tarifas de un concepto que alcanzan a una vivienda, a su tipo o a todas
      *

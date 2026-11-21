@@ -23,7 +23,9 @@ class GuardarCuentaRequest extends FormRequest
         $cuenta = $this->route('cuenta');
         $cuentaId = $cuenta instanceof User ? $cuenta->id : null;
 
-        $esResidente = app(CuentaService::class)->esRolResidente($this->integer('rol_id'));
+        $cuentas = app(CuentaService::class);
+        $esResidente = $cuentas->esRolResidente($this->integer('rol_id'));
+        $esGuardia = $cuentas->esRolGuardia($this->integer('rol_id'));
 
         return [
             'name' => ['required', 'string', 'max:255'],
@@ -35,6 +37,14 @@ class GuardarCuentaRequest extends FormRequest
             'residente_id' => [
                 Rule::requiredIf($esResidente), 'nullable', 'integer',
                 Rule::exists('residentes', 'id')
+                    ->where('residencial_id', $this->user()->residencial_id)
+                    ->where('activo', true)
+                    ->where(fn (Builder $query) => $query->whereNull('user_id')->orWhere('user_id', $cuentaId)),
+            ],
+            // Sin el guardia vinculado la cuenta no puede ver sus turnos ni reportar incidencias
+            'guardia_id' => [
+                Rule::requiredIf($esGuardia), 'nullable', 'integer',
+                Rule::exists('guardias', 'id')
                     ->where('residencial_id', $this->user()->residencial_id)
                     ->where('activo', true)
                     ->where(fn (Builder $query) => $query->whereNull('user_id')->orWhere('user_id', $cuentaId)),
@@ -55,6 +65,8 @@ class GuardarCuentaRequest extends FormRequest
             'rol_id.exists' => 'Selecciona un rol válido.',
             'residente_id.required' => 'Selecciona el residente de esta cuenta.',
             'residente_id.exists' => 'Ese residente no está disponible.',
+            'guardia_id.required' => 'Selecciona el guardia de esta cuenta.',
+            'guardia_id.exists' => 'Ese guardia no está disponible.',
         ];
     }
 

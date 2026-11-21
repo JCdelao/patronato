@@ -30,6 +30,7 @@ Artisan::command('plataforma:admin {email}', function (CuentaService $cuentas) {
     return 0;
 })->purpose('Convierte una cuenta existente en administrador de la plataforma');
 
+// Patrón Command (comportamiento): cada tarea es un comando con nombre que se puede ejecutar o programar
 Artisan::command('respaldos:crear', function (RespaldoService $respaldos) {
     try {
         $this->info('Respaldo creado: '.$respaldos->crear());
@@ -82,6 +83,7 @@ Artisan::command('respaldos:restaurar {archivo} {--base= : Base de datos donde r
 
 Schedule::command('respaldos:crear')->dailyAt('02:00')->timezone('America/Tegucigalpa');
 
+// Patrón Command (comportamiento): la generación de cargos es un comando que el programador ejecuta cada hora
 Artisan::command('cargos:generar', function (GeneracionCargosService $generacion) {
     $resultado = $generacion->generarPendientes();
 
