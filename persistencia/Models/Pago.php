@@ -26,6 +26,9 @@ use Patronato\Persistencia\Excepciones\CobroDeCajaCerrada;
  * @property string|null $numero_referencia
  * @property string|null $cuenta_receptora
  * @property string|null $comprobante_path
+ * @property int|null $verificado_por
+ * @property Carbon|null $verificado_en
+ * @property string|null $motivo_rechazo
  * @property int|null $anulado_por
  * @property int|null $anulacion_aprobada_por
  * @property Carbon|null $anulado_en
@@ -34,13 +37,14 @@ use Patronato\Persistencia\Excepciones\CobroDeCajaCerrada;
  * @property-read Residencial $residencial
  * @property-read Vivienda $vivienda
  * @property-read User|null $cobrador
+ * @property-read User|null $verificador
  * @property-read Collection<int, PagoAplicacion> $aplicaciones
  * @property-read Caja|null $caja
  * @property-read User|null $anuladoPor
  * @property-read User|null $aprobadorAnulacion
  * @property-read Collection<int, SolicitudAnulacion> $solicitudesAnulacion
  */
-#[Fillable(['residencial_id', 'vivienda_id', 'forma_pago', 'estado', 'origen', 'monto', 'fecha_pago', 'numero_recibo', 'caja_id', 'registrado_por', 'banco', 'numero_referencia', 'cuenta_receptora', 'comprobante_path', 'anulado_por', 'anulacion_aprobada_por', 'anulado_en', 'motivo_anulacion'])]
+#[Fillable(['residencial_id', 'vivienda_id', 'forma_pago', 'estado', 'origen', 'monto', 'fecha_pago', 'numero_recibo', 'caja_id', 'registrado_por', 'banco', 'numero_referencia', 'cuenta_receptora', 'comprobante_path', 'verificado_por', 'verificado_en', 'motivo_rechazo', 'anulado_por', 'anulacion_aprobada_por', 'anulado_en', 'motivo_anulacion'])]
 class Pago extends Model
 {
     use PerteneceAResidencial;
@@ -125,6 +129,7 @@ class Pago extends Model
         return [
             'monto' => 'decimal:2',
             'fecha_pago' => 'date',
+            'verificado_en' => 'datetime',
             'anulado_en' => 'datetime',
         ];
     }
@@ -163,6 +168,25 @@ class Pago extends Model
     public function cobrador(): BelongsTo
     {
         return $this->belongsTo(User::class, 'registrado_por');
+    }
+
+    /**
+     * Usuario que confirmó o rechazó la transferencia (HU-26)
+     *
+     * @return BelongsTo<User, $this>
+     */
+    public function verificador(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'verificado_por');
+    }
+
+    /**
+     * Indica si es una transferencia que espera la verificación de tesorería
+     */
+    public function esPorVerificar(): bool
+    {
+        return $this->forma_pago === self::TRANSFERENCIA
+            && in_array($this->estado, [self::PENDIENTE_VERIFICACION, self::REPORTADO_POR_VECINO], true);
     }
 
     /**

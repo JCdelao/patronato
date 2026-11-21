@@ -70,8 +70,11 @@
         <tr><th>Fecha</th><td>{{ $fecha }}, {{ $comprobante['hora'] }}</td></tr>
         <tr><th>Vivienda</th><td>{{ $comprobante['vivienda'] }}</td></tr>
         <tr><th>Monto pagado</th><td>{{ $lempiras($comprobante['monto']) }}</td></tr>
-        <tr><th>Forma de pago</th><td>Efectivo</td></tr>
-        <tr><th>Cobrador</th><td>{{ $comprobante['cobrador'] }}</td></tr>
+        <tr><th>Forma de pago</th><td>{{ $comprobante['forma_pago'] }}</td></tr>
+        @if ($comprobante['referencia'])
+            <tr><th>Referencia</th><td>{{ $comprobante['referencia'] }}</td></tr>
+        @endif
+        <tr><th>{{ $comprobante['etiqueta_responsable'] }}</th><td>{{ $comprobante['cobrador'] }}</td></tr>
     </table>
 
     <table class="periodos">

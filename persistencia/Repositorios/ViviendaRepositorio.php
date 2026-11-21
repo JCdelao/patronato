@@ -12,7 +12,7 @@ class ViviendaRepositorio extends Repositorio
     /**
      * Viviendas activas o inactivas del padrón, con sus residentes
      *
-     * Busca por código, nombre o teléfono de un residente, o por la placa de un vehículo activo.
+     * Busca por código, nombre o teléfono de un residente, o por la placa o el número de comprobante de un vehículo activo.
      *
      * @return LengthAwarePaginator<int, Vivienda>
      */
@@ -30,8 +30,8 @@ class ViviendaRepositorio extends Repositorio
                             $query->whereRaw(Busqueda::columna("nombres || ' ' || apellidos").' like ?', [$patron])
                                 ->orWhereRaw(Busqueda::columna('telefono').' like ?', [$patron]);
                         })
-                        // La placa de un vehículo activo también encuentra su vivienda, con o sin separadores
-                        ->when($placa, fn (Builder $query, string $placa) => $query->orWhereHas('vehiculos', fn (Builder $query) => $query->where('activo', true)->where('placa', 'like', $placa)));
+                        // La placa o el comprobante de un vehículo activo también encuentra su vivienda, con o sin separadores
+                        ->when($placa, fn (Builder $query, string $placa) => $query->orWhereHas('vehiculos', fn (Builder $query) => $query->where('activo', true)->where(fn (Builder $query) => $query->where('placa', 'like', $placa)->orWhere('comprobante_numero', 'like', $placa))));
                 });
             })
             ->with(['tipoVivienda:id,nombre', 'padre:id,codigo', 'conceptos:id,nombre', 'vinculosVigentes.residente.vinculosVigentes.vivienda'])
@@ -127,8 +127,28 @@ class ViviendaRepositorio extends Repositorio
      */
     public function activasConResponsable(string $buscar, ?int $viviendaId, int $limite): Collection
     {
+        return $this->conResponsable($buscar, $viviendaId, $limite, soloActivas: true);
+    }
+
+    /**
+     * Viviendas activas e inactivas con su responsable de pago, las activas primero
+     *
+     * Sirve para consultar el historial de una vivienda que ya se dio de baja.
+     *
+     * @return Collection<int, Vivienda>
+     */
+    public function todasConResponsable(string $buscar, ?int $viviendaId, int $limite): Collection
+    {
+        return $this->conResponsable($buscar, $viviendaId, $limite, soloActivas: false);
+    }
+
+    /**
+     * @return Collection<int, Vivienda>
+     */
+    private function conResponsable(string $buscar, ?int $viviendaId, int $limite, bool $soloActivas): Collection
+    {
         return Vivienda::query()
-            ->where('activa', true)
+            ->when($soloActivas, fn (Builder $query) => $query->where('activa', true), fn (Builder $query) => $query->orderByDesc('activa'))
             ->when($viviendaId !== null, fn (Builder $query) => $query->whereKey($viviendaId))
             ->when($viviendaId === null && $buscar !== '', function (Builder $query) use ($buscar) {
                 $patron = Busqueda::patron($buscar);

@@ -155,16 +155,36 @@ class ViviendaService
     public function opcionesActivas(string $buscar = '', ?int $viviendaId = null, int $limite = 10): array
     {
         return $this->viviendas->activasConResponsable($buscar, $viviendaId, $limite)
-            ->map(function (Vivienda $vivienda): array {
-                $residente = $vivienda->vinculosVigentes->first()?->residente;
-
-                return [
-                    'id' => $vivienda->id,
-                    'codigo' => $vivienda->codigo,
-                    'responsable' => $residente === null ? null : trim("{$residente->nombres} {$residente->apellidos}"),
-                ];
-            })
+            ->map(fn (Vivienda $vivienda): array => $this->opcion($vivienda))
             ->all();
+    }
+
+    /**
+     * Viviendas activas e inactivas que coinciden con la búsqueda, o la vivienda indicada
+     *
+     * Las inactivas se pueden consultar porque conservan su historial.
+     *
+     * @return array<int, array{id: int, codigo: string, responsable: string|null, activa: bool}>
+     */
+    public function opcionesConInactivas(string $buscar = '', ?int $viviendaId = null, int $limite = 10): array
+    {
+        return $this->viviendas->todasConResponsable($buscar, $viviendaId, $limite)
+            ->map(fn (Vivienda $vivienda): array => [...$this->opcion($vivienda), 'activa' => $vivienda->activa])
+            ->all();
+    }
+
+    /**
+     * @return array{id: int, codigo: string, responsable: string|null}
+     */
+    private function opcion(Vivienda $vivienda): array
+    {
+        $residente = $vivienda->vinculosVigentes->first()?->residente;
+
+        return [
+            'id' => $vivienda->id,
+            'codigo' => $vivienda->codigo,
+            'responsable' => $residente === null ? null : trim("{$residente->nombres} {$residente->apellidos}"),
+        ];
     }
 
     /**

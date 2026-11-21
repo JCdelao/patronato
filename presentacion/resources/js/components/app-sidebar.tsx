@@ -3,6 +3,8 @@ import {
     Ban,
     Banknote,
     Building2,
+    BadgeCheck,
+    BookOpenText,
     CalendarClock,
     CalendarDays,
     Car,
@@ -35,6 +37,7 @@ import CobroController from '@/actions/Patronato/Presentacion/Controllers/CobroC
 import GuardiaController from '@/actions/Patronato/Presentacion/Controllers/GuardiaController';
 import IncidenciaController from '@/actions/Patronato/Presentacion/Controllers/IncidenciaController';
 import EgresoController from '@/actions/Patronato/Presentacion/Controllers/EgresoController';
+import EstadoCuentaController from '@/actions/Patronato/Presentacion/Controllers/EstadoCuentaController';
 import IngresoController from '@/actions/Patronato/Presentacion/Controllers/IngresoController';
 import InformeFinancieroController from '@/actions/Patronato/Presentacion/Controllers/InformeFinancieroController';
 import PagoController from '@/actions/Patronato/Presentacion/Controllers/PagoController';
@@ -44,6 +47,7 @@ import PortalTransferenciaController from '@/actions/Patronato/Presentacion/Cont
 import ReporteCobrosController from '@/actions/Patronato/Presentacion/Controllers/ReporteCobrosController';
 import TransferenciaController from '@/actions/Patronato/Presentacion/Controllers/TransferenciaController';
 import TurnoController from '@/actions/Patronato/Presentacion/Controllers/TurnoController';
+import VerificacionTransferenciaController from '@/actions/Patronato/Presentacion/Controllers/VerificacionTransferenciaController';
 import AuditoriaController from '@/actions/Patronato/Presentacion/Controllers/AuditoriaController';
 import CuentaController from '@/actions/Patronato/Presentacion/Controllers/CuentaController';
 import VehiculoController from '@/actions/Patronato/Presentacion/Controllers/VehiculoController';
@@ -114,9 +118,22 @@ export function AppSidebar() {
                     visible: permite('transferencias.registrar'),
                 },
                 {
+                    title: 'Transferencias por verificar',
+                    href: VerificacionTransferenciaController.index(),
+                    icon: BadgeCheck,
+                    badge: auth.transferenciasPorVerificar,
+                    visible: permite('transferencias.verificar'),
+                },
+                {
                     title: 'Cobros',
                     href: PagoController.index(),
                     icon: Wallet,
+                    visible: permite('cobros.ver'),
+                },
+                {
+                    title: 'Estado de cuenta',
+                    href: EstadoCuentaController.index(),
+                    icon: BookOpenText,
                     visible: permite('cobros.ver'),
                 },
                 {

@@ -169,6 +169,14 @@ jobs:
         if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
         run: php artisan test tests/Feature/Portal/ReportarTransferenciaTest.php
 
+      - name: Pruebas HU-26 · Verificar una transferencia
+        if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
+        run: php artisan test tests/Feature/Finanzas/VerificarTransferenciaTest.php
+
+      - name: Pruebas HU-27 · Consultar el estado de cuenta de una vivienda
+        if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
+        run: php artisan test tests/Feature/Finanzas/EstadoCuentaTest.php
+
       - name: Pruebas HU-31 · Registrar egresos
         if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
         run: php artisan test tests/Feature/Finanzas/EgresosTest.php
@@ -185,9 +193,17 @@ jobs:
         if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
         run: php artisan test tests/Feature/Finanzas/PresupuestoTest.php
 
+      - name: Pruebas E08 · Categorías desde el presupuesto
+        if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
+        run: php artisan test tests/Feature/Finanzas/CategoriasPresupuestoTest.php
+
       - name: Pruebas HU-35 · Registrar vehículos
         if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
         run: php artisan test tests/Feature/Vehiculos/VehiculosTest.php
+
+      - name: Pruebas E09 · Vehículos sin placa
+        if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
+        run: php artisan test tests/Feature/Vehiculos/VehiculosSinPlacaTest.php
 
       - name: Pruebas HU-36 · Asignar stickers
         if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}

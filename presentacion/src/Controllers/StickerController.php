@@ -24,7 +24,7 @@ class StickerController extends Controller
     {
         $sticker = $this->stickers->asignar($this->usuario($request), $vehiculo, (string) $request->input('numero'));
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => "Sticker {$sticker->numero} asignado a {$vehiculo->placa}."]);
+        Inertia::flash('toast', ['type' => 'success', 'message' => "Sticker {$sticker->numero} asignado a {$vehiculo->identificador()}."]);
 
         return back();
     }

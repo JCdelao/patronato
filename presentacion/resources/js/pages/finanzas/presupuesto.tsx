@@ -1,7 +1,11 @@
 import { Form, Head, router, usePage } from '@inertiajs/react';
-import { AlertTriangle, Save } from 'lucide-react';
+import { AlertTriangle, Plus, RotateCcw, Save, X } from 'lucide-react';
+import { useState } from 'react';
+import CategoriaEgresoController from '@/actions/Patronato/Presentacion/Controllers/CategoriaEgresoController';
 import PresupuestoController from '@/actions/Patronato/Presentacion/Controllers/PresupuestoController';
+import NuevaCategoriaDialog from '@/components/finanzas/nueva-categoria-dialog';
 import InputError from '@/components/input-error';
+import ConfirmarDialog from '@/components/padron/confirmar-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,6 +19,7 @@ type Fila = {
     categoria_id: number;
     categoria: string;
     activa: boolean;
+    en_uso: boolean;
     presupuestado: string | null;
     ejecutado: string;
     porcentaje: number | null;
@@ -27,6 +32,7 @@ type Comparacion = {
     total_presupuestado: string;
     total_ejecutado: string;
     porcentaje_total: number | null;
+    inactivas: { id: number; nombre: string }[];
 };
 
 const claseSelect =
@@ -76,6 +82,8 @@ export default function Presupuesto({
 }) {
     const { auth } = usePage().props;
     const puedeEditar = auth.permisos.includes('tesoreria.registrar');
+    const [agregando, setAgregando] = useState(false);
+    const [quitando, setQuitando] = useState<Fila | null>(null);
     const listaAnios = Array.from(
         { length: Math.min(6, anios.maximo - anios.minimo + 1) },
         (_, i) => anios.maximo - i,
@@ -99,26 +107,38 @@ export default function Presupuesto({
                             vigentes del año
                         </p>
                     </div>
-                    <div className="grid gap-2">
-                        <Label htmlFor="anio">Año</Label>
-                        <select
-                            id="anio"
-                            value={comparacion.anio}
-                            onChange={(evento) =>
-                                router.get(
-                                    PresupuestoController.index.url(),
-                                    { anio: evento.target.value },
-                                    { preserveScroll: true },
-                                )
-                            }
-                            className={claseSelect}
-                        >
-                            {listaAnios.map((anio) => (
-                                <option key={anio} value={anio}>
-                                    {anio}
-                                </option>
-                            ))}
-                        </select>
+                    <div className="flex flex-wrap items-end gap-3">
+                        {puedeEditar && (
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setAgregando(true)}
+                            >
+                                <Plus />
+                                Agregar categoría
+                            </Button>
+                        )}
+                        <div className="grid gap-2">
+                            <Label htmlFor="anio">Año</Label>
+                            <select
+                                id="anio"
+                                value={comparacion.anio}
+                                onChange={(evento) =>
+                                    router.get(
+                                        PresupuestoController.index.url(),
+                                        { anio: evento.target.value },
+                                        { preserveScroll: true },
+                                    )
+                                }
+                                className={claseSelect}
+                            >
+                                {listaAnios.map((anio) => (
+                                    <option key={anio} value={anio}>
+                                        {anio}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
                     </div>
                 </div>
 
@@ -193,6 +213,24 @@ export default function Presupuesto({
                                                                 (inactiva)
                                                             </span>
                                                         )}
+                                                        {puedeEditar &&
+                                                            fila.activa && (
+                                                                <Button
+                                                                    type="button"
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    className="ml-1 h-6 px-2 text-muted-foreground"
+                                                                    onClick={() =>
+                                                                        setQuitando(
+                                                                            fila,
+                                                                        )
+                                                                    }
+                                                                    aria-label={`Quitar ${fila.categoria}`}
+                                                                >
+                                                                    <X />
+                                                                    Quitar
+                                                                </Button>
+                                                            )}
                                                         <div className="mt-1">
                                                             <EstadoPresupuesto
                                                                 estado={
@@ -309,7 +347,75 @@ export default function Presupuesto({
                         </>
                     )}
                 </Form>
+
+                {puedeEditar && comparacion.inactivas.length > 0 && (
+                    <section className="space-y-2">
+                        <h2 className="text-sm font-medium">
+                            Categorías inactivas
+                        </h2>
+                        <p className="text-sm text-muted-foreground">
+                            No se ofrecen en egresos nuevos ni en el
+                            presupuesto. Sus egresos anteriores se conservan.
+                        </p>
+                        <ul className="divide-y rounded-xl border">
+                            {comparacion.inactivas.map((categoria) => (
+                                <li
+                                    key={categoria.id}
+                                    className="flex items-center justify-between gap-3 p-3 text-sm"
+                                >
+                                    <span>{categoria.nombre}</span>
+                                    <Form
+                                        {...CategoriaEgresoController.reactivar.form(
+                                            categoria.id,
+                                        )}
+                                        options={{ preserveScroll: true }}
+                                    >
+                                        {({ processing }) => (
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
+                                                disabled={processing}
+                                            >
+                                                {processing ? (
+                                                    <Spinner />
+                                                ) : (
+                                                    <RotateCcw />
+                                                )}
+                                                Reactivar
+                                            </Button>
+                                        )}
+                                    </Form>
+                                </li>
+                            ))}
+                        </ul>
+                    </section>
+                )}
             </div>
+
+            {agregando && (
+                <NuevaCategoriaDialog
+                    accion={CategoriaEgresoController.store.form()}
+                    descripcion="Queda disponible en el presupuesto y al registrar egresos."
+                    onClose={() => setAgregando(false)}
+                />
+            )}
+
+            {quitando && (
+                <ConfirmarDialog
+                    titulo={`Quitar ${quitando.categoria}`}
+                    descripcion={
+                        quitando.en_uso
+                            ? 'Ya tiene egresos o presupuestos, así que se desactivará: dejará de ofrecerse en egresos nuevos y en el presupuesto, y su historial se conserva. Puedes reactivarla después.'
+                            : 'Nunca se ha usado, así que se borrará.'
+                    }
+                    confirmar={quitando.en_uso ? 'Desactivar' : 'Borrar'}
+                    accion={CategoriaEgresoController.quitar.form(
+                        quitando.categoria_id,
+                    )}
+                    onClose={() => setQuitando(null)}
+                    onGuardado={() => setQuitando(null)}
+                />
+            )}
         </>
     );
 }

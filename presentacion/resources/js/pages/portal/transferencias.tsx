@@ -15,6 +15,7 @@ type Reporte = {
     numero_referencia: string | null;
     cuenta_receptora: string | null;
     estado: string;
+    motivo_rechazo: string | null;
     tiene_comprobante: boolean;
 };
 
@@ -63,6 +64,12 @@ export default function Transferencias({ reportes }: { reportes: Reporte[] }) {
                                     </div>
                                     <EstadoPago estado={reporte.estado} />
                                 </div>
+                                {reporte.motivo_rechazo && (
+                                    <p className="text-sm">
+                                        Motivo del rechazo:{' '}
+                                        {reporte.motivo_rechazo}
+                                    </p>
+                                )}
                                 {reporte.tiene_comprobante && (
                                     <a
                                         href={PortalTransferenciaController.comprobante.url(

@@ -2,6 +2,7 @@
 
 namespace Patronato\Persistencia\Repositorios;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -72,6 +73,7 @@ class PagoRepositorio
         return $pago->loadMissing([
             'residencial',
             'cobrador',
+            'verificador',
             'vivienda' => $sinFiltro,
             'aplicaciones' => $sinFiltro,
             'aplicaciones.cargo' => $sinFiltro,
@@ -160,6 +162,7 @@ class PagoRepositorio
             'vivienda',
             'cobrador',
             'caja',
+            'verificador',
             'anuladoPor',
             'aprobadorAnulacion',
             'solicitudesAnulacion' => fn ($query) => $query->with(['solicitante', 'resolutor']),
@@ -177,10 +180,90 @@ class PagoRepositorio
     }
 
     /**
+     * Totales de la vivienda según la vista oficial de saldos
+     *
+     * saldo = cargos - pagos confirmados + ajustes; por_verificar no entra al saldo.
+     *
+     * @return array{cargos: string, pagos_confirmados: string, ajustes: string, saldo: string, por_verificar: string}
+     */
+    public function totalesDeVivienda(int $viviendaId): array
+    {
+        $fila = DB::table('v_saldos_vivienda')->where('vivienda_id', $viviendaId)->first();
+        $monto = fn (string $columna): string => number_format((float) ($fila->{$columna} ?? 0), 2, '.', '');
+
+        return [
+            'cargos' => $monto('total_cargos'),
+            'pagos_confirmados' => $monto('total_pagos_confirmados'),
+            'ajustes' => $monto('total_ajustes'),
+            'saldo' => $monto('saldo'),
+            'por_verificar' => $monto('total_por_verificar'),
+        ];
+    }
+
+    /**
+     * Pagos de una vivienda en los estados indicados, del más antiguo al más reciente
+     *
+     * Trae los meses a los que se aplicó cada pago y quién lo cobró, verificó o anuló.
+     *
+     * @param  list<string>  $estados
+     * @return Collection<int, Pago>
+     */
+    public function deVivienda(int $viviendaId, array $estados): Collection
+    {
+        return Pago::query()
+            ->with(['aplicaciones.cargo.concepto', 'cobrador:id,name', 'verificador:id,name', 'anuladoPor:id,name'])
+            ->where('vivienda_id', $viviendaId)
+            ->whereIn('estado', $estados)
+            ->orderBy('fecha_pago')
+            ->orderBy('id')
+            ->get();
+    }
+
+    /**
      * Busca un pago sin filtrar por residencial, para el enlace firmado que se abre sin sesión
      */
     public function buscarSinResidencial(int $id): ?Pago
     {
         return Pago::query()->withoutGlobalScope('residencial')->find($id);
+    }
+
+    /**
+     * Transferencias del residencial que esperan verificación, de la más antigua a la más reciente
+     *
+     * @return Collection<int, Pago>
+     */
+    public function porVerificar(): Collection
+    {
+        return $this->consultaPorVerificar()
+            ->with(['vivienda', 'cobrador'])
+            ->oldest()
+            ->oldest('id')
+            ->get();
+    }
+
+    /**
+     * Cantidad de transferencias del residencial que esperan verificación
+     */
+    public function cantidadPorVerificar(): int
+    {
+        return $this->consultaPorVerificar()->count();
+    }
+
+    /**
+     * Carga lo que muestra la verificación: vivienda, quien la registró y quien la verificó
+     */
+    public function conVerificacion(Pago $pago): Pago
+    {
+        return $pago->loadMissing(['vivienda', 'cobrador', 'verificador']);
+    }
+
+    /**
+     * @return Builder<Pago>
+     */
+    private function consultaPorVerificar(): Builder
+    {
+        return Pago::query()
+            ->where('forma_pago', Pago::TRANSFERENCIA)
+            ->whereIn('estado', [Pago::PENDIENTE_VERIFICACION, Pago::REPORTADO_POR_VECINO]);
     }
 }

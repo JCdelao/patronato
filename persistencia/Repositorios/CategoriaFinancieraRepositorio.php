@@ -5,6 +5,9 @@ namespace Patronato\Persistencia\Repositorios;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Patronato\Persistencia\Models\CategoriaFinanciera;
+use Patronato\Persistencia\Models\Egreso;
+use Patronato\Persistencia\Models\Ingreso;
+use Patronato\Persistencia\Models\Presupuesto;
 
 class CategoriaFinancieraRepositorio extends Repositorio
 {
@@ -33,6 +36,54 @@ class CategoriaFinancieraRepositorio extends Repositorio
             ->where('tipo', $tipo)
             ->orderBy('nombre')
             ->get();
+    }
+
+    /**
+     * Categorías inactivas de un tipo, por nombre
+     *
+     * @return Collection<int, CategoriaFinanciera>
+     */
+    public function inactivasDe(string $tipo): Collection
+    {
+        return CategoriaFinanciera::query()
+            ->where('tipo', $tipo)
+            ->where('activa', false)
+            ->orderBy('nombre')
+            ->get();
+    }
+
+    /**
+     * Ids de las categorías que ya tienen egresos, ingresos o presupuestos, de cualquier año
+     *
+     * Una categoría en uso no se puede borrar sin romper el historial.
+     *
+     * @return list<int>
+     */
+    public function idsEnUso(): array
+    {
+        $ids = Egreso::query()->distinct()->pluck('categoria_id')
+            ->merge(Ingreso::query()->distinct()->pluck('categoria_id'))
+            ->merge(Presupuesto::query()->distinct()->pluck('categoria_id'));
+
+        return array_values(array_unique(array_map('intval', $ids->all())));
+    }
+
+    /**
+     * Indica si la categoría ya tiene egresos, ingresos o presupuestos
+     */
+    public function estaEnUso(int $categoriaId): bool
+    {
+        return Egreso::query()->where('categoria_id', $categoriaId)->exists()
+            || Ingreso::query()->where('categoria_id', $categoriaId)->exists()
+            || Presupuesto::query()->where('categoria_id', $categoriaId)->exists();
+    }
+
+    /**
+     * Vuelve a leer la categoría reservándola hasta terminar la transacción
+     */
+    public function bloquearRegistro(int $categoriaId): ?CategoriaFinanciera
+    {
+        return CategoriaFinanciera::query()->lockForUpdate()->find($categoriaId);
     }
 
     /**

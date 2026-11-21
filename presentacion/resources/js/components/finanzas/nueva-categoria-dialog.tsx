@@ -25,18 +25,19 @@ export default function NuevaCategoriaDialog({
     accion: RouteFormDefinition<'post'>;
     descripcion: string;
     onClose: () => void;
-    onCreada: (id: number) => void;
+    onCreada?: (id: number) => void;
 }) {
     const [nombre, setNombre] = useState('');
 
-    const alGuardar = (categorias: Categoria[]) => {
+    // Si la página trae la lista de categorías, avisa cuál se creó; el presupuesto no la necesita
+    const alGuardar = (categorias: Categoria[] = []) => {
         const creada = categorias.find(
             (item) =>
                 item.nombre.toLocaleLowerCase() ===
                 nombre.trim().toLocaleLowerCase(),
         );
 
-        if (creada) {
+        if (creada && onCreada) {
             onCreada(creada.id);
         }
 
@@ -54,7 +55,9 @@ export default function NuevaCategoriaDialog({
                     {...accion}
                     options={{ preserveScroll: true, preserveState: true }}
                     onSuccess={(pagina) =>
-                        alGuardar(pagina.props.categorias as Categoria[])
+                        alGuardar(
+                            pagina.props.categorias as Categoria[] | undefined,
+                        )
                     }
                     className="grid gap-4"
                 >
