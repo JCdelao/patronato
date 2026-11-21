@@ -201,6 +201,10 @@ jobs:
         if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
         run: php artisan test tests/Feature/Vehiculos/VehiculosTest.php
 
+      - name: Pruebas E09 · Vehículos sin placa
+        if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
+        run: php artisan test tests/Feature/Vehiculos/VehiculosSinPlacaTest.php
+
       - name: Pruebas HU-36 · Asignar stickers
         if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
         run: php artisan test tests/Feature/Vehiculos/StickersTest.php tests/Unit/EstadoCredencialTest.php

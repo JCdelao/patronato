@@ -1,8 +1,10 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { Ban, Ellipsis, Pencil, Plus, Search, Tag } from 'lucide-react';
 import { useRef, useState } from 'react';
+import { formatoFecha } from '@/lib/formato';
 import VehiculoController from '@/actions/Patronato/Presentacion/Controllers/VehiculoController';
 import EstadoCredencial from '@/components/credenciales/estado-credencial';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
@@ -17,7 +19,7 @@ import StickersDialog from '@/components/vehiculos/stickers-dialog';
 import VehiculoDialog from '@/components/vehiculos/vehiculo-dialog';
 import type { OpcionVivienda, TipoVehiculo, Vehiculo } from '@/types/vehiculos';
 import { CREDENCIAL_VIGENTE } from '@/types/credenciales';
-import { TIPOS_VEHICULO } from '@/types/vehiculos';
+import { identificador, TIPOS_VEHICULO } from '@/types/vehiculos';
 
 type Paginado<T> = {
     data: T[];
@@ -36,6 +38,8 @@ export default function Vehiculos({
     vehiculos,
     viviendas,
     tipos,
+    tiposComprobante,
+    hoy,
     nuevoPara,
 }: {
     estado: 'activos' | 'bajas';
@@ -43,6 +47,8 @@ export default function Vehiculos({
     vehiculos: Paginado<Vehiculo>;
     viviendas: OpcionVivienda[];
     tipos: TipoVehiculo[];
+    tiposComprobante: Record<string, string>;
+    hoy: string;
     nuevoPara: number | null;
 }) {
     const { auth } = usePage().props;
@@ -167,11 +173,21 @@ export default function Vehiculos({
                                         className="mt-0.5 size-5 shrink-0 text-muted-foreground"
                                     />
                                     <div className="min-w-0">
-                                        <p className="font-semibold tracking-wide">
-                                            {vehiculo.placa}
-                                            <span className="ml-2 text-sm font-normal text-muted-foreground">
+                                        <p className="flex flex-wrap items-center gap-2 font-semibold tracking-wide">
+                                            {identificador(vehiculo)}
+                                            <span className="text-sm font-normal text-muted-foreground">
                                                 {TIPOS_VEHICULO[vehiculo.tipo]}
                                             </span>
+                                            {vehiculo.placa === null &&
+                                                (vehiculo.comprobante_vencido ? (
+                                                    <Badge variant="destructive">
+                                                        Comprobante vencido
+                                                    </Badge>
+                                                ) : (
+                                                    <Badge variant="outline">
+                                                        Placa en trámite
+                                                    </Badge>
+                                                ))}
                                         </p>
                                         <p className="text-sm text-muted-foreground">
                                             {[
@@ -192,6 +208,12 @@ export default function Vehiculos({
                                             </p>
                                         )}
                                         <StickerVigente vehiculo={vehiculo} />
+                                        {vehiculo.comprobante && (
+                                            <ComprobanteVehiculo
+                                                vehiculo={vehiculo}
+                                                tipos={tiposComprobante}
+                                            />
+                                        )}
                                     </div>
                                 </div>
                                 {activos && (puedeRegistrar || puedeAnular) && (
@@ -200,7 +222,7 @@ export default function Vehiculos({
                                             <Button
                                                 variant="ghost"
                                                 size="icon"
-                                                aria-label={`Acciones de ${vehiculo.placa}`}
+                                                aria-label={`Acciones de ${identificador(vehiculo)}`}
                                             >
                                                 <Ellipsis />
                                             </Button>
@@ -277,6 +299,8 @@ export default function Vehiculos({
                     vehiculo={dialogo.vehiculo}
                     viviendas={viviendas}
                     tipos={tipos}
+                    tiposComprobante={tiposComprobante}
+                    hoy={hoy}
                     viviendaInicial={dialogo.vehiculo ? null : nuevoPara}
                     onClose={() => setDialogo(null)}
                 />
@@ -313,6 +337,48 @@ function StickerVigente({ vehiculo }: { vehiculo: Vehiculo }) {
                 </>
             ) : (
                 <span className="text-muted-foreground">Sin sticker</span>
+            )}
+        </p>
+    );
+}
+
+// Comprobante de circulación; queda como historial cuando el vehículo ya tiene placa
+function ComprobanteVehiculo({
+    vehiculo,
+    tipos,
+}: {
+    vehiculo: Vehiculo;
+    tipos: Record<string, string>;
+}) {
+    const comprobante = vehiculo.comprobante;
+
+    if (!comprobante) {
+        return null;
+    }
+
+    const tipo =
+        comprobante.tipo === 'otro' && comprobante.descripcion
+            ? comprobante.descripcion
+            : (tipos[comprobante.tipo ?? ''] ?? comprobante.tipo);
+
+    return (
+        <p className="mt-1 text-sm text-muted-foreground">
+            {vehiculo.placa ? 'Circuló con ' : ''}
+            {tipo} N.º {comprobante.numero}
+            {comprobante.vence &&
+                ` · vale hasta el ${formatoFecha(comprobante.vence)}`}
+            {comprobante.tiene_archivo && (
+                <>
+                    {' · '}
+                    <a
+                        href={VehiculoController.comprobante.url(vehiculo.id)}
+                        target="_blank"
+                        rel="noopener"
+                        className="font-medium text-foreground underline underline-offset-4"
+                    >
+                        Ver comprobante
+                    </a>
+                </>
             )}
         </p>
     );

@@ -11,6 +11,7 @@ import {
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import type { Vehiculo } from '@/types/vehiculos';
+import { identificador } from '@/types/vehiculos';
 
 const claseTexto =
     'rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none';
@@ -27,7 +28,7 @@ export default function BajaDialog({
         <Dialog open onOpenChange={(abierto) => !abierto && onClose()}>
             <DialogContent className="rounded-2xl sm:max-w-md">
                 <DialogTitle className="text-2xl font-bold tracking-tight">
-                    Dar de baja {vehiculo.placa}
+                    Dar de baja {identificador(vehiculo)}
                 </DialogTitle>
                 <DialogDescription>
                     El vehículo deja de estar activo y su placa queda libre. El
