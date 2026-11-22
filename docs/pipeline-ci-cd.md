@@ -62,6 +62,7 @@ Cada historia terminada tiene su propio paso en CI, así GitHub muestra cuál pa
 | HU-10 · Registrar viviendas | `Padron/ViviendasTest`, `Padron/ViviendasInactivasTest` | 21 |
 | HU-11 · Registrar residentes | `Padron/ResidentesTest` | 13 |
 | HU-12 · Buscar vecinos y viviendas | Pruebas de búsqueda de `Padron` (`--filter=search`) | 6 |
+| HU-28 · Aplicar pagos a los períodos pendientes | `Finanzas/AplicacionPagosTest`, `Finanzas/SaldoAFavorTest` | 43 |
 | Base del sistema | `Unit`, `Settings`, `DashboardTest` y el resto de `Auth` | 28 |
 
 Los archivos están en `presentacion/tests/Feature`. Las pruebas de HU-12 también forman parte de HU-10. Sin contarlas dos veces, los pasos suman las 201 pruebas del proyecto.

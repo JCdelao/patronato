@@ -15,11 +15,13 @@ use Patronato\Negocio\Adaptadores\PdfDompdf;
 use Patronato\Negocio\Contratos\CargosPendientes;
 use Patronato\Negocio\Contratos\GeneradorHojaCalculo;
 use Patronato\Negocio\Contratos\GeneradorPdf;
+use Patronato\Negocio\Eventos\CargosGenerados;
 use Patronato\Negocio\Eventos\PagoAnulado;
 use Patronato\Negocio\Eventos\PagoConfirmado;
 use Patronato\Negocio\Eventos\ResidenteDadoDeBaja;
 use Patronato\Negocio\Eventos\VehiculoDadoDeBaja;
 use Patronato\Negocio\Oyentes\AnularIngresoDeCobro;
+use Patronato\Negocio\Oyentes\AplicarSaldoAFavor;
 use Patronato\Negocio\Oyentes\DarDeBajaCarnetDelResidente;
 use Patronato\Negocio\Oyentes\DarDeBajaStickerDelVehiculo;
 use Patronato\Negocio\Oyentes\RegistrarIngresoDeCobro;
@@ -68,6 +70,9 @@ class AppServiceProvider extends ServiceProvider
         // Tesorería escucha a los cobros: cada pago confirmado es un ingreso y su anulación lo anula
         Event::listen(PagoConfirmado::class, RegistrarIngresoDeCobro::class);
         Event::listen(PagoAnulado::class, AnularIngresoDeCobro::class);
+
+        // Cada generación de cargos aplica el saldo a favor que tengan las viviendas
+        Event::listen(CargosGenerados::class, AplicarSaldoAFavor::class);
 
         // Un vehículo dado de baja no conserva su sticker
         Event::listen(VehiculoDadoDeBaja::class, DarDeBajaStickerDelVehiculo::class);

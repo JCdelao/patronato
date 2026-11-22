@@ -321,8 +321,9 @@ test('the amount and the months must match what is pending', function () {
     $this->post(route('finanzas.cobros.store'), ['vivienda_id' => $this->casa->id, 'monto' => '600', 'cargos' => [$this->enero]])
         ->assertSessionHasErrors('monto');
 
-    $this->post(route('finanzas.cobros.store'), ['vivienda_id' => $this->casa->id, 'monto' => '500', 'cargos' => []])
-        ->assertSessionHasErrors('cargos');
+    // Sin meses elegidos, el monto no puede superar lo pendiente de la vivienda
+    $this->post(route('finanzas.cobros.store'), ['vivienda_id' => $this->casa->id, 'monto' => '600', 'cargos' => []])
+        ->assertSessionHasErrors('monto');
 
     $this->post(route('finanzas.cobros.store'), ['vivienda_id' => $this->casa->id, 'monto' => '500', 'cargos' => [$ajeno]])
         ->assertSessionHasErrors('cargos');

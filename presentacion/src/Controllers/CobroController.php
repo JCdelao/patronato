@@ -10,6 +10,7 @@ use Patronato\Negocio\Contratos\CargosNoIntegrados;
 use Patronato\Negocio\Contratos\CargosPendientes;
 use Patronato\Negocio\Services\CajaService;
 use Patronato\Negocio\Services\CobroService;
+use Patronato\Negocio\Services\ConfiguracionService;
 use Patronato\Negocio\Services\MoraService;
 use Patronato\Negocio\Services\ViviendaService;
 use Patronato\Persistencia\Models\User;
@@ -20,7 +21,7 @@ class CobroController extends Controller
     /**
      * Muestra el registro de un cobro en efectivo
      */
-    public function create(Request $request, CajaService $cajas, ViviendaService $viviendas, CargosPendientes $cargos, MoraService $mora): Response
+    public function create(Request $request, CajaService $cajas, ViviendaService $viviendas, CargosPendientes $cargos, MoraService $mora, ConfiguracionService $configuracion): Response
     {
         /** @var User $usuario */
         $usuario = $request->user();
@@ -51,6 +52,8 @@ class CobroController extends Controller
             'vivienda' => $vivienda === null ? null : $conMora($vivienda),
             'pendientes' => $pendientes,
             'avisoIntegracion' => $avisoIntegracion,
+            // Sin meses elegidos, lo que sobra queda como saldo a favor si el residencial lo acepta
+            'permiteSaldoFavor' => $configuracion->permiteSaldoFavor((int) $usuario->residencial_id),
         ]);
     }
 
@@ -63,7 +66,7 @@ class CobroController extends Controller
         $usuario = $request->user();
 
         /** @var array<int, int|string> $cargos */
-        $cargos = $request->input('cargos');
+        $cargos = $request->input('cargos') ?? [];
 
         $pago = $cobros->registrarEfectivo(
             $usuario,

@@ -20,7 +20,8 @@ class ConfirmarTransferenciaRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'cargos' => ['required', 'array', 'min:1'],
+            // Sin meses, la transferencia se aplica a los pendientes más antiguos
+            'cargos' => ['nullable', 'array'],
             'cargos.*' => ['integer', 'distinct'],
         ];
     }
@@ -33,8 +34,7 @@ class ConfirmarTransferenciaRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'cargos.required' => 'Elige al menos un mes.',
-            'cargos.min' => 'Elige al menos un mes.',
+            'cargos.array' => 'Los meses elegidos no son válidos.',
         ];
     }
 }

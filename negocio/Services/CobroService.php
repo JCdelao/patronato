@@ -40,7 +40,9 @@ class CobroService
      * Si el cobrador no tiene caja abierta hoy, el primer cobro le abre una.
      * La caja, el pago, sus aplicaciones y la auditoría se guardan juntos o no se guarda nada.
      *
-     * @param  array<int, int>  $cargoIds  meses que se pagan
+     * Sin meses elegidos, el pago se aplica a los pendientes del más antiguo al más reciente.
+     *
+     * @param  array<int, int>  $cargoIds  meses que se pagan; vacío para aplicarlo a los más antiguos
      *
      * @throws ValidationException
      */
@@ -59,15 +61,23 @@ class CobroService
             }
 
             $centavos = AplicacionPagoService::centavos($monto);
+            $sinMeses = $cargoIds === [];
 
-            if ($centavos > $pendiente) {
-                throw ValidationException::withMessages(['monto' => 'El monto supera lo pendiente de los meses elegidos.']);
+            // Solo un pago sin meses puede dejar saldo a favor, si el residencial lo acepta
+            $admiteExcedente = $sinMeses && $this->configuracion->permiteSaldoFavor($residencialId);
+
+            if ($centavos > $pendiente && ! $admiteExcedente) {
+                throw ValidationException::withMessages(['monto' => $sinMeses
+                    ? 'El monto supera lo pendiente de la vivienda.'
+                    : 'El monto supera lo pendiente de los meses elegidos.']);
             }
 
             $esAbono = $centavos < $pendiente;
 
             if ($esAbono && ! $this->configuracion->permiteAbonoParcial($residencialId)) {
-                throw ValidationException::withMessages(['monto' => 'El patronato no permite abonos parciales: el monto debe cubrir los meses elegidos.']);
+                throw ValidationException::withMessages(['monto' => $sinMeses
+                    ? 'El patronato no permite abonos parciales: sin meses elegidos, el monto debe cubrir todo lo pendiente de la vivienda.'
+                    : 'El patronato no permite abonos parciales: el monto debe cubrir los meses elegidos.']);
             }
 
             // El primer cobro del día abre la caja; el bloqueo del residencial evita abrir dos
@@ -88,16 +98,18 @@ class CobroService
                 'registrado_por' => $cobrador->id,
             ]);
 
-            $this->aplicaciones->aplicar($pago, $cargoIds);
+            $aplicados = $this->aplicaciones->aplicar($pago, $cargoIds, $admiteExcedente);
 
             $this->auditoria->registrar($cobrador, 'cobros', 'pago_registrado', $pago, [
                 'valor_nuevo' => [
                     'numero_recibo' => $pago->numero_recibo,
                     'vivienda_id' => $viviendaId,
                     'monto' => $pago->monto,
-                    'meses' => array_values(array_unique($cargoIds)),
+                    // Sin meses elegidos se guardan los meses a los que se aplicó
+                    'meses' => $sinMeses ? $aplicados : array_values(array_unique($cargoIds)),
                     'abono_parcial' => $esAbono,
                     'caja_id' => $caja->id,
+                    ...($sinMeses ? ['saldo_a_favor' => AplicacionPagoService::monto(max(0, $centavos - $pendiente))] : []),
                 ],
             ]);
 

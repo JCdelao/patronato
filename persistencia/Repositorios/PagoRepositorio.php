@@ -60,6 +60,37 @@ class PagoRepositorio
     }
 
     /**
+     * Pagos confirmados del residencial que todavía tienen monto sin aplicar
+     *
+     * Lo aplicado suma todas las aplicaciones del pago, de cualquier origen. Los pagos
+     * migrados (pagos.origen = 'migracion') no cuentan. Ordenados por vivienda y, dentro
+     * de cada una, del pago más antiguo al más reciente. Cada pago trae 'aplicado'.
+     *
+     * Bloquea los pagos que devuelve hasta terminar la transacción: si una anulación de
+     * uno de ellos está en curso, espera a que termine y ese pago ya no se devuelve.
+     *
+     * @return Collection<int, Pago>
+     */
+    public function conSaldoDisponible(int $residencialId): Collection
+    {
+        $aplicado = 'select coalesce(sum(pago_aplicaciones.monto), 0) from pago_aplicaciones where pago_aplicaciones.pago_id = pagos.id';
+
+        return Pago::query()
+            ->withoutGlobalScope('residencial')
+            ->where('pagos.residencial_id', $residencialId)
+            ->where('pagos.estado', Pago::CONFIRMADO)
+            ->where('pagos.origen', '<>', 'migracion')
+            ->whereRaw("pagos.monto > ({$aplicado})")
+            ->select('pagos.*')
+            ->selectRaw("({$aplicado}) as aplicado")
+            ->orderBy('pagos.vivienda_id')
+            ->orderBy('pagos.fecha_pago')
+            ->orderBy('pagos.id')
+            ->lockForUpdate()
+            ->get();
+    }
+
+    /**
      * Carga lo que muestra el comprobante: residencial, vivienda, cobrador y períodos
      *
      * Las relaciones se cargan sin el filtro de residencial porque el pago ya fue

@@ -100,6 +100,8 @@ class VerificacionTransferenciaService
      * Datos para verificar una transferencia: el pago, sus meses pendientes y lo que se puede hacer
      *
      * Los meses sugeridos son los más antiguos hasta cubrir el monto de la transferencia.
+     * Si el residencial acepta saldo a favor y el monto supera todo lo pendiente, no se
+     * sugiere ninguno: sin meses elegidos, el excedente queda como saldo a favor.
      *
      * @return array<string, mixed>
      */
@@ -109,6 +111,7 @@ class VerificacionTransferenciaService
         $porVerificar = $pago->esPorVerificar();
         $pendientes = null;
         $avisoIntegracion = null;
+        $permiteSaldoFavor = $this->configuracion->permiteSaldoFavor($pago->residencial_id);
 
         if ($porVerificar) {
             try {
@@ -139,8 +142,9 @@ class VerificacionTransferenciaService
             'por_verificar' => $porVerificar,
             'motivo_no_confirmar' => $porVerificar ? $this->motivoParaNoConfirmar($usuario, $pago) : null,
             'permite_abono_parcial' => $this->configuracion->permiteAbonoParcial($pago->residencial_id),
+            'permite_saldo_favor' => $permiteSaldoFavor,
             'pendientes' => $pendientes,
-            'sugeridos' => $pendientes === null ? [] : self::sugeridos($pendientes, $pago->monto),
+            'sugeridos' => $pendientes === null ? [] : self::sugeridos($pendientes, $pago->monto, $permiteSaldoFavor),
             'aviso_integracion' => $avisoIntegracion,
         ];
     }
@@ -148,9 +152,10 @@ class VerificacionTransferenciaService
     /**
      * Confirma la transferencia y la aplica a los meses elegidos
      *
+     * Sin meses elegidos se aplica a los pendientes del más antiguo al más reciente.
      * El recibo, el estado, las aplicaciones, el ingreso y la auditoría se guardan juntos o no se guarda nada.
      *
-     * @param  array<int, int>  $cargoIds
+     * @param  array<int, int>  $cargoIds  vacío para aplicarla a los más antiguos
      *
      * @throws ValidationException
      */
@@ -180,15 +185,23 @@ class VerificacionTransferenciaService
             }
 
             $centavos = AplicacionPagoService::centavos($pago->monto);
+            $sinMeses = $cargoIds === [];
 
-            if ($centavos > $pendiente) {
-                throw ValidationException::withMessages(['cargos' => 'El monto de la transferencia supera lo pendiente de los meses elegidos. Elige más meses.']);
+            // Solo una transferencia sin meses puede dejar saldo a favor, si el residencial lo acepta
+            $admiteExcedente = $sinMeses && $this->configuracion->permiteSaldoFavor($residencialId);
+
+            if ($centavos > $pendiente && ! $admiteExcedente) {
+                throw ValidationException::withMessages(['cargos' => $sinMeses
+                    ? 'El monto de la transferencia supera lo pendiente de la vivienda.'
+                    : 'El monto de la transferencia supera lo pendiente de los meses elegidos. Elige más meses.']);
             }
 
             $esAbono = $centavos < $pendiente;
 
             if ($esAbono && ! $this->configuracion->permiteAbonoParcial($residencialId)) {
-                throw ValidationException::withMessages(['cargos' => 'El patronato no permite abonos parciales: el monto de la transferencia debe cubrir los meses elegidos.']);
+                throw ValidationException::withMessages(['cargos' => $sinMeses
+                    ? 'El patronato no permite abonos parciales: sin meses elegidos, el monto de la transferencia debe cubrir todo lo pendiente de la vivienda.'
+                    : 'El patronato no permite abonos parciales: el monto de la transferencia debe cubrir los meses elegidos.']);
             }
 
             $estadoAnterior = $pago->estado;
@@ -200,7 +213,7 @@ class VerificacionTransferenciaService
                 'verificado_en' => now(),
             ]);
 
-            $this->aplicaciones->aplicar($pago, $cargoIds);
+            $aplicados = $this->aplicaciones->aplicar($pago, $cargoIds, $admiteExcedente);
 
             $this->auditoria->registrar($usuario, 'transferencias', 'transferencia_confirmada', $pago, [
                 'valor_anterior' => ['estado' => $estadoAnterior],
@@ -208,8 +221,10 @@ class VerificacionTransferenciaService
                     'estado' => Pago::CONFIRMADO,
                     'numero_recibo' => $pago->numero_recibo,
                     'monto' => $pago->monto,
-                    'meses' => array_values(array_unique($cargoIds)),
+                    // Sin meses elegidos se guardan los meses a los que se aplicó
+                    'meses' => $sinMeses ? $aplicados : array_values(array_unique($cargoIds)),
                     'abono_parcial' => $esAbono,
+                    ...($sinMeses ? ['saldo_a_favor' => AplicacionPagoService::monto(max(0, $centavos - $pendiente))] : []),
                 ],
             ]);
 
@@ -331,13 +346,20 @@ class VerificacionTransferenciaService
     /**
      * Meses más antiguos que hacen falta para cubrir el monto
      *
+     * Ninguno si el monto supera todo lo pendiente y el residencial acepta saldo a favor.
+     *
      * @param  array<int, array{cargo_id: int, periodo: string, concepto: string, monto: string, pendiente: string}>  $pendientes  ordenados del más antiguo al más reciente
      * @return list<int>
      */
-    private static function sugeridos(array $pendientes, string $monto): array
+    private static function sugeridos(array $pendientes, string $monto, bool $permiteSaldoFavor): array
     {
         $restante = AplicacionPagoService::centavos($monto);
+        $total = array_sum(array_map(fn (array $cargo): int => AplicacionPagoService::centavos($cargo['pendiente']), $pendientes));
         $ids = [];
+
+        if ($permiteSaldoFavor && $restante > $total) {
+            return [];
+        }
 
         foreach ($pendientes as $cargo) {
             if ($restante <= 0) {

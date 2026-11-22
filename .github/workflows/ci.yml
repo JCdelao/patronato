@@ -177,6 +177,10 @@ jobs:
         if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
         run: php artisan test tests/Feature/Finanzas/EstadoCuentaTest.php
 
+      - name: Pruebas HU-28 · Aplicar pagos a los períodos pendientes
+        if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
+        run: php artisan test tests/Feature/Finanzas/AplicacionPagosTest.php tests/Feature/Finanzas/SaldoAFavorTest.php
+
       - name: Pruebas HU-31 · Registrar egresos
         if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
         run: php artisan test tests/Feature/Finanzas/EgresosTest.php

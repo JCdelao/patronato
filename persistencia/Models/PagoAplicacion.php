@@ -12,9 +12,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $pago_id
  * @property int $cargo_id
  * @property string $monto
+ * @property string $origen
  * @property-read Cargo $cargo
  */
-#[Fillable(['residencial_id', 'pago_id', 'cargo_id', 'monto'])]
+#[Fillable(['residencial_id', 'pago_id', 'cargo_id', 'monto', 'origen'])]
 class PagoAplicacion extends Model
 {
     use PerteneceAResidencial;
@@ -23,9 +24,36 @@ class PagoAplicacion extends Model
     public const UPDATED_AT = null;
 
     /**
+     * Aplicado al registrar o confirmar el pago; es lo que muestra el comprobante
+     */
+    public const PAGO = 'pago';
+
+    /**
+     * Aplicado después, con el saldo a favor que dejó el pago
+     */
+    public const SALDO_A_FAVOR = 'saldo_a_favor';
+
+    /**
+     * Indica si se aplicó al registrar o confirmar el pago
+     */
+    public function esDelPago(): bool
+    {
+        return $this->origen === self::PAGO;
+    }
+
+    /**
      * @var string
      */
     protected $table = 'pago_aplicaciones';
+
+    /**
+     * Igual que el valor predeterminado de la columna
+     *
+     * @var array<string, mixed>
+     */
+    protected $attributes = [
+        'origen' => self::PAGO,
+    ];
 
     /**
      * Conversiones de tipo de los atributos

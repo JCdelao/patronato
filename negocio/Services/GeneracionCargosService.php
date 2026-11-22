@@ -3,12 +3,15 @@
 namespace Patronato\Negocio\Services;
 
 use Carbon\CarbonInterface;
+use Illuminate\Contracts\Events\Dispatcher;
+use Patronato\Negocio\Eventos\CargosGenerados;
 use Patronato\Persistencia\Models\ConceptoCobro;
 use Patronato\Persistencia\Models\GeneracionCargos;
 use Patronato\Persistencia\Models\User;
 use Patronato\Persistencia\Repositorios\CargoRepositorio;
 use Patronato\Persistencia\Repositorios\ConceptoRepositorio;
 use Patronato\Persistencia\Repositorios\GeneracionCargosRepositorio;
+use Patronato\Persistencia\Repositorios\PagoRepositorio;
 use Patronato\Persistencia\Repositorios\ResidencialRepositorio;
 use Patronato\Persistencia\Repositorios\ViviendaRepositorio;
 use Patronato\Persistencia\Transaccion;
@@ -25,9 +28,11 @@ use Patronato\Persistencia\Transaccion;
  * - Generar otra vez el mismo período no duplica: solo crea los que falten,
  *   por ejemplo de una vivienda registrada después.
  * - El monto queda guardado en el cargo; un cambio de tarifa posterior no lo altera.
+ * - Al terminar se aplica el saldo a favor de las viviendas, en la misma transacción.
  */
 class GeneracionCargosService
 {
+    // Principio D (inversión de dependencias): avisa de la generación con el Dispatcher, sin conocer a sus oyentes
     public function __construct(
         private ViviendaRepositorio $viviendas,
         private ConceptoRepositorio $conceptos,
@@ -40,6 +45,8 @@ class GeneracionCargosService
         private ConfiguracionService $configuracion,
         private PeriodoService $periodos,
         private AuditoriaService $auditoria,
+        private PagoRepositorio $pagos,
+        private Dispatcher $eventos,
     ) {}
 
     /**
@@ -117,6 +124,9 @@ class GeneracionCargosService
     private function generar(int $residencialId, CarbonInterface $periodo, ?User $usuario): int
     {
         return $this->transaccion->ejecutar(function () use ($residencialId, $periodo, $usuario) {
+            // Un cobro a la vez por residencial: la generación y los cobros no se cruzan
+            $this->pagos->bloquear($residencialId);
+
             $creados = 0;
             $fecha = $periodo->toDateString();
             $cuota = $this->conceptos->cuotaMensualExistente($residencialId);
@@ -160,6 +170,9 @@ class GeneracionCargosService
             } else {
                 $this->auditoria->registrar($usuario, 'finanzas', 'cargos_generados', $generacion, $datos);
             }
+
+            // Patrón Observer (comportamiento): avisa aunque no haya cargos nuevos, para aplicar el saldo a favor pendiente
+            $this->eventos->dispatch(new CargosGenerados($residencialId, $fecha, $usuario));
 
             return $creados;
         });
