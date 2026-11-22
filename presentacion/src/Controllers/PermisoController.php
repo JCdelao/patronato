@@ -25,6 +25,10 @@ class PermisoController extends Controller
                 'id' => $rol->id,
                 'nombre' => $rol->nombre,
                 'permisos' => $permisos->deRol($residencialId, $rol->id),
+                // Permisos reservados a otros roles: la pantalla no deja marcarlos
+                'no_asignables' => $permisos->noAsignables($rol),
+                // Permisos que el rol conserva siempre: se muestran marcados y no se pueden quitar
+                'obligatorios' => $permisos->obligatorios($rol),
             ])->values(),
             'modulos' => collect(PermisoService::MODULOS)
                 ->map(fn (array $definicion, string $modulo) => ['id' => $modulo, ...$definicion])

@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Patronato\Presentacion\Controllers\AjusteController;
 use Patronato\Presentacion\Controllers\AnulacionController;
 use Patronato\Presentacion\Controllers\CajaController;
 use Patronato\Presentacion\Controllers\CategoriaEgresoController;
@@ -102,6 +103,14 @@ Route::middleware(['auth', 'verified'])
             Route::get('anulaciones', [AnulacionController::class, 'index'])->name('anulaciones.index');
             Route::post('anulaciones/{solicitud}/aprobar', [AnulacionController::class, 'aprobar'])->whereNumber('solicitud')->name('anulaciones.aprobar');
             Route::post('anulaciones/{solicitud}/rechazar', [AnulacionController::class, 'rechazar'])->whereNumber('solicitud')->name('anulaciones.rechazar');
+        });
+
+        // Correcciones al saldo de una vivienda; el servicio exige además el rol de presidente o tesorero
+        Route::middleware("can:permiso,'ajustes','aprobar'")->group(function () {
+            Route::get('ajustes', [AjusteController::class, 'index'])->name('ajustes.index');
+            Route::post('ajustes', [AjusteController::class, 'store'])
+                ->middleware('throttle:30,1')
+                ->name('ajustes.store');
         });
 
         Route::middleware("can:permiso,'cajas','registrar'")->group(function () {

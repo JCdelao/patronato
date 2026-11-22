@@ -14,7 +14,13 @@ import {
 } from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
 
-type Rol = { id: number; nombre: string; permisos: string[] };
+type Rol = {
+    id: number;
+    nombre: string;
+    permisos: string[];
+    no_asignables: string[];
+    obligatorios: string[];
+};
 type Modulo = { id: string; etiqueta: string; acciones: string[] };
 
 const ACCIONES: Record<string, string> = {
@@ -99,6 +105,16 @@ export default function Permisos({
                                                 {modulo.acciones.map(
                                                     (accion) => {
                                                         const permiso = `${modulo.id}.${accion}`;
+                                                        // Reservado a otros roles: no se puede marcar
+                                                        const bloqueado =
+                                                            rol.no_asignables.includes(
+                                                                permiso,
+                                                            );
+                                                        // Obligatorio del rol: siempre marcado y no se puede quitar
+                                                        const obligatorio =
+                                                            rol.obligatorios.includes(
+                                                                permiso,
+                                                            );
 
                                                         return (
                                                             <div
@@ -111,10 +127,33 @@ export default function Permisos({
                                                                     value={
                                                                         permiso
                                                                     }
-                                                                    defaultChecked={rol.permisos.includes(
-                                                                        permiso,
-                                                                    )}
+                                                                    defaultChecked={
+                                                                        obligatorio ||
+                                                                        rol.permisos.includes(
+                                                                            permiso,
+                                                                        )
+                                                                    }
+                                                                    disabled={
+                                                                        bloqueado ||
+                                                                        obligatorio
+                                                                    }
+                                                                    title={
+                                                                        bloqueado
+                                                                            ? 'Solo el presidente y el tesorero pueden tener este permiso'
+                                                                            : obligatorio
+                                                                              ? 'El presidente y el tesorero conservan siempre este permiso'
+                                                                              : undefined
+                                                                    }
                                                                 />
+                                                                {obligatorio && (
+                                                                    <input
+                                                                        type="hidden"
+                                                                        name="permisos[]"
+                                                                        value={
+                                                                            permiso
+                                                                        }
+                                                                    />
+                                                                )}
                                                                 <Label
                                                                     htmlFor={
                                                                         permiso

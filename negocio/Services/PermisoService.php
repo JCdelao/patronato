@@ -2,6 +2,7 @@
 
 namespace Patronato\Negocio\Services;
 
+use Illuminate\Validation\ValidationException;
 use Patronato\Negocio\Permisos\AccesoTotal;
 use Patronato\Negocio\Permisos\EstrategiaPermisos;
 use Patronato\Negocio\Permisos\PermisosPorRol;
@@ -22,6 +23,8 @@ class PermisoService
         'padron' => ['etiqueta' => 'Viviendas y residentes', 'acciones' => ['ver', 'registrar', 'anular']],
         'cobros' => ['etiqueta' => 'Cobros', 'acciones' => ['ver', 'registrar', 'verificar', 'aprobar', 'anular']],
         'cajas' => ['etiqueta' => 'Cierre de caja', 'acciones' => ['registrar']],
+        // Correcciones al saldo de una vivienda; solo el presidente y el tesorero (ver RESERVADOS)
+        'ajustes' => ['etiqueta' => 'Ajustes de saldo', 'acciones' => ['aprobar']],
         // Separado de cobros.registrar: registrar transferencias no permite cobrar en efectivo.
         // 'verificar' confirma o rechaza las transferencias pendientes (HU-26).
         'transferencias' => ['etiqueta' => 'Transferencias', 'acciones' => ['registrar', 'verificar']],
@@ -49,14 +52,24 @@ class PermisoService
      * el administrador técnico los activa desde la pantalla de permisos.
      */
     public const PREDETERMINADOS = [
-        Rol::PRESIDENTE => ['padron.ver', 'padron.registrar', 'padron.anular', 'auditoria.ver', 'parametros.ver', 'reportes.ver', 'cobros.aprobar', 'mora.registrar', 'cajas.registrar', 'tesoreria.ver', 'transferencias.verificar', 'vehiculos.ver', 'carnets.ver', 'guardias.ver', 'guardias.registrar', 'turnos.ver', 'turnos.registrar', 'tipos_incidencia.registrar', 'incidencias.ver'],
+        Rol::PRESIDENTE => ['padron.ver', 'padron.registrar', 'padron.anular', 'auditoria.ver', 'parametros.ver', 'reportes.ver', 'cobros.aprobar', 'ajustes.aprobar', 'mora.registrar', 'cajas.registrar', 'tesoreria.ver', 'transferencias.verificar', 'vehiculos.ver', 'carnets.ver', 'guardias.ver', 'guardias.registrar', 'turnos.ver', 'turnos.registrar', 'tipos_incidencia.registrar', 'incidencias.ver'],
         Rol::SECRETARIO => ['padron.ver', 'padron.registrar', 'padron.anular', 'vehiculos.ver', 'vehiculos.registrar', 'vehiculos.anular', 'carnets.ver', 'carnets.registrar', 'carnets.anular'],
-        'tesorero' => ['padron.ver', 'parametros.ver', 'parametros.registrar', 'cobros.ver', 'cobros.anular', 'cajas.registrar', 'transferencias.registrar', 'transferencias.verificar', 'reportes.ver', 'mora.registrar', 'tesoreria.ver', 'tesoreria.registrar', 'tesoreria.anular'],
+        'tesorero' => ['padron.ver', 'parametros.ver', 'parametros.registrar', 'cobros.ver', 'cobros.anular', 'ajustes.aprobar', 'cajas.registrar', 'transferencias.registrar', 'transferencias.verificar', 'reportes.ver', 'mora.registrar', 'tesoreria.ver', 'tesoreria.registrar', 'tesoreria.anular'],
         'fiscal' => ['padron.ver', 'auditoria.ver', 'parametros.ver', 'reportes.ver', 'cobros.aprobar', 'tesoreria.ver'],
         'vocal' => ['padron.ver'],
         'cobrador' => ['cobros.registrar'],
         Rol::GUARDIA => ['vehiculos.ver', 'carnets.ver', 'entrega_turnos.registrar', 'incidencias.registrar'],
         Rol::RESIDENTE => ['portal.ver', 'portal.registrar'],
+    ];
+
+    /**
+     * Permisos que solo pueden tener ciertos roles, y que esos roles conservan siempre
+     *
+     * No se asignan a otro rol desde la pantalla de permisos, no se quitan a los roles
+     * indicados y el administrador técnico no los recibe con su acceso total.
+     */
+    public const RESERVADOS = [
+        'ajustes.aprobar' => [Rol::PRESIDENTE, 'tesorero'],
     ];
 
     public function __construct(
@@ -83,6 +96,60 @@ class PermisoService
         return $permisos;
     }
 
+    /**
+     * Catálogo sin los permisos reservados a ciertos roles: es lo que recibe el administrador técnico
+     *
+     * @return array<int, string>
+     */
+    public function catalogoSinReservados(): array
+    {
+        return array_values(array_diff($this->catalogo(), array_keys(self::RESERVADOS)));
+    }
+
+    /**
+     * Indica si un rol puede tener el permiso; los no reservados los puede tener cualquiera
+     */
+    public function rolPuedeTener(?string $codigoRol, string $permiso): bool
+    {
+        return ! isset(self::RESERVADOS[$permiso]) || in_array($codigoRol, self::RESERVADOS[$permiso], true);
+    }
+
+    /**
+     * Permisos reservados que el rol no puede tener
+     *
+     * @return list<string>
+     */
+    public function noAsignables(Rol $rol): array
+    {
+        $bloqueados = [];
+
+        foreach (array_keys(self::RESERVADOS) as $permiso) {
+            if (! $this->rolPuedeTener($rol->codigo, $permiso)) {
+                $bloqueados[] = $permiso;
+            }
+        }
+
+        return $bloqueados;
+    }
+
+    /**
+     * Permisos reservados que el rol debe conservar siempre
+     *
+     * @return list<string>
+     */
+    public function obligatorios(Rol $rol): array
+    {
+        $obligatorios = [];
+
+        foreach (self::RESERVADOS as $permiso => $roles) {
+            if (in_array($rol->codigo, $roles, true)) {
+                $obligatorios[] = $permiso;
+            }
+        }
+
+        return $obligatorios;
+    }
+
     // Patrón Factory Method (creacional): este método decide qué estrategia de permisos crear
     /**
      * Elige la estrategia de permisos según el usuario
@@ -91,7 +158,7 @@ class PermisoService
     {
         return match (true) {
             $usuario->residencial_id === null || $usuario->rol_id === null => new SinPermisos,
-            $usuario->rol?->codigo === Rol::ADMIN_TECNICO => new AccesoTotal($this->catalogo()),
+            $usuario->rol?->codigo === Rol::ADMIN_TECNICO => new AccesoTotal($this->catalogoSinReservados()),
             default => new PermisosPorRol($this->matriz),
         };
     }
@@ -150,14 +217,26 @@ class PermisoService
     /**
      * Reemplaza los permisos de un rol
      *
+     * Rechaza un permiso reservado para un rol que no puede tenerlo, y conserva los
+     * permisos reservados que el rol debe tener aunque la petición no los incluya.
+     *
      * @param  array<int, string>  $permisos
+     *
+     * @throws ValidationException
      */
     public function actualizar(User $actor, Rol $rol, array $permisos): void
     {
         $residencialId = (int) $actor->residencial_id;
         $anteriores = $this->deRol($residencialId, $rol->id);
 
-        $nuevos = array_values(array_unique($permisos));
+        foreach ($permisos as $permiso) {
+            if (! $this->rolPuedeTener($rol->codigo, $permiso)) {
+                throw ValidationException::withMessages(['permisos' => "El permiso {$permiso} solo puede tenerlo el presidente o el tesorero."]);
+            }
+        }
+
+        // Un permiso obligatorio del rol no se puede quitar
+        $nuevos = array_values(array_unique([...$permisos, ...$this->obligatorios($rol)]));
         sort($nuevos);
 
         if ($anteriores === $nuevos) {

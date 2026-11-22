@@ -2,6 +2,7 @@ import { Link, usePage } from '@inertiajs/react';
 import {
     Ban,
     Banknote,
+    Scale,
     Building2,
     BadgeCheck,
     BookOpenText,
@@ -30,6 +31,7 @@ import {
     Vault,
     Wallet,
 } from 'lucide-react';
+import AjusteController from '@/actions/Patronato/Presentacion/Controllers/AjusteController';
 import AnulacionController from '@/actions/Patronato/Presentacion/Controllers/AnulacionController';
 import CajaController from '@/actions/Patronato/Presentacion/Controllers/CajaController';
 import CarnetController from '@/actions/Patronato/Presentacion/Controllers/CarnetController';
@@ -142,6 +144,12 @@ export function AppSidebar() {
                     icon: Ban,
                     badge: auth.anulacionesPendientes,
                     visible: permite('cobros.aprobar'),
+                },
+                {
+                    title: 'Ajustes de saldo',
+                    href: AjusteController.index(),
+                    icon: Scale,
+                    visible: permite('ajustes.aprobar'),
                 },
                 {
                     title: 'Cierre de caja',
