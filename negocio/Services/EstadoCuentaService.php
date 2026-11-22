@@ -22,6 +22,9 @@ use Patronato\Persistencia\Repositorios\PagoRepositorio;
  *   y los anulados o rechazados se muestran sin efecto en el saldo.
  * - Un pago es "abono" si dejó algún mes sin cubrir por completo, con lo que realmente
  *   se aplicó en pago_aplicaciones (la misma regla del cobro: monto menor que lo pendiente).
+ *   Solo cuenta lo aplicado al cobrar; el saldo a favor aplicado después suma a cada mes,
+ *   pero no convierte un pago en abono.
+ * - Los meses de un pago son los que cubrió al cobrarse, igual que su comprobante.
  * - Orden: fecha del movimiento (el período del cargo, la fecha del pago o del ajuste);
  *   el mismo día van primero los cargos, luego los ajustes y al final los pagos.
  * - Los movimientos migrados se marcan; un pago migrado puede no tener recibo ni meses.
@@ -134,7 +137,7 @@ class EstadoCuentaService
             /** @var PagoAplicacion $aplicacion */
             $pagado[$aplicacion->cargo_id] = ($pagado[$aplicacion->cargo_id] ?? 0) + AplicacionPagoService::centavos($aplicacion->monto);
 
-            if ($pagado[$aplicacion->cargo_id] < ($montos[$aplicacion->cargo_id] ?? 0)) {
+            if ($aplicacion->esDelPago() && $pagado[$aplicacion->cargo_id] < ($montos[$aplicacion->cargo_id] ?? 0)) {
                 $abonos[] = $aplicacion->pago_id;
             }
         }
@@ -209,7 +212,7 @@ class EstadoCuentaService
             'numero_recibo' => $pago->numero_recibo,
             'referencia' => $this->referencia($pago),
             'responsable' => $pago->forma_pago === Pago::TRANSFERENCIA ? $pago->verificador?->name : $pago->cobrador?->name,
-            'meses' => $pago->aplicaciones->sortBy('id')->map(fn (PagoAplicacion $aplicacion): array => [
+            'meses' => $pago->aplicaciones->filter(fn (PagoAplicacion $aplicacion): bool => $aplicacion->esDelPago())->sortBy('id')->map(fn (PagoAplicacion $aplicacion): array => [
                 'periodo' => $aplicacion->cargo->periodo->toDateString(),
                 'concepto' => $aplicacion->cargo->concepto->nombre,
                 'monto' => $aplicacion->monto,

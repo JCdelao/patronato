@@ -87,7 +87,9 @@ class ComprobanteService
         $esTransferencia = $pago->forma_pago === Pago::TRANSFERENCIA;
         $hora = $esTransferencia && $pago->verificado_en !== null ? $pago->verificado_en : $pago->created_at;
 
+        // Solo lo aplicado al cobrar: el saldo a favor aplicado después no cambia el comprobante
         $periodos = array_values($pago->aplicaciones
+            ->filter(fn (PagoAplicacion $aplicacion): bool => $aplicacion->esDelPago())
             ->sortBy(fn (PagoAplicacion $aplicacion) => [$aplicacion->cargo->periodo->toDateString(), $aplicacion->cargo_id])
             ->map(fn (PagoAplicacion $aplicacion): array => [
                 'periodo' => $aplicacion->cargo->periodo->toDateString(),

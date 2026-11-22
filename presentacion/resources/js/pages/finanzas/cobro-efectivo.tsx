@@ -49,6 +49,7 @@ export default function CobroEfectivo({
     vivienda,
     pendientes,
     avisoIntegracion,
+    permiteSaldoFavor,
 }: {
     cajaAbierta: boolean;
     buscar: string;
@@ -56,14 +57,26 @@ export default function CobroEfectivo({
     vivienda: OpcionVivienda | null;
     pendientes: CargoPendiente[] | null;
     avisoIntegracion: string | null;
+    permiteSaldoFavor: boolean;
 }) {
     const [elegidos, setElegidos] = useState<number[]>([]);
+    const [monto, setMonto] = useState('');
     const espera = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
+    // Sin meses elegidos, el pago se aplica a todos los pendientes
+    const sinMeses = elegidos.length === 0;
+    const sinPendientes = pendientes !== null && pendientes.length === 0;
     const totalElegido =
         (pendientes ?? [])
-            .filter((cargo) => elegidos.includes(cargo.cargo_id))
+            .filter((cargo) => sinMeses || elegidos.includes(cargo.cargo_id))
             .reduce((suma, cargo) => suma + centavos(cargo.pendiente), 0) / 100;
+
+    // Lo que sobra de un pago sin meses queda como saldo a favor
+    const excedente =
+        permiteSaldoFavor && sinMeses
+            ? Math.max(0, centavos(monto) - Math.round(totalElegido * 100)) /
+              100
+            : 0;
 
     const alBuscar = (valor: string) => {
         clearTimeout(espera.current);
@@ -194,7 +207,7 @@ export default function CobroEfectivo({
                                     {avisoIntegracion}
                                 </AlertDescription>
                             </Alert>
-                        ) : pendientes !== null && pendientes.length === 0 ? (
+                        ) : sinPendientes && !permiteSaldoFavor ? (
                             <p className="text-muted-foreground">
                                 Esta vivienda no tiene meses pendientes.
                             </p>
@@ -221,60 +234,81 @@ export default function CobroEfectivo({
                                             />
                                         ))}
 
-                                        <fieldset className="grid gap-2">
-                                            <legend className="mb-2 text-sm font-medium">
-                                                Meses que se pagan
-                                            </legend>
-                                            {(pendientes ?? []).map((cargo) => (
-                                                <Label
-                                                    key={cargo.cargo_id}
-                                                    className="flex items-center gap-3 rounded-xl border p-4 font-normal"
-                                                >
-                                                    <Checkbox
-                                                        checked={elegidos.includes(
-                                                            cargo.cargo_id,
-                                                        )}
-                                                        onCheckedChange={(
-                                                            marcado,
-                                                        ) =>
-                                                            alternarMes(
-                                                                cargo.cargo_id,
-                                                                marcado ===
-                                                                    true,
-                                                            )
-                                                        }
-                                                    />
-                                                    <span className="flex-1">
-                                                        <span className="block capitalize">
-                                                            {formatoPeriodo(
-                                                                cargo.periodo,
-                                                            )}
-                                                        </span>
-                                                        <span className="text-sm text-muted-foreground">
-                                                            {cargo.concepto}
-                                                        </span>
-                                                    </span>
-                                                    <span className="font-medium">
-                                                        L{' '}
-                                                        {formatoMonto(
-                                                            Number(
-                                                                cargo.pendiente,
-                                                            ),
-                                                        )}
-                                                    </span>
-                                                </Label>
-                                            ))}
-                                            <InputError
-                                                message={errors.cargos}
-                                            />
-                                        </fieldset>
+                                        {sinPendientes ? (
+                                            <p className="text-muted-foreground">
+                                                Esta vivienda no tiene meses
+                                                pendientes: todo el pago quedará
+                                                como saldo a favor.
+                                            </p>
+                                        ) : (
+                                            <fieldset className="grid gap-2">
+                                                <legend className="mb-2 text-sm font-medium">
+                                                    Meses que se pagan
+                                                </legend>
+                                                {(pendientes ?? []).map(
+                                                    (cargo) => (
+                                                        <Label
+                                                            key={cargo.cargo_id}
+                                                            className="flex items-center gap-3 rounded-xl border p-4 font-normal"
+                                                        >
+                                                            <Checkbox
+                                                                checked={elegidos.includes(
+                                                                    cargo.cargo_id,
+                                                                )}
+                                                                onCheckedChange={(
+                                                                    marcado,
+                                                                ) =>
+                                                                    alternarMes(
+                                                                        cargo.cargo_id,
+                                                                        marcado ===
+                                                                            true,
+                                                                    )
+                                                                }
+                                                            />
+                                                            <span className="flex-1">
+                                                                <span className="block capitalize">
+                                                                    {formatoPeriodo(
+                                                                        cargo.periodo,
+                                                                    )}
+                                                                </span>
+                                                                <span className="text-sm text-muted-foreground">
+                                                                    {
+                                                                        cargo.concepto
+                                                                    }
+                                                                </span>
+                                                            </span>
+                                                            <span className="font-medium">
+                                                                L{' '}
+                                                                {formatoMonto(
+                                                                    Number(
+                                                                        cargo.pendiente,
+                                                                    ),
+                                                                )}
+                                                            </span>
+                                                        </Label>
+                                                    ),
+                                                )}
+                                                <InputError
+                                                    message={errors.cargos}
+                                                />
+                                            </fieldset>
+                                        )}
 
                                         <p className="text-sm text-muted-foreground">
-                                            Pendiente de los meses elegidos:{' '}
+                                            {sinMeses
+                                                ? 'Pendiente de la vivienda:'
+                                                : 'Pendiente de los meses elegidos:'}{' '}
                                             <span className="font-semibold text-foreground">
                                                 L {formatoMonto(totalElegido)}
                                             </span>
                                         </p>
+                                        {sinMeses && !sinPendientes && (
+                                            <p className="text-sm text-muted-foreground">
+                                                Sin meses elegidos, el pago se
+                                                aplica a los meses pendientes,
+                                                del más antiguo al más reciente.
+                                            </p>
+                                        )}
 
                                         <div className="grid gap-2">
                                             <Label htmlFor="monto">
@@ -288,10 +322,22 @@ export default function CobroEfectivo({
                                                 step="0.01"
                                                 min="0.01"
                                                 className="h-12 text-lg"
+                                                onChange={(evento) =>
+                                                    setMonto(
+                                                        evento.target.value,
+                                                    )
+                                                }
                                             />
                                             <InputError
                                                 message={errors.monto}
                                             />
+                                            {excedente > 0 && (
+                                                <p className="text-sm text-muted-foreground">
+                                                    El excedente de L{' '}
+                                                    {formatoMonto(excedente)}{' '}
+                                                    quedará como saldo a favor.
+                                                </p>
+                                            )}
                                         </div>
 
                                         <InputError message={errors.caja} />
@@ -301,10 +347,7 @@ export default function CobroEfectivo({
 
                                         <Button
                                             className="h-12 w-full text-base"
-                                            disabled={
-                                                processing ||
-                                                elegidos.length === 0
-                                            }
+                                            disabled={processing}
                                         >
                                             {processing && <Spinner />}
                                             Registrar cobro

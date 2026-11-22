@@ -64,7 +64,7 @@ class VerificacionTransferenciaController extends Controller
         $usuario = $request->user();
 
         /** @var array<int, int|string> $cargos */
-        $cargos = $request->input('cargos');
+        $cargos = $request->input('cargos') ?? [];
 
         $pago = $this->verificacion->confirmar($usuario, $pago, array_map(intval(...), $cargos));
 

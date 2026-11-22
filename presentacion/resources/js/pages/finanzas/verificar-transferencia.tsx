@@ -45,6 +45,7 @@ type Transferencia = {
     por_verificar: boolean;
     motivo_no_confirmar: string | null;
     permite_abono_parcial: boolean;
+    permite_saldo_favor: boolean;
     pendientes: CargoPendiente[] | null;
     sugeridos: number[];
     aviso_integracion: string | null;
@@ -205,10 +206,16 @@ function Verificacion({ transferencia }: { transferencia: Transferencia }) {
     const [rechazando, setRechazando] = useState(false);
 
     const pendientes = transferencia.pendientes ?? [];
+    // Sin meses elegidos, la transferencia se aplica a todos los pendientes
+    const sinMeses = elegidos.length === 0;
     const totalElegido = pendientes
-        .filter((cargo) => elegidos.includes(cargo.cargo_id))
+        .filter((cargo) => sinMeses || elegidos.includes(cargo.cargo_id))
         .reduce((total, cargo) => total + centavos(cargo.pendiente), 0);
     const monto = centavos(transferencia.monto);
+
+    // Lo que sobra de una transferencia sin meses queda como saldo a favor
+    const admiteExcedente = sinMeses && transferencia.permite_saldo_favor;
+    const excedente = admiteExcedente ? Math.max(0, monto - totalElegido) : 0;
 
     const alternarMes = (id: number, marcado: boolean) =>
         setElegidos((actuales) =>
@@ -218,13 +225,15 @@ function Verificacion({ transferencia }: { transferencia: Transferencia }) {
         );
 
     const avisoMonto =
-        elegidos.length === 0
-            ? null
-            : monto > totalElegido
-              ? 'El monto de la transferencia supera lo pendiente de los meses elegidos. Elige más meses.'
-              : monto < totalElegido && !transferencia.permite_abono_parcial
-                ? 'El patronato no permite abonos parciales: el monto debe cubrir los meses elegidos.'
-                : null;
+        monto > totalElegido && !admiteExcedente
+            ? sinMeses
+                ? 'El monto de la transferencia supera lo pendiente de la vivienda.'
+                : 'El monto de la transferencia supera lo pendiente de los meses elegidos. Elige más meses.'
+            : monto < totalElegido && !transferencia.permite_abono_parcial
+              ? sinMeses
+                  ? 'El patronato no permite abonos parciales: sin meses elegidos, el monto debe cubrir todo lo pendiente de la vivienda.'
+                  : 'El patronato no permite abonos parciales: el monto debe cubrir los meses elegidos.'
+              : null;
 
     return (
         <div className="space-y-6">
@@ -244,7 +253,8 @@ function Verificacion({ transferencia }: { transferencia: Transferencia }) {
                         {transferencia.aviso_integracion}
                     </AlertDescription>
                 </Alert>
-            ) : pendientes.length === 0 ? (
+            ) : pendientes.length === 0 &&
+              !transferencia.permite_saldo_favor ? (
                 <Alert>
                     <CircleAlert />
                     <AlertTitle>
@@ -275,44 +285,64 @@ function Verificacion({ transferencia }: { transferencia: Transferencia }) {
                                 />
                             ))}
 
-                            <fieldset className="grid gap-2">
-                                <legend className="mb-2 text-sm font-medium">
-                                    Meses a los que se aplica
-                                </legend>
-                                {pendientes.map((cargo) => (
-                                    <Label
-                                        key={cargo.cargo_id}
-                                        className="flex items-center gap-3 rounded-xl border p-4 font-normal"
-                                    >
-                                        <Checkbox
-                                            checked={elegidos.includes(
-                                                cargo.cargo_id,
-                                            )}
-                                            onCheckedChange={(marcado) =>
-                                                alternarMes(
+                            {pendientes.length === 0 ? (
+                                <p className="text-muted-foreground">
+                                    La vivienda no tiene meses pendientes: toda
+                                    la transferencia quedará como saldo a favor.
+                                </p>
+                            ) : (
+                                <fieldset className="grid gap-2">
+                                    <legend className="mb-2 text-sm font-medium">
+                                        Meses a los que se aplica
+                                    </legend>
+                                    {pendientes.map((cargo) => (
+                                        <Label
+                                            key={cargo.cargo_id}
+                                            className="flex items-center gap-3 rounded-xl border p-4 font-normal"
+                                        >
+                                            <Checkbox
+                                                checked={elegidos.includes(
                                                     cargo.cargo_id,
-                                                    marcado === true,
-                                                )
-                                            }
-                                        />
-                                        <span className="flex-1">
-                                            <span className="block capitalize">
-                                                {formatoPeriodo(cargo.periodo)}
+                                                )}
+                                                onCheckedChange={(marcado) =>
+                                                    alternarMes(
+                                                        cargo.cargo_id,
+                                                        marcado === true,
+                                                    )
+                                                }
+                                            />
+                                            <span className="flex-1">
+                                                <span className="block capitalize">
+                                                    {formatoPeriodo(
+                                                        cargo.periodo,
+                                                    )}
+                                                </span>
+                                                <span className="text-sm text-muted-foreground">
+                                                    {cargo.concepto}
+                                                </span>
                                             </span>
-                                            <span className="text-sm text-muted-foreground">
-                                                {cargo.concepto}
+                                            <span className="font-medium">
+                                                L{' '}
+                                                {formatoMonto(cargo.pendiente)}
                                             </span>
-                                        </span>
-                                        <span className="font-medium">
-                                            L {formatoMonto(cargo.pendiente)}
-                                        </span>
-                                    </Label>
-                                ))}
-                                <InputError message={errors.cargos} />
-                            </fieldset>
+                                        </Label>
+                                    ))}
+                                    <InputError message={errors.cargos} />
+                                </fieldset>
+                            )}
+
+                            {sinMeses && pendientes.length > 0 && (
+                                <p className="text-sm text-muted-foreground">
+                                    Sin meses elegidos, la transferencia se
+                                    aplica a los meses pendientes, del más
+                                    antiguo al más reciente.
+                                </p>
+                            )}
 
                             <p className="text-sm text-muted-foreground">
-                                Pendiente de los meses elegidos:{' '}
+                                {sinMeses
+                                    ? 'Pendiente de la vivienda:'
+                                    : 'Pendiente de los meses elegidos:'}{' '}
                                 <span className="font-semibold text-foreground">
                                     L {formatoMonto(totalElegido / 100)}
                                 </span>{' '}
@@ -321,6 +351,14 @@ function Verificacion({ transferencia }: { transferencia: Transferencia }) {
                                     L {formatoMonto(transferencia.monto)}
                                 </span>
                             </p>
+
+                            {excedente > 0 && (
+                                <p className="text-sm text-muted-foreground">
+                                    El excedente de L{' '}
+                                    {formatoMonto(excedente / 100)} quedará como
+                                    saldo a favor.
+                                </p>
+                            )}
 
                             {avisoMonto && (
                                 <p className="text-sm text-destructive">
@@ -331,11 +369,7 @@ function Verificacion({ transferencia }: { transferencia: Transferencia }) {
 
                             <Button
                                 className="h-12 w-full text-base"
-                                disabled={
-                                    processing ||
-                                    elegidos.length === 0 ||
-                                    avisoMonto !== null
-                                }
+                                disabled={processing || avisoMonto !== null}
                             >
                                 {processing ? <Spinner /> : <Check />}
                                 Confirmar transferencia

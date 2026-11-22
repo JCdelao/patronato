@@ -23,7 +23,8 @@ class RegistrarCobroRequest extends FormRequest
                 Rule::exists('viviendas', 'id')->where('residencial_id', $this->user()->residencial_id)->where('activa', true),
             ],
             'monto' => ['required', 'decimal:0,2', 'gt:0', 'max:9999999999.99'],
-            'cargos' => ['required', 'array', 'min:1'],
+            // Sin meses, el pago se aplica a los pendientes más antiguos
+            'cargos' => ['nullable', 'array'],
             'cargos.*' => ['integer', 'distinct'],
         ];
     }
@@ -42,8 +43,7 @@ class RegistrarCobroRequest extends FormRequest
             'monto.decimal' => 'El monto admite hasta dos decimales.',
             'monto.gt' => 'El monto debe ser mayor que cero.',
             'monto.max' => 'El monto es demasiado alto.',
-            'cargos.required' => 'Elige al menos un mes.',
-            'cargos.min' => 'Elige al menos un mes.',
+            'cargos.array' => 'Los meses elegidos no son válidos.',
         ];
     }
 }

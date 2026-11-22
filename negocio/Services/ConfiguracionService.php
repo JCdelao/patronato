@@ -41,6 +41,17 @@ class ConfiguracionService
     }
 
     /**
+     * Indica si el residencial acepta que un pago sin meses elegidos supere lo pendiente
+     *
+     * Solo decide si se acepta un excedente nuevo; el saldo a favor que ya existe
+     * se sigue aplicando aunque se desactive. Sin configuración guardada vale falso.
+     */
+    public function permiteSaldoFavor(int $residencialId): bool
+    {
+        return (bool) $this->configuracion->valor($residencialId, 'permite_saldo_favor');
+    }
+
+    /**
      * Indica si quien registró una transferencia tiene prohibido confirmarla (HU-26)
      *
      * Sin configuración guardada vale falso, igual que el valor predeterminado de la tabla.
