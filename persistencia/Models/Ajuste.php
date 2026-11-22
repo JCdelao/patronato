@@ -2,6 +2,7 @@
 
 namespace Patronato\Persistencia\Models;
 
+use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
@@ -9,8 +10,9 @@ use Illuminate\Support\Carbon;
 /**
  * Ajuste autorizado al saldo de una vivienda
  *
- * Un monto negativo reduce la deuda y uno positivo la aumenta.
- * Por ahora solo se lee en el estado de cuenta; el registro llega con la HU-29.
+ * Un monto negativo reduce la deuda y uno positivo la aumenta. Solo cambia el saldo
+ * general: no toca cargos, pagos ni sus aplicaciones. Los ajustes nuevos son siempre
+ * correcciones; los otros tipos solo pueden venir de la migración de datos.
  *
  * @property int $id
  * @property int $residencial_id
@@ -23,9 +25,15 @@ use Illuminate\Support\Carbon;
  * @property int|null $lote_migracion_id
  * @property-read User|null $autorizador
  */
+#[Fillable(['residencial_id', 'vivienda_id', 'tipo', 'monto', 'fecha', 'motivo', 'autorizado_por'])]
 class Ajuste extends Model
 {
     use PerteneceAResidencial;
+
+    /**
+     * Único tipo que se registra en el sistema
+     */
+    public const CORRECCION = 'correccion';
 
     /**
      * Nombre visible de cada tipo de ajuste

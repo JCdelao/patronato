@@ -147,6 +147,9 @@ test('each user gets the permission strategy of its role', function () {
     expect($permisos->estrategia($this->admin))->toBeInstanceOf(AccesoTotal::class)
         ->and($permisos->estrategia($this->secretario))->toBeInstanceOf(PermisosPorRol::class)
         ->and($permisos->estrategia(User::factory()->create()))->toBeInstanceOf(SinPermisos::class)
-        ->and($permisos->deUsuario($this->admin))->toBe($permisos->catalogo())
+        // El administrador técnico tiene todo el catálogo menos los permisos reservados a ciertos roles
+        ->and($permisos->deUsuario($this->admin))->toBe($permisos->catalogoSinReservados())
+        ->and($permisos->deUsuario($this->admin))->toHaveCount(count($permisos->catalogo()) - count(PermisoService::RESERVADOS))
+        ->and($permisos->deUsuario($this->admin))->not->toContain('ajustes.aprobar')
         ->and($permisos->deUsuario($this->secretario))->toBe(['carnets.anular', 'carnets.registrar', 'carnets.ver', 'padron.anular', 'padron.registrar', 'padron.ver', 'vehiculos.anular', 'vehiculos.registrar', 'vehiculos.ver']);
 });

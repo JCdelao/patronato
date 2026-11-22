@@ -21,4 +21,12 @@ class AjusteRepositorio
             ->orderBy('id')
             ->get();
     }
+
+    /**
+     * @param  array<string, mixed>  $datos
+     */
+    public function crear(array $datos): Ajuste
+    {
+        return Ajuste::query()->create($datos);
+    }
 }
