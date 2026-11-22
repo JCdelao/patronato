@@ -11,6 +11,7 @@ import {
     Car,
     ChartColumn,
     Coins,
+    FileDown,
     HandCoins,
     Home,
     IdCard,
@@ -40,6 +41,7 @@ import GuardiaController from '@/actions/Patronato/Presentacion/Controllers/Guar
 import IncidenciaController from '@/actions/Patronato/Presentacion/Controllers/IncidenciaController';
 import EgresoController from '@/actions/Patronato/Presentacion/Controllers/EgresoController';
 import EstadoCuentaController from '@/actions/Patronato/Presentacion/Controllers/EstadoCuentaController';
+import EstadoCuentaPdfController from '@/actions/Patronato/Presentacion/Controllers/EstadoCuentaPdfController';
 import IngresoController from '@/actions/Patronato/Presentacion/Controllers/IngresoController';
 import InformeFinancieroController from '@/actions/Patronato/Presentacion/Controllers/InformeFinancieroController';
 import PagoController from '@/actions/Patronato/Presentacion/Controllers/PagoController';
@@ -137,6 +139,12 @@ export function AppSidebar() {
                     href: EstadoCuentaController.index(),
                     icon: BookOpenText,
                     visible: permite('cobros.ver'),
+                },
+                {
+                    title: 'Estado de cuenta en PDF',
+                    href: EstadoCuentaPdfController.index(),
+                    icon: FileDown,
+                    visible: permite('estado_cuenta_pdf.ver'),
                 },
                 {
                     title: 'Anulaciones por aprobar',

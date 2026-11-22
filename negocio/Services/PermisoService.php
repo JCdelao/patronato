@@ -22,6 +22,8 @@ class PermisoService
     public const MODULOS = [
         'padron' => ['etiqueta' => 'Viviendas y residentes', 'acciones' => ['ver', 'registrar', 'anular']],
         'cobros' => ['etiqueta' => 'Cobros', 'acciones' => ['ver', 'registrar', 'verificar', 'aprobar', 'anular']],
+        // Independiente de cobros.ver: genera el PDF sin abrir la pantalla del estado de cuenta
+        'estado_cuenta_pdf' => ['etiqueta' => 'Estado de cuenta en PDF', 'acciones' => ['ver']],
         'cajas' => ['etiqueta' => 'Cierre de caja', 'acciones' => ['registrar']],
         // Correcciones al saldo de una vivienda; solo el presidente y el tesorero (ver RESERVADOS)
         'ajustes' => ['etiqueta' => 'Ajustes de saldo', 'acciones' => ['aprobar']],
@@ -52,9 +54,9 @@ class PermisoService
      * el administrador técnico los activa desde la pantalla de permisos.
      */
     public const PREDETERMINADOS = [
-        Rol::PRESIDENTE => ['padron.ver', 'padron.registrar', 'padron.anular', 'auditoria.ver', 'parametros.ver', 'reportes.ver', 'cobros.aprobar', 'ajustes.aprobar', 'mora.registrar', 'cajas.registrar', 'tesoreria.ver', 'transferencias.verificar', 'vehiculos.ver', 'carnets.ver', 'guardias.ver', 'guardias.registrar', 'turnos.ver', 'turnos.registrar', 'tipos_incidencia.registrar', 'incidencias.ver'],
-        Rol::SECRETARIO => ['padron.ver', 'padron.registrar', 'padron.anular', 'vehiculos.ver', 'vehiculos.registrar', 'vehiculos.anular', 'carnets.ver', 'carnets.registrar', 'carnets.anular'],
-        'tesorero' => ['padron.ver', 'parametros.ver', 'parametros.registrar', 'cobros.ver', 'cobros.anular', 'ajustes.aprobar', 'cajas.registrar', 'transferencias.registrar', 'transferencias.verificar', 'reportes.ver', 'mora.registrar', 'tesoreria.ver', 'tesoreria.registrar', 'tesoreria.anular'],
+        Rol::PRESIDENTE => ['padron.ver', 'padron.registrar', 'padron.anular', 'auditoria.ver', 'parametros.ver', 'reportes.ver', 'cobros.aprobar', 'ajustes.aprobar', 'estado_cuenta_pdf.ver', 'mora.registrar', 'cajas.registrar', 'tesoreria.ver', 'transferencias.verificar', 'vehiculos.ver', 'carnets.ver', 'guardias.ver', 'guardias.registrar', 'turnos.ver', 'turnos.registrar', 'tipos_incidencia.registrar', 'incidencias.ver'],
+        Rol::SECRETARIO => ['padron.ver', 'padron.registrar', 'padron.anular', 'estado_cuenta_pdf.ver', 'vehiculos.ver', 'vehiculos.registrar', 'vehiculos.anular', 'carnets.ver', 'carnets.registrar', 'carnets.anular'],
+        'tesorero' => ['padron.ver', 'parametros.ver', 'parametros.registrar', 'cobros.ver', 'cobros.anular', 'ajustes.aprobar', 'estado_cuenta_pdf.ver', 'cajas.registrar', 'transferencias.registrar', 'transferencias.verificar', 'reportes.ver', 'mora.registrar', 'tesoreria.ver', 'tesoreria.registrar', 'tesoreria.anular'],
         'fiscal' => ['padron.ver', 'auditoria.ver', 'parametros.ver', 'reportes.ver', 'cobros.aprobar', 'tesoreria.ver'],
         'vocal' => ['padron.ver'],
         'cobrador' => ['cobros.registrar'],
@@ -71,6 +73,13 @@ class PermisoService
     public const RESERVADOS = [
         'ajustes.aprobar' => [Rol::PRESIDENTE, 'tesorero'],
     ];
+
+    /**
+     * Permisos que el administrador técnico no recibe con su acceso total
+     *
+     * A diferencia de los reservados, se pueden asignar a cualquier rol desde la pantalla de permisos.
+     */
+    public const FUERA_DE_ACCESO_TOTAL = ['estado_cuenta_pdf.ver'];
 
     public function __construct(
         private RolRepositorio $roles,
@@ -104,6 +113,16 @@ class PermisoService
     public function catalogoSinReservados(): array
     {
         return array_values(array_diff($this->catalogo(), array_keys(self::RESERVADOS)));
+    }
+
+    /**
+     * Catálogo que recibe el administrador técnico: sin los reservados ni los que quedan fuera de su acceso
+     *
+     * @return array<int, string>
+     */
+    public function catalogoAccesoTotal(): array
+    {
+        return array_values(array_diff($this->catalogoSinReservados(), self::FUERA_DE_ACCESO_TOTAL));
     }
 
     /**
@@ -158,7 +177,7 @@ class PermisoService
     {
         return match (true) {
             $usuario->residencial_id === null || $usuario->rol_id === null => new SinPermisos,
-            $usuario->rol?->codigo === Rol::ADMIN_TECNICO => new AccesoTotal($this->catalogoSinReservados()),
+            $usuario->rol?->codigo === Rol::ADMIN_TECNICO => new AccesoTotal($this->catalogoAccesoTotal()),
             default => new PermisosPorRol($this->matriz),
         };
     }
