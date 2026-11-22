@@ -11,6 +11,7 @@ use Patronato\Presentacion\Controllers\ComprobanteController;
 use Patronato\Presentacion\Controllers\ConceptoController;
 use Patronato\Presentacion\Controllers\EgresoController;
 use Patronato\Presentacion\Controllers\EstadoCuentaController;
+use Patronato\Presentacion\Controllers\EstadoCuentaPdfController;
 use Patronato\Presentacion\Controllers\GeneracionCargosController;
 use Patronato\Presentacion\Controllers\IngresoController;
 use Patronato\Presentacion\Controllers\MoraController;
@@ -56,6 +57,15 @@ Route::middleware(['auth', 'verified'])
             // Estado de cuenta de una vivienda, también de las inactivas (HU-27)
             Route::get('estado-de-cuenta', [EstadoCuentaController::class, 'index'])->name('estado-cuenta.index');
             Route::get('estado-de-cuenta/{vivienda}', [EstadoCuentaController::class, 'show'])->whereNumber('vivienda')->name('estado-cuenta.show');
+        });
+
+        // Estado de cuenta en PDF con su propio permiso; no requiere cobros.ver
+        Route::middleware("can:permiso,'estado_cuenta_pdf','ver'")->group(function () {
+            Route::get('estado-de-cuenta-pdf', [EstadoCuentaPdfController::class, 'index'])->name('estado-cuenta-pdf.index');
+            Route::get('estado-de-cuenta-pdf/{vivienda}', [EstadoCuentaPdfController::class, 'descargar'])
+                ->whereNumber('vivienda')
+                ->middleware('throttle:20,1')
+                ->name('estado-cuenta-pdf.descargar');
         });
 
         // Registrar transferencias no da permiso de cobrar en efectivo (cobros.registrar)

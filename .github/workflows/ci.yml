@@ -185,6 +185,10 @@ jobs:
         if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
         run: php artisan test tests/Feature/Finanzas/AjustesTest.php
 
+      - name: Pruebas HU-30 · Generar el estado de cuenta en PDF
+        if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
+        run: php artisan test tests/Feature/Finanzas/EstadoCuentaPdfTest.php
+
       - name: Pruebas HU-31 · Registrar egresos
         if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
         run: php artisan test tests/Feature/Finanzas/EgresosTest.php
