@@ -5,6 +5,7 @@ namespace Patronato\Persistencia\Repositorios;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\DB;
 use Patronato\Persistencia\Models\Guardia;
 
 class GuardiaRepositorio extends Repositorio
@@ -67,6 +68,16 @@ class GuardiaRepositorio extends Repositorio
     public function activoDeUsuario(int $usuarioId): ?Guardia
     {
         return Guardia::query()->where('user_id', $usuarioId)->where('activo', true)->first();
+    }
+
+    public function bloquearActivoDeUsuario(int $usuarioId, int $residencialId): ?Guardia
+    {
+        // Las entregas conservan la posibilidad de tomar el bloqueo de clave de su FK.
+        return Guardia::query()->where('user_id', $usuarioId)
+            ->where('residencial_id', $residencialId)
+            ->where('activo', true)
+            ->lock(DB::getDriverName() === 'pgsql' ? 'for no key update' : true)
+            ->first();
     }
 
     /**

@@ -14,6 +14,13 @@ class UsuarioRepositorio extends Repositorio
         return User::query()->findOrFail($id);
     }
 
+    public function bloquearSinEspera(int $id): ?User
+    {
+        return User::query()
+            ->lock(DB::getDriverName() === 'pgsql' ? 'for no key update nowait' : true)
+            ->find($id);
+    }
+
     public function porCorreo(string $correo): ?User
     {
         return User::query()->where('email', $correo)->first();

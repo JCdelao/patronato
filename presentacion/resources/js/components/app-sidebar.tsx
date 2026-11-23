@@ -11,6 +11,7 @@ import {
     Car,
     ChartColumn,
     Coins,
+    DoorOpen,
     FileDown,
     HandCoins,
     Home,
@@ -44,6 +45,7 @@ import EstadoCuentaController from '@/actions/Patronato/Presentacion/Controllers
 import EstadoCuentaPdfController from '@/actions/Patronato/Presentacion/Controllers/EstadoCuentaPdfController';
 import IngresoController from '@/actions/Patronato/Presentacion/Controllers/IngresoController';
 import InformeFinancieroController from '@/actions/Patronato/Presentacion/Controllers/InformeFinancieroController';
+import MedioEntradaController from '@/actions/Patronato/Presentacion/Controllers/MedioEntradaController';
 import PagoController from '@/actions/Patronato/Presentacion/Controllers/PagoController';
 import PresupuestoController from '@/actions/Patronato/Presentacion/Controllers/PresupuestoController';
 import ParametroCobroController from '@/actions/Patronato/Presentacion/Controllers/ParametroCobroController';
@@ -55,6 +57,7 @@ import VerificacionTransferenciaController from '@/actions/Patronato/Presentacio
 import AuditoriaController from '@/actions/Patronato/Presentacion/Controllers/AuditoriaController';
 import CuentaController from '@/actions/Patronato/Presentacion/Controllers/CuentaController';
 import VehiculoController from '@/actions/Patronato/Presentacion/Controllers/VehiculoController';
+import VisitaController from '@/actions/Patronato/Presentacion/Controllers/VisitaController';
 import ViviendaController from '@/actions/Patronato/Presentacion/Controllers/ViviendaController';
 import ResidencialController from '@/actions/Patronato/Presentacion/Controllers/ResidencialController';
 import AppLogo from '@/components/app-logo';
@@ -77,6 +80,8 @@ export function AppSidebar() {
     const { auth } = usePage().props;
 
     const permite = (permiso: string) => auth.permisos.includes(permiso);
+    const registraVisitas = auth.esGuardia && permite('visitas.registrar');
+    const configuraMedios = permite('medios_entrada.registrar');
 
     // Solo se muestran las opciones que el usuario puede usar, agrupadas por tema
     const opciones: (Opcion | Grupo)[] = [
@@ -220,6 +225,18 @@ export function AppSidebar() {
             icon: ShieldCheck,
             items: [
                 {
+                    title: 'Entrada de visitas',
+                    href: VisitaController.create(),
+                    icon: DoorOpen,
+                    visible: registraVisitas,
+                },
+                {
+                    title: 'Medios de entrada',
+                    href: MedioEntradaController.index(),
+                    icon: SlidersHorizontal,
+                    visible: configuraMedios,
+                },
+                {
                     title: 'Guardias',
                     href: GuardiaController.index(),
                     icon: UserCheck,
@@ -292,7 +309,11 @@ export function AppSidebar() {
 
         const visibles = opcion.items.filter((item) => item.visible);
 
-        return visibles.length > 1
+        const conservaSubmenu =
+            opcion.title === 'Seguridad' &&
+            (registraVisitas || configuraMedios);
+
+        return visibles.length > 1 || conservaSubmenu
             ? [{ ...opcion, items: visibles }]
             : visibles;
     });

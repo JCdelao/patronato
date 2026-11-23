@@ -27,6 +27,7 @@ use Patronato\Negocio\Oyentes\DarDeBajaStickerDelVehiculo;
 use Patronato\Negocio\Oyentes\RegistrarIngresoDeCobro;
 use Patronato\Negocio\Services\CargosPendientesService;
 use Patronato\Negocio\Services\CategoriaFinancieraService;
+use Patronato\Negocio\Services\MedioEntradaService;
 use Patronato\Negocio\Services\PermisoService;
 use Patronato\Negocio\Services\TipoIncidenciaService;
 use Patronato\Negocio\Services\TipoViviendaService;
@@ -58,12 +59,13 @@ class AppServiceProvider extends ServiceProvider
         $this->configureDefaults();
 
         // Patrón Observer (comportamiento): reacciona cuando se crea un residencial
-        // Cada residencial nuevo recibe los permisos de sus roles, sus tipos de vivienda, sus categorías de egreso e ingreso y sus tipos de incidencia
+        // Cada residencial nuevo recibe sus permisos y catálogos iniciales.
         Residencial::created(function (Residencial $residencial) {
             app(PermisoService::class)->asignarPredeterminados($residencial->id);
             app(TipoViviendaService::class)->crearPredeterminados($residencial->id);
             app(CategoriaFinancieraService::class)->crearPredeterminadas($residencial->id);
             app(TipoIncidenciaService::class)->crearPredeterminados($residencial->id);
+            app(MedioEntradaService::class)->crearPredeterminados($residencial->id);
         });
 
         // Patrón Observer (comportamiento): los oyentes reaccionan a los eventos del pago
