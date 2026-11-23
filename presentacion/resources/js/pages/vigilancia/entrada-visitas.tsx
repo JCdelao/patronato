@@ -1,13 +1,21 @@
-import { Form, Head } from '@inertiajs/react';
+import { Form, Head, useForm } from '@inertiajs/react';
 import { CircleCheck, DoorOpen } from 'lucide-react';
+import type { SubmitEvent } from 'react';
 import { useState } from 'react';
 import VisitaController from '@/actions/Patronato/Presentacion/Controllers/VisitaController';
 import InputError from '@/components/input-error';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
+import { formatoFechaHora } from '@/lib/formato';
 
 const claseSelect =
     'h-10 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-xs focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none';
@@ -22,16 +30,125 @@ const campos = [
     { nombre: 'motivo', etiqueta: 'Motivo de la visita', limite: 255 },
 ];
 
+type VisitaDentro = {
+    id: number;
+    visitante: string;
+    vivienda: string;
+    entrada_en: string;
+};
+
+function VisitasDentro({ visitas }: { visitas: VisitaDentro[] }) {
+    const [seleccion, setSeleccion] = useState<VisitaDentro | null>(null);
+    const salida = useForm<{ salida?: string; turno?: string }>({});
+
+    function registrarSalida(event: SubmitEvent<HTMLFormElement>) {
+        event.preventDefault();
+        if (seleccion) {
+            salida.post(VisitaController.salida.url(seleccion.id), {
+                preserveScroll: true,
+                onSuccess: () => setSeleccion(null),
+            });
+        }
+    }
+
+    return (
+        <section className="space-y-4" aria-labelledby="visitas-dentro">
+            <h2 id="visitas-dentro" className="text-xl font-semibold">
+                Visitas dentro
+            </h2>
+            {visitas.length === 0 ? (
+                <p className="text-muted-foreground">
+                    No hay visitas pendientes de salida.
+                </p>
+            ) : (
+                <ul className="divide-y rounded-xl border">
+                    {visitas.map((visita) => (
+                        <li
+                            key={visita.id}
+                            className="flex flex-wrap items-center justify-between gap-3 p-4"
+                        >
+                            <div>
+                                <p className="font-medium break-all">
+                                    {visita.visitante}
+                                </p>
+                                <p className="text-sm text-muted-foreground">
+                                    Vivienda {visita.vivienda} · Entrada{' '}
+                                    <time dateTime={visita.entrada_en}>
+                                        {formatoFechaHora(visita.entrada_en)}
+                                    </time>
+                                </p>
+                            </div>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => {
+                                    salida.clearErrors();
+                                    setSeleccion(visita);
+                                }}
+                            >
+                                Registrar salida
+                            </Button>
+                        </li>
+                    ))}
+                </ul>
+            )}
+            {seleccion && (
+                <Dialog
+                    open
+                    onOpenChange={(abierto) => {
+                        if (!abierto && !salida.processing) {
+                            setSeleccion(null);
+                        }
+                    }}
+                >
+                    <DialogContent>
+                        <DialogTitle>¿Registrar la salida?</DialogTitle>
+                        <DialogDescription>
+                            Se guardará la hora de salida de{' '}
+                            {seleccion.visitante}, de la vivienda{' '}
+                            {seleccion.vivienda}.
+                        </DialogDescription>
+                        <InputError
+                            message={
+                                salida.errors.salida ?? salida.errors.turno
+                            }
+                        />
+                        <form
+                            onSubmit={registrarSalida}
+                            className="flex flex-wrap justify-end gap-2"
+                        >
+                            <Button
+                                type="button"
+                                variant="outline"
+                                disabled={salida.processing}
+                                onClick={() => setSeleccion(null)}
+                            >
+                                Cancelar
+                            </Button>
+                            <Button disabled={salida.processing}>
+                                {salida.processing && <Spinner />}
+                                Registrar salida
+                            </Button>
+                        </form>
+                    </DialogContent>
+                </Dialog>
+            )}
+        </section>
+    );
+}
+
 export default function EntradaVisitas({
     guardia,
     viviendas,
     medios,
     identificador,
+    visitasDentro,
 }: {
     guardia: string;
     viviendas: { id: number; codigo: string }[];
     medios: { id: number; nombre: string; requiere_placa: boolean }[];
     identificador: string | null;
+    visitasDentro: VisitaDentro[];
 }) {
     const [medioId, setMedioId] = useState('');
     const requierePlaca = medios.some(
@@ -182,6 +299,7 @@ export default function EntradaVisitas({
                         </>
                     )}
                 </Form>
+                <VisitasDentro visitas={visitasDentro} />
             </div>
         </>
     );

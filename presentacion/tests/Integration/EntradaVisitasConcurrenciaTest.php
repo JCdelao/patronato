@@ -182,3 +182,51 @@ test('registration rejects the stale choice when deletion commits first', functi
         ->and($eliminado)->toBeTrue()
         ->and(($this->visitas)())->toBe(0);
 });
+
+test('concurrent guards cannot record two exits for the same visit', function () {
+    $visita = ($this->registrar)();
+    $residencialId = $this->guardia->residencial_id;
+    $otraCuenta = User::factory()->create([
+        'residencial_id' => $residencialId, 'rol_id' => $this->cuenta->rol_id, 'activo' => true,
+    ]);
+    $otroGuardia = Guardia::query()->create([
+        'residencial_id' => $residencialId, 'user_id' => $otraCuenta->id,
+        'identidad' => 'G-02', 'nombre' => 'Otro guardia', 'turno' => 'dia',
+    ]);
+    Turno::query()->create([
+        'residencial_id' => $residencialId, 'guardia_id' => $otroGuardia->id, 'tipo' => 'dia',
+        'inicio' => now()->subHour(), 'fin' => now()->addHour(), 'inicio_real' => now()->subHour(),
+    ]);
+    $registrarSalidaConcurrente = function () use ($otraCuenta, $visita): void {
+        $principal = DB::getDefaultConnection();
+        DB::setDefaultConnection($this->administracion->getName());
+        try {
+            app(VisitaService::class)->registrarSalida($otraCuenta, $visita->id);
+        } finally {
+            DB::setDefaultConnection($principal);
+        }
+    };
+
+    $bloqueo = null;
+    $this->administracion->statement("set lock_timeout = '150ms'");
+    $this->principal->beforeExecuting(function (string $sql) use ($registrarSalidaConcurrente, &$bloqueo) {
+        if (str_starts_with($sql, 'update "visitas"')) {
+            try {
+                $registrarSalidaConcurrente();
+            } catch (QueryException $error) {
+                $bloqueo = $error->getCode();
+            }
+        }
+    });
+
+    app(VisitaService::class)->registrarSalida($this->cuenta, $visita->id);
+    $salida = $this->principal->table('visitas')->where('id', $visita->id)->first();
+    expect($bloqueo)->toBe('55P03')
+        ->and($salida->salida_en)->not->toBeNull()
+        ->and((int) $salida->guardia_salida_id)->toBe($this->guardia->id);
+
+    expect($registrarSalidaConcurrente)->toThrow(ValidationException::class, 'La salida de esta visita ya fue registrada.');
+    expect($this->principal->table('visitas')->where('id', $visita->id)->first())->toEqual($salida)
+        ->and($this->principal->table('auditoria')->where('accion', 'visita_salida_registrada')
+            ->where('entidad_id', $visita->id)->count())->toBe(1);
+});

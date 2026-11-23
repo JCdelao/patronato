@@ -24,7 +24,17 @@ class VisitaController extends Controller
             'viviendas' => $this->visitas->viviendas($guardia),
             'medios' => $this->medios->listado($guardia->residencial_id, soloActivos: true),
             'identificador' => $request->session()->get('visita_registrada'),
+            'visitasDentro' => $this->visitas->dentro($guardia),
         ]);
+    }
+
+    public function salida(Request $request, int $visita): RedirectResponse
+    {
+        $this->visitas->registrarSalida($this->usuario($request), $visita);
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => 'Salida registrada.']);
+
+        return to_route('vigilancia.visitas.create');
     }
 
     public function store(RegistrarVisitaRequest $request): RedirectResponse
