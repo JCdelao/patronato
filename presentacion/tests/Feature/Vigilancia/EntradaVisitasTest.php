@@ -264,3 +264,101 @@ test('reports a foreign key rejection for a reference outside the catalog checks
         Schema::drop('referencias_medios_prueba');
     }
 });
+
+function visitaHistoricaParaSalida(Residencial $residencial, Vivienda $vivienda, Guardia $guardia, MedioEntrada $medio, array $cambios = []): int
+{
+    return DB::table('visitas')->insertGetId([
+        'identificador' => (string) Str::uuid(),
+        'residencial_id' => $residencial->id,
+        'vivienda_id' => $vivienda->id,
+        'guardia_entrada_id' => $guardia->id,
+        'medio_entrada_id' => $medio->id,
+        'nombre_visitante' => 'Visita histórica',
+        'entrada_en' => now()->subHour(),
+        ...$cambios,
+    ]);
+}
+
+test('lists only open visits in the guard residential, including historical entries', function () {
+    $medio = ($this->medio)('A pie');
+    $abierta = visitaHistoricaParaSalida($this->residencial, $this->casa, $this->guardia, $medio);
+    visitaHistoricaParaSalida($this->residencial, $this->casa, $this->guardia, $medio, ['salida_en' => now()]);
+    $guardiaAjeno = Guardia::query()->create([
+        'residencial_id' => $this->otro->id, 'nombre' => 'Guardia de otro residencial',
+        'identidad' => 'GUARDIA-AJENO', 'turno' => 'dia',
+    ]);
+    $ajena = visitaHistoricaParaSalida($this->otro, ($this->vivienda)($this->otro), $guardiaAjeno, ($this->medio)('A pie', $this->otro));
+
+    $this->actingAs($this->cuenta)->get(route('vigilancia.visitas.create'))
+        ->assertInertia(fn (AssertableInertia $page) => $page->has('visitasDentro', 1)
+            ->where('visitasDentro.0.id', $abierta)
+            ->where('visitasDentro.0.visitante', 'Visita histórica')
+            ->where('visitasDentro.0.vivienda', $this->casa->codigo)
+            ->where('visitasDentro.0.entrada_en', now()->subHour()->toIso8601String()));
+
+    $this->post(route('vigilancia.visitas.salida', $ajena))->assertNotFound();
+    $this->assertDatabaseHas('visitas', ['id' => $ajena, 'salida_en' => null]);
+});
+
+test('closes another guard historical entry with server time and audits it only once', function () {
+    $guardiaEntrada = Guardia::query()->create([
+        'residencial_id' => $this->residencial->id, 'nombre' => 'Guardia de entrada',
+        'identidad' => 'GUARDIA-ENTRADA', 'turno' => 'dia',
+    ]);
+    $id = visitaHistoricaParaSalida($this->residencial, $this->casa, $guardiaEntrada, ($this->medio)('A pie'));
+    $ruta = route('vigilancia.visitas.salida', $id);
+    $datosEsperados = [
+        'id' => $id,
+        'entrada_en' => now()->subHour()->toDateTimeString(),
+        'turno_entrada_id' => null,
+        'guardia_entrada_id' => $guardiaEntrada->id,
+        'guardia_salida_id' => $this->guardia->id,
+        'salida_en' => now()->toDateTimeString(),
+    ];
+
+    $this->actingAs($this->cuenta)->post($ruta, [
+        'salida_en' => '2030-01-01 12:00:00', 'guardia_salida_id' => $guardiaEntrada->id,
+    ])->assertRedirect(route('vigilancia.visitas.create'))->assertSessionHasNoErrors();
+    $this->assertDatabaseHas('visitas', $datosEsperados);
+    $this->get(route('vigilancia.visitas.create'))
+        ->assertInertia(fn (AssertableInertia $page) => $page->has('visitasDentro', 0));
+
+    $this->travel(10)->minutes();
+    $this->post($ruta)->assertSessionHasErrors(['salida' => 'La salida de esta visita ya fue registrada.']);
+    $this->assertDatabaseHas('visitas', $datosEsperados);
+    expect(DB::table('auditoria')->where('accion', 'visita_salida_registrada')->count())->toBe(1);
+    $this->assertDatabaseHas('auditoria', [
+        'accion' => 'visita_salida_registrada', 'entidad' => 'visitas', 'entidad_id' => $id,
+        'user_id' => $this->cuenta->id, 'valor_nuevo->guardia_salida_id' => $this->guardia->id,
+    ]);
+});
+
+test('rejects unauthorized, inactive and off-duty guards without changing the visit', function () {
+    $id = visitaHistoricaParaSalida($this->residencial, $this->casa, $this->guardia, ($this->medio)('A pie'));
+    $ruta = route('vigilancia.visitas.salida', $id);
+    $this->actingAs(($this->usuario)(Rol::RESIDENTE))->post($ruta)->assertForbidden();
+    $this->actingAs($this->cuenta);
+    $this->guardia->update(['activo' => false]);
+    $this->post($ruta)->assertForbidden();
+    $this->guardia->update(['activo' => true]);
+    $this->turno->update(['inicio_real' => null]);
+    $this->post($ruta)->assertSessionHasErrors('turno');
+    $this->turno->update(['inicio_real' => now()->subHour()]);
+    EntregaTurno::query()->create([
+        'residencial_id' => $this->residencial->id, 'turno_id' => $this->turno->id,
+        'guardia_entrega_id' => $this->guardia->id, 'entregado_en' => now(),
+    ]);
+    $this->post($ruta)->assertSessionHasErrors('turno');
+    $this->assertDatabaseHas('visitas', ['id' => $id, 'salida_en' => null, 'guardia_salida_id' => null]);
+    $this->assertDatabaseMissing('auditoria', ['accion' => 'visita_salida_registrada']);
+});
+
+test('preserves historical entries whose entry time is in the future', function () {
+    $entrada = now()->addHour();
+    $id = visitaHistoricaParaSalida($this->residencial, $this->casa, $this->guardia, ($this->medio)('A pie'), ['entrada_en' => $entrada]);
+
+    $this->actingAs($this->cuenta)->post(route('vigilancia.visitas.salida', $id))
+        ->assertSessionHasErrors(['salida' => 'La hora de entrada está en el futuro. No se registró la salida.']);
+    $this->assertDatabaseHas('visitas', ['id' => $id, 'entrada_en' => $entrada->toDateTimeString(), 'salida_en' => null]);
+    $this->assertDatabaseMissing('auditoria', ['accion' => 'visita_salida_registrada']);
+});

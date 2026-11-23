@@ -241,6 +241,10 @@ jobs:
         if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
         run: php artisan test tests/Feature/Vigilancia/IncidenciasTest.php
 
+      - name: Pruebas HU-42 y HU-43 · Entrada y salida de visitas
+        if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
+        run: php artisan test tests/Feature/Vigilancia/EntradaVisitasTest.php tests/Feature/Vigilancia/EntradaVisitasMigracionTest.php
+
       - name: Pruebas de los datos de demostración
         if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
         run: php artisan test tests/Feature/DemostracionSeederTest.php
@@ -301,7 +305,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y postgresql-common
           sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
-          sudo apt-get install -y postgresql-client-18
+          sudo apt-get install -y postgresql-18
 
       - name: Preparar PHP
         uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962
@@ -343,3 +347,14 @@ jobs:
           echo "Original: $original"
           echo "Restaurada: $restaurada"
           test "$original" = "$restaurada"
+
+      - name: Pruebas de concurrencia de visitas en PostgreSQL desechable
+        run: |
+          fixture="$(mktemp -d "$RUNNER_TEMP/visitas-pg.XXXXXX")"
+          "$PG_BIN_PATH/initdb" -D "$fixture" -U hu42_fixture -A trust --encoding=UTF8 --no-locale
+          "$PG_BIN_PATH/pg_ctl" -D "$fixture" -l "$fixture/server.log" -o "-h 127.0.0.1 -p 55442 -k $fixture" -w start
+          trap '"$PG_BIN_PATH/pg_ctl" -D "$fixture" -m fast -w stop' EXIT
+          "$PG_BIN_PATH/createdb" -h 127.0.0.1 -p 55442 -U hu42_fixture hu42_fixture
+          APP_ENV=testing DB_CONNECTION=pgsql DB_HOST=127.0.0.1 DB_PORT=55442 \
+            DB_DATABASE=hu42_fixture DB_USERNAME=hu42_fixture DB_PASSWORD= DB_URL=null \
+            HU42_PG_FIXTURE_DIR="$fixture" php vendor/bin/pest tests/Integration/EntradaVisitasConcurrenciaTest.php

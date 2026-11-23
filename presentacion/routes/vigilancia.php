@@ -16,6 +16,7 @@ Route::middleware(['auth', 'verified'])
         Route::middleware("can:permiso,'visitas','registrar'")->group(function () {
             Route::get('entrada-visitas', [VisitaController::class, 'create'])->name('visitas.create');
             Route::post('entrada-visitas', [VisitaController::class, 'store'])->name('visitas.store');
+            Route::post('entrada-visitas/{visita}/salida', [VisitaController::class, 'salida'])->whereNumber('visita')->name('visitas.salida');
         });
 
         Route::middleware("can:permiso,'medios_entrada','registrar'")->group(function () {

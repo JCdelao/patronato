@@ -7,6 +7,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Patronato\Persistencia\Models\Guardia;
+use Patronato\Persistencia\Models\Turno;
 use Patronato\Persistencia\Models\User;
 use Patronato\Persistencia\Models\Visita;
 use Patronato\Persistencia\Models\Vivienda;
@@ -49,30 +50,23 @@ class VisitaService
         ])->all());
     }
 
+    /** @return list<array{id: int, visitante: string, vivienda: string, entrada_en: string}> */
+    public function dentro(Guardia $guardia): array
+    {
+        return array_values($this->visitas->dentro($guardia->residencial_id)->map(fn (Visita $visita) => [
+            'id' => $visita->id,
+            'visitante' => $visita->nombre_visitante,
+            'vivienda' => $visita->vivienda->codigo,
+            'entrada_en' => $visita->entrada_en->toIso8601String(),
+        ])->all());
+    }
+
     /** @param array{nombre_visitante: string, identidad: string, motivo: string, vivienda_id: int|string, medio_entrada_id: int|string, placa?: string|null} $datos */
     public function registrar(User $usuario, array $datos): Visita
     {
         return $this->transaccion->ejecutar(function () use ($usuario, $datos): Visita {
-            $residencialId = $usuario->residencial_id;
-            abort_if($residencialId === null, 403, 'Esta cuenta no está vinculada a un guardia activo.');
-
-            // Guardia -> cuenta -> turno -> medio. La desactivación también empieza por el guardia.
-            $guardia = $this->guardias->bloquearActivoDeUsuario($usuario->id, $residencialId);
-            abort_if($guardia === null, 403, 'Esta cuenta no está vinculada a un guardia activo.');
-            $cuenta = $this->bloquearCuenta($usuario->id);
-            abort_if(
-                $cuenta === null || $cuenta->residencial_id !== $residencialId
-                    || $cuenta->motivoSinAcceso() !== null || ! $this->permisos->puede($cuenta, 'visitas', 'registrar'),
-                403,
-                'Esta cuenta no está autorizada para registrar entradas.',
-            );
-            $turno = $this->turnos->enCurso($guardia->id);
-
-            // La entrega bloquea la misma fila. Tras adquirir el bloqueo, se vuelve a comprobar el turno.
-            if ($turno === null || $this->turnos->bloquearRegistro($turno->id) === null
-                || $this->turnos->enCurso($guardia->id)?->id !== $turno->id) {
-                throw ValidationException::withMessages(['turno' => 'Inicia tu turno antes de registrar una entrada.']);
-            }
+            [$guardia, $cuenta, $turno] = $this->bloquearContexto($usuario, 'entrada');
+            $residencialId = $guardia->residencial_id;
 
             $vivienda = $this->viviendas->buscar((int) $datos['vivienda_id']);
             if ($vivienda === null || $vivienda->residencial_id !== $residencialId) {
@@ -102,6 +96,58 @@ class VisitaService
 
             return $visita;
         });
+    }
+
+    public function registrarSalida(User $usuario, int $visitaId): void
+    {
+        $this->transaccion->ejecutar(function () use ($usuario, $visitaId): void {
+            [$guardia, $cuenta] = $this->bloquearContexto($usuario, 'salida');
+            $residencialId = $guardia->residencial_id;
+            $visita = $this->visitas->bloquear($residencialId, $visitaId);
+            $hora = CarbonImmutable::now()->utc();
+
+            if ($visita->salida_en === null && $visita->entrada_en->isAfter($hora)) {
+                throw ValidationException::withMessages(['salida' => 'La hora de entrada está en el futuro. No se registró la salida.']);
+            }
+
+            if (! $this->visitas->registrarSalida($residencialId, $visitaId, $guardia->id, $hora)) {
+                throw ValidationException::withMessages(['salida' => 'La salida de esta visita ya fue registrada.']);
+            }
+
+            $this->auditoria->registrar($cuenta, 'vigilancia', 'visita_salida_registrada', $visita, [
+                'valor_nuevo' => ['salida_en' => $hora->toIso8601String(), 'guardia_salida_id' => $guardia->id],
+            ]);
+        });
+    }
+
+    /**
+     * @param  'entrada'|'salida'  $operacion
+     * @return array{Guardia, User, Turno}
+     */
+    private function bloquearContexto(User $usuario, string $operacion): array
+    {
+        $residencialId = $usuario->residencial_id;
+        abort_if($residencialId === null, 403, 'Esta cuenta no está vinculada a un guardia activo.');
+
+        // Mantén el orden guardia -> cuenta -> turno antes de bloquear el medio o la visita.
+        $guardia = $this->guardias->bloquearActivoDeUsuario($usuario->id, $residencialId);
+        abort_if($guardia === null, 403, 'Esta cuenta no está vinculada a un guardia activo.');
+        $cuenta = $this->bloquearCuenta($usuario->id);
+        abort_if(
+            $cuenta === null || $cuenta->residencial_id !== $residencialId
+                || $cuenta->motivoSinAcceso() !== null || ! $this->permisos->puede($cuenta, 'visitas', 'registrar'),
+            403,
+            "Esta cuenta no está autorizada para registrar {$operacion}s.",
+        );
+        $turno = $this->turnos->enCurso($guardia->id);
+
+        // La entrega bloquea la misma fila. Vuelve a comprobar el turno después del bloqueo.
+        if ($turno === null || $this->turnos->bloquearRegistro($turno->id) === null
+            || $this->turnos->enCurso($guardia->id)?->id !== $turno->id) {
+            throw ValidationException::withMessages(['turno' => "Inicia tu turno antes de registrar una {$operacion}."]);
+        }
+
+        return [$guardia, $cuenta, $turno];
     }
 
     private function bloquearCuenta(int $id): ?User
