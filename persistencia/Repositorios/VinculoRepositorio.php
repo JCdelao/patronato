@@ -26,6 +26,13 @@ class VinculoRepositorio extends Repositorio
             ->get();
     }
 
+    public function bloquearVigente(int $residencialId, int $residenteId, int $viviendaId): ?ViviendaResidente
+    {
+        return $this->vigentes()->where('residencial_id', $residencialId)
+            ->where('residente_id', $residenteId)->where('vivienda_id', $viviendaId)
+            ->lockForUpdate()->first();
+    }
+
     /**
      * Residentes que viven hoy en la vivienda, por nombre
      *

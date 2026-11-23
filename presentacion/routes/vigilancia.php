@@ -5,6 +5,7 @@ use Patronato\Presentacion\Controllers\EntregaTurnoController;
 use Patronato\Presentacion\Controllers\GuardiaController;
 use Patronato\Presentacion\Controllers\IncidenciaController;
 use Patronato\Presentacion\Controllers\MedioEntradaController;
+use Patronato\Presentacion\Controllers\PreautorizacionController;
 use Patronato\Presentacion\Controllers\TipoIncidenciaController;
 use Patronato\Presentacion\Controllers\TurnoController;
 use Patronato\Presentacion\Controllers\VisitaController;
@@ -14,6 +15,8 @@ Route::middleware(['auth', 'verified'])
     ->name('vigilancia.')
     ->group(function () {
         Route::middleware("can:permiso,'visitas','registrar'")->group(function () {
+            Route::get('viviendas/{vivienda}/preautorizaciones', [PreautorizacionController::class, 'index'])
+                ->whereNumber('vivienda')->name('preautorizaciones.index');
             Route::get('entrada-visitas', [VisitaController::class, 'create'])->name('visitas.create');
             Route::post('entrada-visitas', [VisitaController::class, 'store'])->name('visitas.store');
             Route::post('entrada-visitas/{visita}/salida', [VisitaController::class, 'salida'])->whereNumber('visita')->name('visitas.salida');

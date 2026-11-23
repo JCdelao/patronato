@@ -7,15 +7,18 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Patronato\Negocio\Services\MedioEntradaService;
+use Patronato\Negocio\Services\PreautorizacionService;
 use Patronato\Negocio\Services\VisitaService;
 use Patronato\Persistencia\Models\Guardia;
 use Patronato\Persistencia\Models\MedioEntrada;
 use Patronato\Persistencia\Models\Residencial;
+use Patronato\Persistencia\Models\Residente;
 use Patronato\Persistencia\Models\Rol;
 use Patronato\Persistencia\Models\TipoVivienda;
 use Patronato\Persistencia\Models\Turno;
 use Patronato\Persistencia\Models\User;
 use Patronato\Persistencia\Models\Vivienda;
+use Patronato\Persistencia\Models\ViviendaResidente;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\TestCase;
 
@@ -230,3 +233,62 @@ test('concurrent guards cannot record two exits for the same visit', function ()
         ->and($this->principal->table('auditoria')->where('accion', 'visita_salida_registrada')
             ->where('entidad_id', $visita->id)->count())->toBe(1);
 });
+
+test('serializes identical preauthorizations and rejects a link closed during the request', function (bool $cerrarVinculo) {
+    $residencial = $this->guardia->residencial_id;
+    $usuario = User::factory()->create([
+        'residencial_id' => $residencial, 'rol_id' => Rol::query()->where('codigo', Rol::RESIDENTE)->value('id'),
+    ]);
+    $residente = Residente::query()->create([
+        'residencial_id' => $residencial, 'user_id' => $usuario->id,
+        'nombres' => 'Residente', 'apellidos' => 'Ficticio',
+    ]);
+    $vivienda = $this->datos['vivienda_id'];
+    $vinculo = ViviendaResidente::query()->create([
+        'residencial_id' => $residencial, 'residente_id' => $residente->id,
+        'vivienda_id' => $vivienda, 'tipo' => 'propietario',
+    ]);
+    $crear = fn () => app(PreautorizacionService::class)->crear(
+        $usuario, $vivienda, $this->medio->id, 'Visitante ficticio', '2026-11-23T14:00', '2026-11-23T15:00',
+    );
+    $competir = function () use ($crear): bool {
+        $principal = DB::getDefaultConnection();
+        DB::setDefaultConnection($this->administracion->getName());
+        try {
+            return $crear();
+        } finally {
+            DB::setDefaultConnection($principal);
+        }
+    };
+    $intervino = false;
+    $bloqueo = null;
+    $this->administracion->statement("set lock_timeout = '150ms'");
+    $this->principal->beforeExecuting(function (string $sql) use ($cerrarVinculo, $competir, $vinculo, &$intervino, &$bloqueo) {
+        if ($intervino) {
+            return;
+        }
+        if ($cerrarVinculo && str_contains($sql, 'from "vivienda_residentes"') && str_contains($sql, 'for update')) {
+            $intervino = true;
+            $this->administracion->table('vivienda_residentes')->where('id', $vinculo->id)->update(['fecha_fin' => now()->toDateString()]);
+        } elseif (! $cerrarVinculo && str_starts_with($sql, 'insert into "preautorizaciones"')) {
+            $intervino = true;
+            try {
+                $competir();
+            } catch (QueryException $error) {
+                $bloqueo = $error->getCode();
+            }
+        }
+    });
+
+    if ($cerrarVinculo) {
+        expect($crear)->toThrow(ValidationException::class, 'Elige una vivienda activa donde tengas un vínculo vigente.');
+    } else {
+        expect($crear())->toBeTrue()->and($bloqueo)->toBe('55P03');
+        expect($competir())->toBeFalse();
+    }
+    $cantidad = $cerrarVinculo ? 0 : 1;
+    expect($intervino)->toBeTrue()
+        ->and($this->principal->table('preautorizaciones')->where('residencial_id', $residencial)->count())->toBe($cantidad)
+        ->and($this->principal->table('auditoria')->where('residencial_id', $residencial)
+            ->where('accion', 'preautorizacion_creada')->count())->toBe($cantidad);
+})->with(['concurrent duplicate' => false, 'concurrent link closure' => true]);
