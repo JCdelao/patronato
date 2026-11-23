@@ -20,6 +20,7 @@ import {
     Landmark,
     LayoutGrid,
     PiggyBank,
+    QrCode,
     Receipt,
     ReceiptText,
     ScrollText,
@@ -52,6 +53,7 @@ import MedioEntradaController from '@/actions/Patronato/Presentacion/Controllers
 import PagoController from '@/actions/Patronato/Presentacion/Controllers/PagoController';
 import PresupuestoController from '@/actions/Patronato/Presentacion/Controllers/PresupuestoController';
 import ParametroCobroController from '@/actions/Patronato/Presentacion/Controllers/ParametroCobroController';
+import PortalQrController from '@/actions/Patronato/Presentacion/Controllers/PortalQrController';
 import PortalTransferenciaController from '@/actions/Patronato/Presentacion/Controllers/PortalTransferenciaController';
 import PortalPreautorizacionController from '@/actions/Patronato/Presentacion/Controllers/PortalPreautorizacionController';
 import ReporteCobrosController from '@/actions/Patronato/Presentacion/Controllers/ReporteCobrosController';
@@ -87,6 +89,7 @@ export function AppSidebar() {
     const registraVisitas = auth.esGuardia && permite('visitas.registrar');
     const configuraMedios = permite('medios_entrada.registrar');
     const registraFrecuentes = permite('autorizados_frecuentes.registrar');
+    const puedeUsarQr = auth.esResidente && permite('portal.registrar');
 
     // Solo se muestran las opciones que el usuario puede usar, agrupadas por tema
     const opciones: (Opcion | Grupo)[] = [
@@ -254,6 +257,12 @@ export function AppSidebar() {
                     visible: registraFrecuentes,
                 },
                 {
+                    title: 'Mi código QR',
+                    href: PortalQrController.show(),
+                    icon: QrCode,
+                    visible: puedeUsarQr,
+                },
+                {
                     title: 'Guardias',
                     href: GuardiaController.index(),
                     icon: UserCheck,
@@ -324,7 +333,7 @@ export function AppSidebar() {
         },
     ];
 
-    // Un grupo sin opciones no aparece y uno con una sola opción se muestra suelto
+    // Seguridad conserva el submenú cuando incluye el código QR del residente.
     const items = opciones.flatMap((opcion): (NavItem | NavGroup)[] => {
         if (!('items' in opcion)) {
             return opcion.visible ? [opcion] : [];
@@ -334,7 +343,7 @@ export function AppSidebar() {
 
         const conservaSubmenu =
             opcion.title === 'Seguridad' &&
-            (registraVisitas || configuraMedios || registraFrecuentes);
+            (registraVisitas || configuraMedios || registraFrecuentes || puedeUsarQr);
 
         return visibles.length > 1 || conservaSubmenu
             ? [{ ...opcion, items: visibles }]
