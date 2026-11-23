@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Patronato\Negocio\Services\MedioEntradaService;
 use Patronato\Negocio\Services\VisitaService;
 use Patronato\Persistencia\Models\Guardia;
 use Patronato\Persistencia\Models\MedioEntrada;
@@ -72,6 +73,7 @@ beforeEach(function () {
         'residencial_id' => $r->id, 'tipo_vivienda_id' => $tipo->id, 'codigo' => 'A-01',
     ]);
     $medio = MedioEntrada::query()->where('residencial_id', $r->id)->where('nombre', 'A pie')->firstOrFail();
+    $this->medio = $medio;
     $this->datos = [
         'vivienda_id' => $vivienda->id, 'medio_entrada_id' => $medio->id,
         'nombre_visitante' => 'Visitante ficticio', 'identidad' => 'V-01', 'motivo' => 'Prueba',
@@ -141,5 +143,42 @@ test('does not wait on a locked account while holding the guard lock', function 
     }
 
     expect($this->registrar)->toThrow(HttpException::class, 'Esta cuenta no está autorizada para registrar entradas.')
+        ->and(($this->visitas)())->toBe(0);
+});
+
+test('registration locks the entry medium until its visit commits and then deletion preserves it', function () {
+    $bloqueo = null;
+    $this->principal->beforeExecuting(function (string $sql) use (&$bloqueo) {
+        if (str_starts_with($sql, 'insert into "visitas"')) {
+            try {
+                $this->administracion->table('medios_entrada')->where('id', $this->medio->id)
+                    ->lock('for update nowait')->first();
+            } catch (QueryException $error) {
+                $bloqueo = $error->getCode();
+            }
+        }
+    });
+
+    ($this->registrar)();
+    expect($bloqueo)->toBe('55P03');
+    expect(fn () => app(MedioEntradaService::class)->eliminar($this->cuenta, $this->medio))
+        ->toThrow(ValidationException::class);
+    expect($this->medio->fresh())->not->toBeNull()
+        ->and(($this->visitas)())->toBe(1);
+});
+
+test('registration rejects the stale choice when deletion commits first', function () {
+    $eliminado = false;
+    $this->principal->beforeExecuting(function (string $sql) use (&$eliminado) {
+        if (! $eliminado && str_contains($sql, 'from "medios_entrada"') && str_contains($sql, 'for update')) {
+            $this->administracion->transaction(function () {
+                $this->administracion->table('medios_entrada')->where('id', $this->medio->id)->delete();
+            });
+            $eliminado = true;
+        }
+    });
+
+    expect($this->registrar)->toThrow(ValidationException::class)
+        ->and($eliminado)->toBeTrue()
         ->and(($this->visitas)())->toBe(0);
 });

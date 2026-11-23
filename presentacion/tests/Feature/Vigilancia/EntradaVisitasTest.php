@@ -2,12 +2,16 @@
 
 use Carbon\CarbonImmutable;
 use Database\Seeders\RolesSeeder;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Inertia\Testing\AssertableInertia;
 use Patronato\Persistencia\Models\EntregaTurno;
 use Patronato\Persistencia\Models\Guardia;
 use Patronato\Persistencia\Models\MedioEntrada;
 use Patronato\Persistencia\Models\Residencial;
+use Patronato\Persistencia\Models\Residente;
 use Patronato\Persistencia\Models\Rol;
 use Patronato\Persistencia\Models\Turno;
 use Patronato\Persistencia\Models\User;
@@ -173,4 +177,90 @@ test('rejects malformed visitor details', function () {
         'placa' => str_repeat('P', 21),
     ]))->assertSessionHasErrors(['nombre_visitante', 'identidad', 'motivo', 'vivienda_id', 'medio_entrada_id', 'placa']);
     $this->assertDatabaseCount('visitas', 0);
+});
+
+test('deletes an unused catalog entry and keeps its previous values in the audit log', function () {
+    $presidente = ($this->usuario)(Rol::PRESIDENTE);
+    $catalogo = route('vigilancia.medios-entrada.index');
+    $this->actingAs($presidente)->post(route('vigilancia.medios-entrada.store'), [
+        'nombre' => 'Medio creado por error', 'requiere_placa' => false, 'activo' => false,
+    ])->assertSessionHasNoErrors();
+    $medio = ($this->medio)('Medio creado por error');
+
+    $this->delete(route('vigilancia.medios-entrada.destroy', $medio))
+        ->assertRedirect($catalogo)->assertSessionHasNoErrors();
+
+    $this->assertDatabaseMissing('medios_entrada', ['id' => $medio->id]);
+    $this->assertDatabaseHas('auditoria', [
+        'residencial_id' => $this->residencial->id, 'user_id' => $presidente->id,
+        'entidad' => 'medios_entrada', 'entidad_id' => $medio->id,
+        'accion' => 'medio_entrada_eliminado',
+        'valor_anterior->nombre' => $medio->nombre,
+    ]);
+});
+
+test('rejects deletion without catalog permission or across residentials', function () {
+    $medio = ($this->medio)('A pie');
+    $ajeno = ($this->medio)('A pie', $this->otro);
+
+    $this->actingAs($this->cuenta)->delete(route('vigilancia.medios-entrada.destroy', $medio))->assertForbidden();
+    $this->actingAs(($this->usuario)(Rol::PRESIDENTE))
+        ->delete(route('vigilancia.medios-entrada.destroy', $ajeno))->assertForbidden();
+
+    $this->assertModelExists($medio);
+    $this->assertModelExists($ajeno);
+});
+
+test('keeps the entry medium and visit history when deletion is rejected', function () {
+    $medio = ($this->medio)('A pie');
+    $this->actingAs($this->cuenta)->post(route('vigilancia.visitas.store'), ($this->datos)())->assertSessionHasNoErrors();
+    $visita = Visita::query()->sole();
+
+    $this->actingAs(($this->usuario)(Rol::PRESIDENTE))
+        ->from(route('vigilancia.medios-entrada.index'))
+        ->delete(route('vigilancia.medios-entrada.destroy', $medio))
+        ->assertSessionHasErrors(['eliminar' => 'Este medio de entrada tiene registros asociados. Puedes desactivarlo para conservar el historial.']);
+
+    $this->assertDatabaseHas('medios_entrada', ['id' => $medio->id, 'activo' => true]);
+    $this->assertDatabaseHas('visitas', ['id' => $visita->id, 'medio_entrada_id' => $medio->id]);
+    $this->assertDatabaseMissing('auditoria', ['accion' => 'medio_entrada_eliminado']);
+});
+
+test('keeps entry media referenced only by a preauthorization', function () {
+    $medio = ($this->medio)('A pie');
+    $residente = Residente::query()->create([
+        'residencial_id' => $this->residencial->id, 'nombres' => 'Residente', 'apellidos' => 'De prueba', 'identidad' => 'RES-01',
+    ]);
+    $preautorizacion = DB::table('preautorizaciones')->insertGetId([
+        'residencial_id' => $this->residencial->id, 'vivienda_id' => $this->casa->id,
+        'residente_id' => $residente->id, 'medio_entrada_id' => $medio->id, 'nombre_visitante' => 'Ana Visitante',
+        'inicio' => now(), 'fin' => now()->addHour(),
+    ]);
+
+    $this->actingAs(($this->usuario)(Rol::PRESIDENTE))
+        ->delete(route('vigilancia.medios-entrada.destroy', $medio))->assertSessionHasErrors('eliminar');
+
+    $this->assertModelExists($medio);
+    $this->assertDatabaseHas('preautorizaciones', ['id' => $preautorizacion, 'medio_entrada_id' => $medio->id]);
+});
+
+test('reports a foreign key rejection for a reference outside the catalog checks', function () {
+    $medio = ($this->medio)('A pie');
+    Schema::create('referencias_medios_prueba', function (Blueprint $tabla) {
+        $tabla->foreignId('medio_entrada_id')->constrained('medios_entrada');
+    });
+
+    try {
+        DB::table('referencias_medios_prueba')->insert(['medio_entrada_id' => $medio->id]);
+
+        $this->actingAs(($this->usuario)(Rol::PRESIDENTE))
+            ->delete(route('vigilancia.medios-entrada.destroy', $medio))
+            ->assertSessionHasErrors('eliminar');
+
+        $this->assertModelExists($medio);
+        $this->assertDatabaseHas('referencias_medios_prueba', ['medio_entrada_id' => $medio->id]);
+        $this->assertDatabaseMissing('auditoria', ['accion' => 'medio_entrada_eliminado']);
+    } finally {
+        Schema::drop('referencias_medios_prueba');
+    }
 });

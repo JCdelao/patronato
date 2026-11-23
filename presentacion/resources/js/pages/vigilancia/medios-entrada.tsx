@@ -1,8 +1,15 @@
 import { Head, useForm } from '@inertiajs/react';
 import type { SubmitEvent } from 'react';
+import { useState } from 'react';
 import MedioEntradaController from '@/actions/Patronato/Presentacion/Controllers/MedioEntradaController';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
@@ -14,7 +21,13 @@ type Medio = {
     activo: boolean;
 };
 
-function FormularioMedio({ medio }: { medio?: Medio }) {
+function FormularioMedio({
+    medio,
+    onEliminar,
+}: {
+    medio?: Medio;
+    onEliminar?: () => void;
+}) {
     const id = medio?.id ?? 'nuevo';
     const form = useForm({
         nombre: medio?.nombre ?? '',
@@ -81,7 +94,17 @@ function FormularioMedio({ medio }: { medio?: Medio }) {
             <InputError
                 message={form.errors.requiere_placa ?? form.errors.activo}
             />
-            <div className="flex justify-end">
+            <div className="flex justify-end gap-2">
+                {medio && (
+                    <Button
+                        type="button"
+                        variant="destructive"
+                        onClick={onEliminar}
+                        disabled={form.processing}
+                    >
+                        Eliminar
+                    </Button>
+                )}
                 <Button
                     variant={medio ? 'outline' : 'default'}
                     disabled={form.processing}
@@ -95,6 +118,22 @@ function FormularioMedio({ medio }: { medio?: Medio }) {
 }
 
 export default function MediosEntrada({ medios }: { medios: Medio[] }) {
+    const [medioAEliminar, setMedioAEliminar] = useState<Medio | null>(null);
+    const eliminacion = useForm<{ eliminar?: string }>({});
+
+    function eliminar(event: SubmitEvent<HTMLFormElement>) {
+        event.preventDefault();
+        if (medioAEliminar) {
+            eliminacion.delete(
+                MedioEntradaController.destroy.url(medioAEliminar.id),
+                {
+                    preserveScroll: true,
+                    onSuccess: () => setMedioAEliminar(null),
+                },
+            );
+        }
+    }
+
     return (
         <>
             <Head title="Medios de entrada" />
@@ -107,9 +146,54 @@ export default function MediosEntrada({ medios }: { medios: Medio[] }) {
                     <FormularioMedio
                         key={`${medio.id}-${medio.nombre}-${medio.requiere_placa}-${medio.activo}`}
                         medio={medio}
+                        onEliminar={() => {
+                            eliminacion.clearErrors();
+                            setMedioAEliminar(medio);
+                        }}
                     />
                 ))}
             </div>
+            {medioAEliminar && (
+                <Dialog
+                    open
+                    onOpenChange={(abierto) => {
+                        if (!abierto && !eliminacion.processing) {
+                            setMedioAEliminar(null);
+                        }
+                    }}
+                >
+                    <DialogContent>
+                        <DialogTitle>
+                            ¿Eliminar {medioAEliminar.nombre}?
+                        </DialogTitle>
+                        <DialogDescription>
+                            Si el medio no tiene registros asociados, se
+                            eliminará definitivamente del catálogo.
+                        </DialogDescription>
+                        <InputError message={eliminacion.errors.eliminar} />
+                        <form
+                            onSubmit={eliminar}
+                            className="flex justify-end gap-2"
+                        >
+                            <Button
+                                type="button"
+                                variant="outline"
+                                disabled={eliminacion.processing}
+                                onClick={() => setMedioAEliminar(null)}
+                            >
+                                Cancelar
+                            </Button>
+                            <Button
+                                variant="destructive"
+                                disabled={eliminacion.processing}
+                            >
+                                {eliminacion.processing && <Spinner />}
+                                Eliminar
+                            </Button>
+                        </form>
+                    </DialogContent>
+                </Dialog>
+            )}
         </>
     );
 }

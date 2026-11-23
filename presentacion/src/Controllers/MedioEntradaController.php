@@ -33,6 +33,15 @@ class MedioEntradaController extends Controller
         return $this->guardar($request, $medio);
     }
 
+    public function destroy(Request $request, MedioEntrada $medio): RedirectResponse
+    {
+        $this->medios->eliminar($this->usuario($request), $medio);
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => 'Medio de entrada eliminado.']);
+
+        return to_route('vigilancia.medios-entrada.index');
+    }
+
     private function guardar(GuardarMedioEntradaRequest $request, ?MedioEntrada $medio = null): RedirectResponse
     {
         $this->medios->guardar(
