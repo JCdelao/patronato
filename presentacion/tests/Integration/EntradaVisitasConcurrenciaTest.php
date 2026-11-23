@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Patronato\Negocio\Services\AutorizadoFrecuenteService;
 use Patronato\Negocio\Services\MedioEntradaService;
 use Patronato\Negocio\Services\PreautorizacionService;
 use Patronato\Negocio\Services\VisitaService;
@@ -292,3 +293,52 @@ test('serializes identical preauthorizations and rejects a link closed during th
         ->and($this->principal->table('auditoria')->where('residencial_id', $residencial)
             ->where('accion', 'preautorizacion_creada')->count())->toBe($cantidad);
 })->with(['concurrent duplicate' => false, 'concurrent link closure' => true]);
+
+test('concurrent frequent authorizations share one record, one housing link and one audit', function () {
+    $residencial = $this->guardia->residencial_id;
+    $actor = User::factory()->create([
+        'residencial_id' => $residencial, 'rol_id' => Rol::query()->where('codigo', Rol::PRESIDENTE)->value('id'),
+    ]);
+    $vivienda = $this->datos['vivienda_id'];
+    $crear = fn () => app(AutorizadoFrecuenteService::class)->crear(
+        $actor, 'Proveedor', 'Jardinería', [1, 7], '22:00', '02:00', [$vivienda],
+    );
+    $competir = function () use ($crear): bool {
+        $principal = DB::getDefaultConnection();
+        DB::setDefaultConnection($this->administracion->getName());
+        try {
+            return $crear();
+        } finally {
+            DB::setDefaultConnection($principal);
+        }
+    };
+    $bloqueo = null;
+    $this->administracion->statement("set lock_timeout = '150ms'");
+    $this->principal->beforeExecuting(function (string $sql) use ($competir, &$bloqueo) {
+        if (str_starts_with($sql, 'insert into "autorizados_frecuentes"')) {
+            try {
+                $competir();
+            } catch (QueryException $error) {
+                $bloqueo = $error->getCode();
+            }
+        }
+    });
+
+    expect($crear())->toBeTrue()->and($bloqueo)->toBe('55P03');
+    expect($competir())->toBeFalse();
+    $registro = $this->principal->table('autorizados_frecuentes')->where('residencial_id', $residencial)->sole();
+    $vinculos = $this->principal->table('autorizado_frecuente_viviendas');
+    $datos = ['residencial_id' => $residencial, 'autorizado_id' => $registro->id, 'vivienda_id' => $vivienda];
+    expect($vinculos->where('autorizado_id', $registro->id)->count())->toBe(1)
+        ->and($this->principal->table('auditoria')->where('residencial_id', $residencial)
+            ->where('accion', 'autorizado_frecuente_creado')->count())->toBe(1);
+    $otro = Residencial::query()->create(['nombre' => 'Fixture externo '.Str::uuid()]);
+    $casaAjena = Vivienda::query()->create([
+        'residencial_id' => $otro->id, 'codigo' => 'A-01',
+        'tipo_vivienda_id' => TipoVivienda::query()->where('residencial_id', $otro->id)->value('id'),
+    ]);
+    expect(fn () => $vinculos->insert($datos))->toThrow(QueryException::class)
+        ->and(fn () => $vinculos->insert([...$datos, 'vivienda_id' => $casaAjena->id]))->toThrow(QueryException::class)
+        ->and(fn () => $this->principal->table('autorizados_frecuentes')->where('id', $registro->id)
+            ->update(['dias_semana' => '[8]']))->toThrow(QueryException::class);
+});

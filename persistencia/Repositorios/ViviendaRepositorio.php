@@ -59,6 +59,16 @@ class ViviendaRepositorio extends Repositorio
         return Vivienda::query()->find($id);
     }
 
+    /**
+     * @param  list<int>  $ids
+     * @return list<int>
+     */
+    public function bloquearActivas(int $residencial, array $ids): array
+    {
+        return array_values(array_map('intval', Vivienda::query()->where('residencial_id', $residencial)->whereKey($ids)
+            ->where('activa', true)->orderBy('id')->lockForUpdate()->pluck('id')->all()));
+    }
+
     /** @return Collection<int, Vivienda> */
     public function paraVisitas(int $residencialId): Collection
     {
