@@ -59,6 +59,13 @@ class ViviendaRepositorio extends Repositorio
         return Vivienda::query()->find($id);
     }
 
+    /** @return Collection<int, Vivienda> */
+    public function paraVisitas(int $residencialId): Collection
+    {
+        return Vivienda::query()->where('residencial_id', $residencialId)
+            ->orderBy('codigo')->get(['id', 'codigo']);
+    }
+
     /**
      * Vuelve a leer el tipo y la vivienda a la que pertenece
      */

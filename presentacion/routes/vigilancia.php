@@ -4,13 +4,26 @@ use Illuminate\Support\Facades\Route;
 use Patronato\Presentacion\Controllers\EntregaTurnoController;
 use Patronato\Presentacion\Controllers\GuardiaController;
 use Patronato\Presentacion\Controllers\IncidenciaController;
+use Patronato\Presentacion\Controllers\MedioEntradaController;
 use Patronato\Presentacion\Controllers\TipoIncidenciaController;
 use Patronato\Presentacion\Controllers\TurnoController;
+use Patronato\Presentacion\Controllers\VisitaController;
 
 Route::middleware(['auth', 'verified'])
     ->prefix('vigilancia')
     ->name('vigilancia.')
     ->group(function () {
+        Route::middleware("can:permiso,'visitas','registrar'")->group(function () {
+            Route::get('entrada-visitas', [VisitaController::class, 'create'])->name('visitas.create');
+            Route::post('entrada-visitas', [VisitaController::class, 'store'])->name('visitas.store');
+        });
+
+        Route::middleware("can:permiso,'medios_entrada','registrar'")->group(function () {
+            Route::get('medios-entrada', [MedioEntradaController::class, 'index'])->name('medios-entrada.index');
+            Route::post('medios-entrada', [MedioEntradaController::class, 'store'])->name('medios-entrada.store');
+            Route::put('medios-entrada/{medio}', [MedioEntradaController::class, 'update'])->whereNumber('medio')->name('medios-entrada.update');
+        });
+
         Route::middleware("can:permiso,'guardias','ver'")->get('guardias', [GuardiaController::class, 'index'])->name('guardias.index');
 
         Route::middleware("can:permiso,'guardias','registrar'")->group(function () {
