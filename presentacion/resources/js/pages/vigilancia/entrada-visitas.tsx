@@ -16,6 +16,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { formatoFechaHora } from '@/lib/formato';
+import PreautorizacionesVivienda from '@/components/vigilancia/preautorizaciones-vivienda';
 
 const claseSelect =
     'h-10 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-xs focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none';
@@ -299,6 +300,7 @@ export default function EntradaVisitas({
                         </>
                     )}
                 </Form>
+                <PreautorizacionesVivienda viviendas={viviendas} />
                 <VisitasDentro visitas={visitasDentro} />
             </div>
         </>

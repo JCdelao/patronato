@@ -50,6 +50,7 @@ import PagoController from '@/actions/Patronato/Presentacion/Controllers/PagoCon
 import PresupuestoController from '@/actions/Patronato/Presentacion/Controllers/PresupuestoController';
 import ParametroCobroController from '@/actions/Patronato/Presentacion/Controllers/ParametroCobroController';
 import PortalTransferenciaController from '@/actions/Patronato/Presentacion/Controllers/PortalTransferenciaController';
+import PortalPreautorizacionController from '@/actions/Patronato/Presentacion/Controllers/PortalPreautorizacionController';
 import ReporteCobrosController from '@/actions/Patronato/Presentacion/Controllers/ReporteCobrosController';
 import TransferenciaController from '@/actions/Patronato/Presentacion/Controllers/TransferenciaController';
 import TurnoController from '@/actions/Patronato/Presentacion/Controllers/TurnoController';
@@ -96,6 +97,12 @@ export function AppSidebar() {
             title: 'Reportar transferencia',
             href: PortalTransferenciaController.create(),
             icon: Send,
+            visible: auth.esResidente && permite('portal.registrar'),
+        },
+        {
+            title: 'Preautorizar visita',
+            href: PortalPreautorizacionController.create(),
+            icon: CalendarClock,
             visible: auth.esResidente && permite('portal.registrar'),
         },
         {

@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Patronato\Presentacion\Controllers\PortalPreautorizacionController;
 use Patronato\Presentacion\Controllers\PortalTransferenciaController;
 
 // Portal del residente; además del permiso, el servicio exige un residente activo vinculado
@@ -16,6 +17,9 @@ Route::middleware(['auth', 'verified'])
         });
 
         Route::middleware("can:permiso,'portal','registrar'")->group(function () {
+            Route::get('preautorizar-visita', [PortalPreautorizacionController::class, 'create'])->name('preautorizaciones.create');
+            Route::post('preautorizaciones', [PortalPreautorizacionController::class, 'store'])
+                ->middleware('throttle:10,1')->name('preautorizaciones.store');
             Route::get('transferencias/reportar', [PortalTransferenciaController::class, 'create'])->name('transferencias.create');
             Route::post('transferencias', [PortalTransferenciaController::class, 'store'])
                 ->middleware('throttle:10,1')
