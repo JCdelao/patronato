@@ -34,6 +34,7 @@ import {
     Wallet,
 } from 'lucide-react';
 import AjusteController from '@/actions/Patronato/Presentacion/Controllers/AjusteController';
+import AutorizadoFrecuenteController from '@/actions/Patronato/Presentacion/Controllers/AutorizadoFrecuenteController';
 import AnulacionController from '@/actions/Patronato/Presentacion/Controllers/AnulacionController';
 import CajaController from '@/actions/Patronato/Presentacion/Controllers/CajaController';
 import CarnetController from '@/actions/Patronato/Presentacion/Controllers/CarnetController';
@@ -83,6 +84,7 @@ export function AppSidebar() {
     const permite = (permiso: string) => auth.permisos.includes(permiso);
     const registraVisitas = auth.esGuardia && permite('visitas.registrar');
     const configuraMedios = permite('medios_entrada.registrar');
+    const registraFrecuentes = permite('autorizados_frecuentes.registrar');
 
     // Solo se muestran las opciones que el usuario puede usar, agrupadas por tema
     const opciones: (Opcion | Grupo)[] = [
@@ -244,6 +246,12 @@ export function AppSidebar() {
                     visible: configuraMedios,
                 },
                 {
+                    title: 'Autorizaciones frecuentes',
+                    href: AutorizadoFrecuenteController.create(),
+                    icon: CalendarClock,
+                    visible: registraFrecuentes,
+                },
+                {
                     title: 'Guardias',
                     href: GuardiaController.index(),
                     icon: UserCheck,
@@ -318,7 +326,7 @@ export function AppSidebar() {
 
         const conservaSubmenu =
             opcion.title === 'Seguridad' &&
-            (registraVisitas || configuraMedios);
+            (registraVisitas || configuraMedios || registraFrecuentes);
 
         return visibles.length > 1 || conservaSubmenu
             ? [{ ...opcion, items: visibles }]

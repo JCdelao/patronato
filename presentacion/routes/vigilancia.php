@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Patronato\Presentacion\Controllers\AutorizadoFrecuenteController;
 use Patronato\Presentacion\Controllers\EntregaTurnoController;
 use Patronato\Presentacion\Controllers\GuardiaController;
 use Patronato\Presentacion\Controllers\IncidenciaController;
@@ -15,11 +16,18 @@ Route::middleware(['auth', 'verified'])
     ->name('vigilancia.')
     ->group(function () {
         Route::middleware("can:permiso,'visitas','registrar'")->group(function () {
+            Route::get('viviendas/{vivienda}/autorizados-frecuentes', [AutorizadoFrecuenteController::class, 'index'])
+                ->whereNumber('vivienda')->name('autorizados-frecuentes.index');
             Route::get('viviendas/{vivienda}/preautorizaciones', [PreautorizacionController::class, 'index'])
                 ->whereNumber('vivienda')->name('preautorizaciones.index');
             Route::get('entrada-visitas', [VisitaController::class, 'create'])->name('visitas.create');
             Route::post('entrada-visitas', [VisitaController::class, 'store'])->name('visitas.store');
             Route::post('entrada-visitas/{visita}/salida', [VisitaController::class, 'salida'])->whereNumber('visita')->name('visitas.salida');
+        });
+
+        Route::middleware("can:permiso,'autorizados_frecuentes','registrar'")->group(function () {
+            Route::get('autorizaciones-frecuentes', [AutorizadoFrecuenteController::class, 'create'])->name('autorizados-frecuentes.create');
+            Route::post('autorizaciones-frecuentes', [AutorizadoFrecuenteController::class, 'store'])->name('autorizados-frecuentes.store');
         });
 
         Route::middleware("can:permiso,'medios_entrada','registrar'")->group(function () {

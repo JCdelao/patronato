@@ -30,6 +30,11 @@ class ResidencialRepositorio extends Repositorio
         return Residencial::query()->findOrFail($id);
     }
 
+    public function bloquear(int $id): Residencial
+    {
+        return Residencial::query()->lockForUpdate()->findOrFail($id);
+    }
+
     /**
      * Indica si ya existe un residencial con el nombre, sin importar mayúsculas
      */
