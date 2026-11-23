@@ -13,6 +13,8 @@ class MedioEntradaService
 {
     public const PREDETERMINADOS = ['A pie' => false, 'Moto' => true, 'Carro' => true];
 
+    private const MEDIO_EN_USO = 'Este medio de entrada tiene registros asociados. Puedes desactivarlo para conservar el historial.';
+
     public function __construct(
         private MedioEntradaRepositorio $medios,
         private Transaccion $transaccion,
@@ -62,5 +64,22 @@ class MedioEntradaService
         } catch (UniqueConstraintViolationException) {
             throw ValidationException::withMessages(['nombre' => 'Ya existe un medio de entrada con ese nombre.']);
         }
+    }
+
+    public function eliminar(User $usuario, MedioEntrada $medio): void
+    {
+        $residencialId = $usuario->residencial_id;
+        abort_if($residencialId === null || $medio->residencial_id !== $residencialId, 403);
+
+        $this->transaccion->ejecutar(function () use ($usuario, $medio, $residencialId): void {
+            $medio = $this->medios->bloquear($residencialId, $medio->id);
+            if (! $this->medios->eliminarSiNoTieneReferencias($medio)) {
+                throw ValidationException::withMessages(['eliminar' => self::MEDIO_EN_USO]);
+            }
+
+            $this->auditoria->registrar($usuario, 'vigilancia', 'medio_entrada_eliminado', $medio, [
+                'valor_anterior' => $medio->only(['nombre', 'requiere_placa', 'activo']),
+            ]);
+        });
     }
 }

@@ -22,6 +22,7 @@ Route::middleware(['auth', 'verified'])
             Route::get('medios-entrada', [MedioEntradaController::class, 'index'])->name('medios-entrada.index');
             Route::post('medios-entrada', [MedioEntradaController::class, 'store'])->name('medios-entrada.store');
             Route::put('medios-entrada/{medio}', [MedioEntradaController::class, 'update'])->whereNumber('medio')->name('medios-entrada.update');
+            Route::delete('medios-entrada/{medio}', [MedioEntradaController::class, 'destroy'])->whereNumber('medio')->name('medios-entrada.destroy');
         });
 
         Route::middleware("can:permiso,'guardias','ver'")->get('guardias', [GuardiaController::class, 'index'])->name('guardias.index');
