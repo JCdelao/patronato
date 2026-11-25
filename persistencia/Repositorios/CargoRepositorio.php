@@ -2,6 +2,7 @@
 
 namespace Patronato\Persistencia\Repositorios;
 
+use Illuminate\Database\Eloquent\Builder as ConsultaCargo;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Query\Builder;
 use Patronato\Persistencia\Models\Cargo;
@@ -62,9 +63,31 @@ class CargoRepositorio
      */
     public function conAplicadoDeViviendas(array $viviendaIds): Collection
     {
+        return $this->conAplicado()->with('concepto:id,nombre')->whereIn('vivienda_id', $viviendaIds)->get();
+    }
+
+    /** @return Collection<int, Cargo> */
+    public function paraEvaluarAcceso(int $residencialId, int $viviendaId, bool $contarPendientes): Collection
+    {
+        $consulta = $this->conAplicado()->where('cargos.residencial_id', $residencialId)->where('cargos.vivienda_id', $viviendaId);
+        $columnas = ['total_pagos_confirmados', 'total_ajustes'];
+        if ($contarPendientes) {
+            $columnas[] = 'total_por_verificar';
+        }
+
+        // Lee cargos, aplicaciones y totales de la misma instantánea SQL.
+        foreach ($columnas as $columna) {
+            $consulta->selectSub(fn (Builder $query) => $query->from('v_saldos_vivienda')
+                ->where('residencial_id', $residencialId)->where('vivienda_id', $viviendaId)->select($columna), $columna);
+        }
+
+        return $consulta->get();
+    }
+
+    /** @return ConsultaCargo<Cargo> */
+    private function conAplicado(): ConsultaCargo
+    {
         return Cargo::query()
-            ->with('concepto:id,nombre')
-            ->whereIn('vivienda_id', $viviendaIds)
             ->select('cargos.*')
             ->selectSub(fn (Builder $query) => $query
                 ->from('pago_aplicaciones')
@@ -73,7 +96,6 @@ class CargoRepositorio
                 ->where('pagos.estado', 'confirmado')
                 ->selectRaw('coalesce(sum(pago_aplicaciones.monto), 0)'), 'aplicado')
             ->orderBy('periodo')
-            ->orderBy('concepto_id')
-            ->get();
+            ->orderBy('concepto_id');
     }
 }

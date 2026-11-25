@@ -18,6 +18,7 @@ use Patronato\Presentacion\Controllers\MoraController;
 use Patronato\Presentacion\Controllers\PagoController;
 use Patronato\Presentacion\Controllers\ParametroCobroController;
 use Patronato\Presentacion\Controllers\PresupuestoController;
+use Patronato\Presentacion\Controllers\ReglaAccesoPagoController;
 use Patronato\Presentacion\Controllers\TarifaEspecialController;
 use Patronato\Presentacion\Controllers\TipoViviendaController;
 use Patronato\Presentacion\Controllers\TransferenciaController;
@@ -197,4 +198,8 @@ Route::middleware(['auth', 'verified'])
         Route::put('mora', [MoraController::class, 'update'])
             ->middleware("can:permiso,'mora','registrar'")
             ->name('mora.update');
+
+        Route::put('regla-acceso-pagos', [ReglaAccesoPagoController::class, 'update'])
+            ->middleware("can:permiso,'mora','registrar'")
+            ->name('regla-acceso-pagos.update');
     });

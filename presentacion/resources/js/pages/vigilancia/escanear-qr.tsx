@@ -16,6 +16,7 @@ type Escaneo = Registro & {
     nombre: string | null;
     viviendas: string[];
     foto: boolean;
+    indicacion?: string;
 };
 
 const DECISION = { ingreso: 'Ingreso', no_ingreso: 'No ingreso' };
@@ -296,17 +297,22 @@ export default function EscanearQr({ historial }: { historial: Registro[] }) {
                     {escaneo.viviendas.length > 0 && (
                         <p>Vivienda: {escaneo.viviendas.join(', ')}</p>
                     )}
-                    {escaneo.resultado === 'revisar' && (
-                        <p>
-                            Verifica el vínculo con la vivienda antes de
-                            decidir.
-                        </p>
+                    {escaneo.indicacion ? (
+                        <p>{escaneo.indicacion}</p>
+                    ) : (
+                        escaneo.resultado === 'revisar' && (
+                            <p>
+                                Verifica el vínculo con la vivienda antes de
+                                decidir.
+                            </p>
+                        )
                     )}
                     {escaneo.decision ? (
                         <p>Decisión: {DECISION[escaneo.decision]}</p>
                     ) : (
                         <div className="flex flex-wrap gap-2">
                             {escaneo.resultado !== 'denegado' &&
+                                !escaneo.indicacion &&
                                 escaneo.viviendas.length > 0 && (
                                     <Button
                                         disabled={procesando}
