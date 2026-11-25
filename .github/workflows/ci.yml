@@ -269,6 +269,10 @@ jobs:
         if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
         run: php artisan test tests/Feature/Vigilancia/ReglaAccesoPagoTest.php
 
+      - name: Pruebas HU-50 · Excepciones temporales de acceso
+        if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
+        run: php artisan test tests/Feature/Vigilancia/ExcepcionAccesoTest.php
+
       - name: Pruebas de los datos de demostración
         if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
         run: php artisan test tests/Feature/DemostracionSeederTest.php
@@ -372,7 +376,7 @@ jobs:
           echo "Restaurada: $restaurada"
           test "$original" = "$restaurada"
 
-      - name: Pruebas de concurrencia de visitas y HU-48 en PostgreSQL desechable
+      - name: Pruebas de concurrencia de visitas, HU-48 y HU-50 en PostgreSQL desechable
         run: |
           fixture="$(mktemp -d "$RUNNER_TEMP/visitas-pg.XXXXXX")"
           "$PG_BIN_PATH/initdb" -D "$fixture" -U hu42_fixture -A trust --encoding=UTF8 --no-locale
@@ -385,3 +389,6 @@ jobs:
           APP_ENV=testing DB_CONNECTION=pgsql DB_HOST=127.0.0.1 DB_PORT=55442 \
             DB_DATABASE=hu42_fixture DB_USERNAME=hu42_fixture DB_PASSWORD= DB_URL=null \
             HU42_PG_FIXTURE_DIR="$fixture" php vendor/bin/pest tests/Integration/EscaneoQrConcurrenciaTest.php
+          APP_ENV=testing DB_CONNECTION=pgsql DB_HOST=127.0.0.1 DB_PORT=55442 \
+            DB_DATABASE=hu42_fixture DB_USERNAME=hu42_fixture DB_PASSWORD= DB_URL=null \
+            HU42_PG_FIXTURE_DIR="$fixture" php vendor/bin/pest tests/Integration/ExcepcionAccesoConcurrenciaTest.php
