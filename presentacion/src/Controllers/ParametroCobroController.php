@@ -10,6 +10,7 @@ use Patronato\Negocio\Services\GeneracionCargosService;
 use Patronato\Negocio\Services\MoraService;
 use Patronato\Negocio\Services\PeriodoService;
 use Patronato\Negocio\Services\PermisoService;
+use Patronato\Negocio\Services\ReglaAccesoPagoService;
 use Patronato\Negocio\Services\TarifaEspecialService;
 use Patronato\Negocio\Services\TarifaService;
 use Patronato\Negocio\Services\TipoViviendaService;
@@ -34,6 +35,7 @@ class ParametroCobroController extends Controller
         TarifaService $tarifas,
         PeriodoService $periodos,
         PermisoService $permisos,
+        ReglaAccesoPagoService $reglaAcceso,
     ): Response {
         $periodo = $periodos->actual()->toDateString();
 
@@ -98,6 +100,7 @@ class ParametroCobroController extends Controller
             'especiales' => collect($especiales)->sortBy('codigo')->values(),
             'viviendas' => $viviendas->activas(),
             'mora' => $mora->regla($residencialId),
+            'reglaAcceso' => $reglaAcceso->puedeConfigurar($request->user()) ? $reglaAcceso->regla($residencialId) : null,
             'periodoActual' => $periodo,
             'puedeEditar' => $permisos->puede($request->user(), 'parametros', 'registrar'),
             'puedeEditarMora' => $permisos->puede($request->user(), 'mora', 'registrar'),

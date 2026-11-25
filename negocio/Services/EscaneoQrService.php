@@ -32,6 +32,7 @@ class EscaneoQrService
         private TurnoRepositorio $turnos,
         private PermisoService $permisos,
         private Transaccion $transaccion,
+        private ReglaAccesoPagoService $reglaAcceso,
     ) {}
 
     public function guardia(User $usuario): Guardia
@@ -47,7 +48,7 @@ class EscaneoQrService
         return $this->escaneos->recientes($guardia)->map($this->resumen(...));
     }
 
-    /** @return array{id: int, hora: string, resultado: string, decision: string|null, nombre: string|null, viviendas: list<string>, foto: bool} */
+    /** @return array{id: int, hora: string, resultado: string, decision: string|null, nombre: string|null, viviendas: list<string>, foto: bool, indicacion?: string} */
     public function escanear(User $usuario, #[SensitiveParameter] string $token): array
     {
         return $this->transaccion->ejecutar(function () use ($usuario, $token): array {
@@ -57,19 +58,27 @@ class EscaneoQrService
                 $qr = $this->bloquearQrVigente($guardia, $qr);
             }
             $residente = $this->residente($qr);
-            $viviendas = $residente === null ? [] : array_column($this->portal->viviendas($residente), 'codigo');
+            $viviendas = $residente === null ? [] : $this->portal->viviendas($residente);
+            $evaluacion = $residente === null ? null : $this->reglaAcceso->evaluar($guardia->residencial_id, array_column($viviendas, 'id'));
             $resultado = match (true) {
-                $residente === null => 'denegado',
-                count($viviendas) !== 1 => 'revisar',
+                $residente === null || $evaluacion === ReglaAccesoPagoService::DENEGADO => 'denegado',
+                count($viviendas) !== 1 || $evaluacion === ReglaAccesoPagoService::REVISAR => 'revisar',
                 default => 'permitido',
             };
-            $escaneo = $this->escaneos->registrar($guardia, $qr?->id, $resultado);
+            $escaneo = $this->escaneos->registrar($guardia, $resultado === 'denegado' ? null : $qr?->id, $resultado);
+            $residente = $resultado === 'denegado' ? null : $residente;
 
-            return $this->resumen($escaneo) + [
+            $respuesta = $this->resumen($escaneo) + [
                 'nombre' => $residente === null ? null : trim($residente->nombres.' '.$residente->apellidos),
-                'viviendas' => $viviendas,
+                'viviendas' => $residente === null ? [] : array_column($viviendas, 'codigo'),
                 'foto' => $residente?->foto_path !== null,
             ];
+
+            return match ($evaluacion) {
+                ReglaAccesoPagoService::DENEGADO => $respuesta + ['indicacion' => 'Dirija al residente a la Junta Directiva.'],
+                ReglaAccesoPagoService::REVISAR => $respuesta + ['indicacion' => 'Solicite revisión a la Junta Directiva.'],
+                default => $respuesta,
+            };
         });
     }
 
@@ -86,7 +95,10 @@ class EscaneoQrService
             if ($decision === 'ingreso') {
                 $qr = $this->qrDeEscaneo($guardia, $escaneo);
                 $residente = $qr === null ? null : $this->residente($this->bloquearQrVigente($guardia, $qr));
-                abort_if($residente === null || $this->portal->viviendas($residente) === [], 409, 'El QR ya no autoriza el ingreso. Escanea el código vigente.');
+                $viviendas = $residente === null ? [] : $this->portal->viviendas($residente);
+                abort_if($viviendas === [], 409, 'El QR ya no autoriza el ingreso. Escanea el código vigente.');
+                $evaluacion = $this->reglaAcceso->evaluar($guardia->residencial_id, array_column($viviendas, 'id'));
+                abort_if($evaluacion !== null && $evaluacion !== ReglaAccesoPagoService::AL_DIA, 409, 'Dirija al residente a la Junta Directiva.');
             }
 
             $this->escaneos->decidir($escaneo, $decision);

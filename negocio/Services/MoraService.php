@@ -79,9 +79,7 @@ class MoraService
 
         foreach ($this->cargos->conAplicadoDeViviendas($viviendaIds) as $cargo) {
             $saldo = $this->saldo($cargo);
-            $vence = $cargo->periodo->toImmutable()->addDays($regla['dias_gracia'])->toDateString();
-
-            if ($saldo > 0 && $vence <= $hoy) {
+            if ($saldo > 0 && $this->vence($cargo, $regla['dias_gracia']) <= $hoy) {
                 $periodo = $cargo->periodo->toDateString();
                 $vencidos[$cargo->vivienda_id][$periodo] = ($vencidos[$cargo->vivienda_id][$periodo] ?? 0) + $saldo;
             }
@@ -108,6 +106,59 @@ class MoraService
     public function estadoDe(int $residencialId, int $viviendaId): array
     {
         return $this->estados($residencialId, [$viviendaId])[$viviendaId];
+    }
+
+    public function mesesParaAcceso(int $residencialId, int $viviendaId, bool $contarPendientes): ?int
+    {
+        $gracia = $this->regla($residencialId)['dias_gracia'];
+        $hoy = $this->periodos->hoy()->toDateString();
+        $cargos = $this->cargos->paraEvaluarAcceso($residencialId, $viviendaId, $contarPendientes);
+        $primero = $cargos->first();
+        if ($primero === null || $primero->periodo->toDateString() > $hoy) {
+            return null;
+        }
+
+        $meses = [];
+        $aplicado = 0;
+        foreach ($cargos as $cargo) {
+            $monto = AplicacionPagoService::centavos($cargo->monto);
+            $saldo = $this->saldo($cargo);
+            if ($monto < 0 || $saldo < 0 || $saldo > $monto) {
+                return null;
+            }
+            $aplicado += $monto - $saldo;
+            if ($saldo > 0 && $this->vence($cargo, $gracia) <= $hoy) {
+                $periodo = $cargo->periodo->toDateString();
+                $meses[$periodo] = ($meses[$periodo] ?? 0) + $saldo;
+            }
+        }
+
+        $confirmado = AplicacionPagoService::centavos((string) $primero->getAttribute('total_pagos_confirmados'));
+        $ajustes = AplicacionPagoService::centavos((string) $primero->getAttribute('total_ajustes'));
+        if ($aplicado > $confirmado || $ajustes !== 0 || ($meses !== [] && $aplicado < $confirmado)) {
+            // Un saldo sin aplicar o ajustes sin asignación mensual requieren revisión.
+            return null;
+        }
+
+        $pendiente = $contarPendientes ? AplicacionPagoService::centavos((string) $primero->getAttribute('total_por_verificar')) : 0;
+        if ($pendiente < 0) {
+            return null;
+        }
+        // Proyección para acceso solamente. Cubre primero los meses vencidos más antiguos.
+        foreach ($meses as $periodo => $saldo) {
+            if ($pendiente < $saldo) {
+                break;
+            }
+            $pendiente -= $saldo;
+            unset($meses[$periodo]);
+        }
+
+        return count($meses);
+    }
+
+    private function vence(Cargo $cargo, int $gracia): string
+    {
+        return $cargo->periodo->toImmutable()->addDays($gracia)->toDateString();
     }
 
     /**

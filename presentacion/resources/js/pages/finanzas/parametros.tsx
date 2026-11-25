@@ -2,6 +2,8 @@ import { Head } from '@inertiajs/react';
 import ParametroCobroController from '@/actions/Patronato/Presentacion/Controllers/ParametroCobroController';
 import ConceptosSeccion from '@/components/finanzas/conceptos-seccion';
 import GeneracionCargosSeccion from '@/components/finanzas/generacion-cargos-seccion';
+import ReglaAccesoPagoSeccion from '@/components/finanzas/regla-acceso-pago-seccion';
+import type { ReglaAccesoPago } from '@/components/finanzas/regla-acceso-pago-seccion';
 import ReglaMoraSeccion from '@/components/finanzas/regla-mora-seccion';
 import TarifasEspecialesSeccion from '@/components/finanzas/tarifas-especiales-seccion';
 import TiposViviendaSeccion from '@/components/finanzas/tipos-vivienda-seccion';
@@ -22,6 +24,7 @@ export default function ParametrosCobro({
     viviendas,
     conceptos,
     mora,
+    reglaAcceso,
     periodoActual,
     puedeEditar,
     puedeEditarMora,
@@ -32,6 +35,7 @@ export default function ParametrosCobro({
     viviendas: OpcionVivienda[];
     conceptos: Concepto[];
     mora: ReglaMora;
+    reglaAcceso: ReglaAccesoPago | null;
     periodoActual: string;
     puedeEditar: boolean;
     puedeEditarMora: boolean;
@@ -59,6 +63,13 @@ export default function ParametrosCobro({
                 <Separator />
 
                 <ReglaMoraSeccion mora={mora} puedeEditar={puedeEditarMora} />
+
+                {reglaAcceso && (
+                    <>
+                        <Separator />
+                        <ReglaAccesoPagoSeccion regla={reglaAcceso} />
+                    </>
+                )}
 
                 <Separator />
 
