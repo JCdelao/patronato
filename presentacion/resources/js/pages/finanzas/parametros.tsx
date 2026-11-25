@@ -1,6 +1,7 @@
 import { Head } from '@inertiajs/react';
 import ParametroCobroController from '@/actions/Patronato/Presentacion/Controllers/ParametroCobroController';
 import ConceptosSeccion from '@/components/finanzas/conceptos-seccion';
+import ExcepcionAccesoSeccion from '@/components/finanzas/excepcion-acceso-seccion';
 import GeneracionCargosSeccion from '@/components/finanzas/generacion-cargos-seccion';
 import ReglaAccesoPagoSeccion from '@/components/finanzas/regla-acceso-pago-seccion';
 import type { ReglaAccesoPago } from '@/components/finanzas/regla-acceso-pago-seccion';
@@ -68,6 +69,9 @@ export default function ParametrosCobro({
                     <>
                         <Separator />
                         <ReglaAccesoPagoSeccion regla={reglaAcceso} />
+                        {reglaAcceso.acceso_depende_pago && (
+                            <ExcepcionAccesoSeccion viviendas={viviendas} />
+                        )}
                     </>
                 )}
 

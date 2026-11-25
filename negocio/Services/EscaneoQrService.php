@@ -32,7 +32,7 @@ class EscaneoQrService
         private TurnoRepositorio $turnos,
         private PermisoService $permisos,
         private Transaccion $transaccion,
-        private ReglaAccesoPagoService $reglaAcceso,
+        private ExcepcionAccesoService $reglaAcceso,
     ) {}
 
     public function guardia(User $usuario): Guardia

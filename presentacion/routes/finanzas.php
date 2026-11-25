@@ -12,6 +12,7 @@ use Patronato\Presentacion\Controllers\ConceptoController;
 use Patronato\Presentacion\Controllers\EgresoController;
 use Patronato\Presentacion\Controllers\EstadoCuentaController;
 use Patronato\Presentacion\Controllers\EstadoCuentaPdfController;
+use Patronato\Presentacion\Controllers\ExcepcionAccesoController;
 use Patronato\Presentacion\Controllers\GeneracionCargosController;
 use Patronato\Presentacion\Controllers\IngresoController;
 use Patronato\Presentacion\Controllers\MoraController;
@@ -202,4 +203,8 @@ Route::middleware(['auth', 'verified'])
         Route::put('regla-acceso-pagos', [ReglaAccesoPagoController::class, 'update'])
             ->middleware("can:permiso,'mora','registrar'")
             ->name('regla-acceso-pagos.update');
+
+        Route::post('excepciones-acceso', [ExcepcionAccesoController::class, 'store'])
+            ->middleware("can:permiso,'mora','registrar'")
+            ->name('excepciones-acceso.store');
     });
