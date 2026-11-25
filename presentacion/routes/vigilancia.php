@@ -1,7 +1,9 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Patronato\Negocio\Services\BitacoraAccesosService;
 use Patronato\Presentacion\Controllers\AutorizadoFrecuenteController;
+use Patronato\Presentacion\Controllers\BitacoraAccesosController;
 use Patronato\Presentacion\Controllers\EntregaTurnoController;
 use Patronato\Presentacion\Controllers\GuardiaController;
 use Patronato\Presentacion\Controllers\IncidenciaController;
@@ -15,6 +17,14 @@ Route::middleware(['auth', 'verified'])
     ->prefix('vigilancia')
     ->name('vigilancia.')
     ->group(function () {
+        Route::middleware("can:permiso,'bitacora','ver'")->group(function () {
+            Route::get('bitacora', [BitacoraAccesosController::class, 'index'])->name('bitacora.index');
+            Route::get('bitacora/exportar/{formato}', [BitacoraAccesosController::class, 'exportar'])
+                ->whereIn('formato', BitacoraAccesosService::FORMATOS)
+                ->middleware('throttle:20,1')
+                ->name('bitacora.exportar');
+        });
+
         Route::middleware("can:permiso,'visitas','registrar'")->group(function () {
             Route::get('viviendas/{vivienda}/autorizados-frecuentes', [AutorizadoFrecuenteController::class, 'index'])
                 ->whereNumber('vivienda')->name('autorizados-frecuentes.index');

@@ -183,7 +183,7 @@ test('the guard sees the active types and their incidents of the last week', fun
             ->has('incidencias', 1)
             ->where('incidencias.0.tipo', 'Persona sospechosa')
             ->where('incidencias.0.ocurrida_en', '2026-11-18 09:40')
-            ->has('tipos', 5)
+            ->has('tipos', 6)
             ->where('tipos', fn ($tipos) => ! collect($tipos)->contains('nombre', 'Ruido')));
 });
 
@@ -218,7 +218,7 @@ test('the president lists the incidents filtered by type and urgency', function 
             ->where('incidencias.data.0.urgente', true)
             ->where('incidencias.data.0.guardia', 'Carlos Mejía')
             ->where('incidencias.data.1.tipo', 'Ruido')
-            ->has('tipos', 6));
+            ->has('tipos', 7));
 
     $this->get(route('vigilancia.incidencias.index', ['urgentes' => 1]))
         ->assertInertia(fn (AssertableInertia $page) => $page->where('urgentes', true)->has('incidencias.data', 1));

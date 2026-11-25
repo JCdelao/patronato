@@ -18,7 +18,7 @@ use Patronato\Persistencia\Transaccion;
  */
 class TipoIncidenciaService
 {
-    public const PREDETERMINADOS = ['Robo', 'Daño a la propiedad', 'Persona sospechosa', 'Ruido', 'Emergencia médica', 'Otro'];
+    public const PREDETERMINADOS = ['Robo', 'Daño a la propiedad', 'Ingreso no autorizado', 'Persona sospechosa', 'Ruido', 'Emergencia médica', 'Otro'];
 
     private const NOMBRE_USADO = 'Ya existe un tipo de incidencia con ese nombre.';
 

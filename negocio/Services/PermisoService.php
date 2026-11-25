@@ -40,6 +40,7 @@ class PermisoService
         'entrega_turnos' => ['etiqueta' => 'Iniciar y entregar sus turnos', 'acciones' => ['registrar']],
         'incidencias' => ['etiqueta' => 'Incidencias', 'acciones' => ['ver', 'registrar']],
         'visitas' => ['etiqueta' => 'Entrada de visitas', 'acciones' => ['registrar']],
+        'bitacora' => ['etiqueta' => 'Bitácora de accesos', 'acciones' => ['ver']],
         'medios_entrada' => ['etiqueta' => 'Medios de entrada', 'acciones' => ['registrar']],
         'autorizados_frecuentes' => ['etiqueta' => 'Autorizaciones frecuentes', 'acciones' => ['registrar']],
         'vehiculos' => ['etiqueta' => 'Vehículos', 'acciones' => ['ver', 'registrar', 'anular']],
@@ -57,7 +58,7 @@ class PermisoService
      * el administrador técnico los activa desde la pantalla de permisos.
      */
     public const PREDETERMINADOS = [
-        Rol::PRESIDENTE => ['padron.ver', 'padron.registrar', 'padron.anular', 'auditoria.ver', 'parametros.ver', 'reportes.ver', 'cobros.aprobar', 'ajustes.aprobar', 'estado_cuenta_pdf.ver', 'mora.registrar', 'cajas.registrar', 'tesoreria.ver', 'transferencias.verificar', 'vehiculos.ver', 'carnets.ver', 'guardias.ver', 'guardias.registrar', 'turnos.ver', 'turnos.registrar', 'tipos_incidencia.registrar', 'incidencias.ver', 'medios_entrada.registrar', 'autorizados_frecuentes.registrar'],
+        Rol::PRESIDENTE => ['padron.ver', 'padron.registrar', 'padron.anular', 'auditoria.ver', 'parametros.ver', 'reportes.ver', 'cobros.aprobar', 'ajustes.aprobar', 'estado_cuenta_pdf.ver', 'mora.registrar', 'cajas.registrar', 'tesoreria.ver', 'transferencias.verificar', 'vehiculos.ver', 'carnets.ver', 'guardias.ver', 'guardias.registrar', 'turnos.ver', 'turnos.registrar', 'tipos_incidencia.registrar', 'incidencias.ver', 'medios_entrada.registrar', 'autorizados_frecuentes.registrar', 'bitacora.ver'],
         Rol::SECRETARIO => ['padron.ver', 'padron.registrar', 'padron.anular', 'estado_cuenta_pdf.ver', 'vehiculos.ver', 'vehiculos.registrar', 'vehiculos.anular', 'carnets.ver', 'carnets.registrar', 'carnets.anular'],
         'tesorero' => ['padron.ver', 'parametros.ver', 'parametros.registrar', 'cobros.ver', 'cobros.anular', 'ajustes.aprobar', 'estado_cuenta_pdf.ver', 'cajas.registrar', 'transferencias.registrar', 'transferencias.verificar', 'reportes.ver', 'mora.registrar', 'tesoreria.ver', 'tesoreria.registrar', 'tesoreria.anular'],
         'fiscal' => ['padron.ver', 'auditoria.ver', 'parametros.ver', 'reportes.ver', 'cobros.aprobar', 'tesoreria.ver'],

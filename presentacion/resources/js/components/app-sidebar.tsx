@@ -8,6 +8,7 @@ import {
     BookOpenText,
     CalendarClock,
     CalendarDays,
+    ClipboardList,
     Car,
     ChartColumn,
     Coins,
@@ -36,6 +37,7 @@ import {
 import AjusteController from '@/actions/Patronato/Presentacion/Controllers/AjusteController';
 import AutorizadoFrecuenteController from '@/actions/Patronato/Presentacion/Controllers/AutorizadoFrecuenteController';
 import AnulacionController from '@/actions/Patronato/Presentacion/Controllers/AnulacionController';
+import BitacoraAccesosController from '@/actions/Patronato/Presentacion/Controllers/BitacoraAccesosController';
 import CajaController from '@/actions/Patronato/Presentacion/Controllers/CajaController';
 import CarnetController from '@/actions/Patronato/Presentacion/Controllers/CarnetController';
 import CobroController from '@/actions/Patronato/Presentacion/Controllers/CobroController';
@@ -275,6 +277,12 @@ export function AppSidebar() {
                     href: IncidenciaController.index(),
                     icon: TriangleAlert,
                     visible: permite('incidencias.ver'),
+                },
+                {
+                    title: 'Bitácora de accesos',
+                    href: BitacoraAccesosController.index(),
+                    icon: ClipboardList,
+                    visible: permite('bitacora.ver'),
                 },
                 {
                     title: 'Reportar incidencia',
