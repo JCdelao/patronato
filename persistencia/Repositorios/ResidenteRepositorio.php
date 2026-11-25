@@ -94,6 +94,16 @@ class ResidenteRepositorio extends Repositorio
         return Residente::query()->where('user_id', $usuarioId)->where('activo', true)->first();
     }
 
+    public function bloquearActivoDeUsuario(int $usuarioId, int $residencialId): ?Residente
+    {
+        return Residente::query()
+            ->where('residencial_id', $residencialId)
+            ->where('user_id', $usuarioId)
+            ->where('activo', true)
+            ->lockForUpdate()
+            ->first();
+    }
+
     /**
      * Quita la cuenta al residente que la tenga y se la asigna a otro
      */
