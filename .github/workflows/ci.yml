@@ -103,7 +103,7 @@ jobs:
 
       - name: Pruebas HU-08 · Consultar la bitácora de auditoría
         if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
-        run: php artisan test tests/Feature/Identidad/BitacoraAccesosTest.php
+        run: php artisan test tests/Feature/Identidad/BitacoraTest.php
 
       - name: Pruebas HU-09 · Respaldar y restaurar la base de datos
         if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
