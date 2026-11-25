@@ -103,7 +103,7 @@ jobs:
 
       - name: Pruebas HU-08 · Consultar la bitácora de auditoría
         if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
-        run: php artisan test tests/Feature/Identidad/BitacoraTest.php
+        run: php artisan test tests/Feature/Identidad/BitacoraAccesosTest.php
 
       - name: Pruebas HU-09 · Respaldar y restaurar la base de datos
         if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
@@ -252,6 +252,10 @@ jobs:
       - name: Pruebas HU-45 · Autorizaciones frecuentes
         if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
         run: php artisan test tests/Feature/Vigilancia/AutorizadosFrecuentesTest.php
+
+      - name: Pruebas HU-46 · Consultar la bitácora de accesos
+        if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
+        run: php artisan test tests/Feature/Vigilancia/BitacoraAccesosTest.php
 
       - name: Pruebas de los datos de demostración
         if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
