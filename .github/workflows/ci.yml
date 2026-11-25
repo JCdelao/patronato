@@ -257,6 +257,10 @@ jobs:
         if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
         run: php artisan test tests/Feature/Vigilancia/BitacoraAccesosTest.php
 
+      - name: Pruebas HU-47 · Consultar y regenerar el QR personal del residente
+        if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
+        run: php artisan test tests/Feature/Portal/QrResidenteTest.php
+
       - name: Pruebas de los datos de demostración
         if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
         run: php artisan test tests/Feature/DemostracionSeederTest.php
