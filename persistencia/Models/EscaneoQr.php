@@ -16,6 +16,8 @@ use Illuminate\Support\Carbon;
 #[Fillable(['residencial_id', 'guardia_id', 'qr_id', 'escaneado_en', 'resultado', 'decision_final'])]
 class EscaneoQr extends Model
 {
+    use PerteneceAResidencial;
+
     public const UPDATED_AT = null;
 
     protected $table = 'escaneos_qr';
