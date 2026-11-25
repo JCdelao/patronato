@@ -3,6 +3,7 @@
 namespace Patronato\Negocio\Services;
 
 use Illuminate\Support\Str;
+use Patronato\Persistencia\Models\QrResidente;
 use Patronato\Persistencia\Models\User;
 use Patronato\Persistencia\Repositorios\QrResidenteRepositorio;
 use Patronato\Persistencia\Repositorios\ResidenteRepositorio;
@@ -52,7 +53,13 @@ class QrResidenteService
      */
     public function esValido(int $residencialId, #[SensitiveParameter] string $token): bool
     {
+        return $this->valido($residencialId, $token) !== null;
+    }
+
+    public function valido(int $residencialId, #[SensitiveParameter] string $token): ?QrResidente
+    {
         return Str::isUuid($token, 4)
-            && $this->codigos->esValido($residencialId, strtolower($token), $this->periodos->hoy()->toDateString());
+            ? $this->codigos->valido($residencialId, strtolower($token), $this->periodos->hoy()->toDateString())
+            : null;
     }
 }

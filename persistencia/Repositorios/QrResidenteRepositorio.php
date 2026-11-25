@@ -28,6 +28,21 @@ class QrResidenteRepositorio extends Repositorio
             ->first();
     }
 
+    public function obtener(int $residencialId, int $id, bool $bloquear = false): ?QrResidente
+    {
+        $consulta = QrResidente::query()->where('residencial_id', $residencialId);
+        if ($bloquear) {
+            $consulta->lockForUpdate();
+        }
+
+        return $consulta->find($id);
+    }
+
+    public function residente(QrResidente $qr): ?Residente
+    {
+        return Residente::query()->where('residencial_id', $qr->residencial_id)->find($qr->residente_id);
+    }
+
     public function invalidarDe(Residente $residente): void
     {
         $this->activosDelResidencial($residente->residencial_id)
@@ -51,6 +66,11 @@ class QrResidenteRepositorio extends Repositorio
 
     public function esValido(int $residencialId, #[SensitiveParameter] string $token, string $hoy): bool
     {
+        return $this->valido($residencialId, $token, $hoy) !== null;
+    }
+
+    public function valido(int $residencialId, #[SensitiveParameter] string $token, string $hoy): ?QrResidente
+    {
         $carnets = $this->carnetsVigentes($hoy)
             ->select('carnets.id')
             ->whereColumn('carnets.residencial_id', 'qr_residentes.residencial_id')
@@ -68,7 +88,7 @@ class QrResidenteRepositorio extends Repositorio
                 ->where('residenciales.estado', '!=', Residencial::SUSPENDIDO)
                 ->where('qr_residentes.token', $token)
                 ->whereExists($carnets)
-                ->exists();
+                ->first('qr_residentes.*');
         } catch (QueryException) {
             throw new RuntimeException('No se pudo validar el código QR.');
         }

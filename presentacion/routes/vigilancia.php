@@ -5,6 +5,7 @@ use Patronato\Negocio\Services\BitacoraAccesosService;
 use Patronato\Presentacion\Controllers\AutorizadoFrecuenteController;
 use Patronato\Presentacion\Controllers\BitacoraAccesosController;
 use Patronato\Presentacion\Controllers\EntregaTurnoController;
+use Patronato\Presentacion\Controllers\EscaneoQrController;
 use Patronato\Presentacion\Controllers\GuardiaController;
 use Patronato\Presentacion\Controllers\IncidenciaController;
 use Patronato\Presentacion\Controllers\MedioEntradaController;
@@ -26,6 +27,13 @@ Route::middleware(['auth', 'verified'])
         });
 
         Route::middleware("can:permiso,'visitas','registrar'")->group(function () {
+            Route::get('escanear-qr', [EscaneoQrController::class, 'index'])->name('qr.index');
+            Route::middleware('throttle:30,1,hu48-qr')->group(function () {
+                Route::post('escanear-qr', [EscaneoQrController::class, 'store'])->name('qr.store');
+                Route::post('escanear-qr/{escaneo}/decision', [EscaneoQrController::class, 'decidir'])->whereNumber('escaneo')->name('qr.decidir');
+            });
+            Route::get('escanear-qr/{escaneo}/foto', [EscaneoQrController::class, 'foto'])->whereNumber('escaneo')->name('qr.foto');
+
             Route::get('viviendas/{vivienda}/autorizados-frecuentes', [AutorizadoFrecuenteController::class, 'index'])
                 ->whereNumber('vivienda')->name('autorizados-frecuentes.index');
             Route::get('viviendas/{vivienda}/preautorizaciones', [PreautorizacionController::class, 'index'])
