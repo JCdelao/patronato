@@ -54,6 +54,7 @@ import PagoController from '@/actions/Patronato/Presentacion/Controllers/PagoCon
 import PresupuestoController from '@/actions/Patronato/Presentacion/Controllers/PresupuestoController';
 import ParametroCobroController from '@/actions/Patronato/Presentacion/Controllers/ParametroCobroController';
 import PortalQrController from '@/actions/Patronato/Presentacion/Controllers/PortalQrController';
+import EscaneoQrController from '@/actions/Patronato/Presentacion/Controllers/EscaneoQrController';
 import PortalTransferenciaController from '@/actions/Patronato/Presentacion/Controllers/PortalTransferenciaController';
 import PortalPreautorizacionController from '@/actions/Patronato/Presentacion/Controllers/PortalPreautorizacionController';
 import ReporteCobrosController from '@/actions/Patronato/Presentacion/Controllers/ReporteCobrosController';
@@ -242,6 +243,12 @@ export function AppSidebar() {
                     title: 'Entrada de visitas',
                     href: VisitaController.create(),
                     icon: DoorOpen,
+                    visible: registraVisitas,
+                },
+                {
+                    title: 'Escanear QR',
+                    href: EscaneoQrController.index(),
+                    icon: QrCode,
                     visible: registraVisitas,
                 },
                 {

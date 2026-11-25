@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string|null $identidad
  * @property string|null $telefono
  * @property string|null $correo
+ * @property string|null $foto_path
  * @property bool $activo
  * @property-read Collection<int, ViviendaResidente> $vinculos
  * @property-read Collection<int, ViviendaResidente> $vinculosVigentes
