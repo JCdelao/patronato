@@ -343,7 +343,10 @@ export function AppSidebar() {
 
         const conservaSubmenu =
             opcion.title === 'Seguridad' &&
-            (registraVisitas || configuraMedios || registraFrecuentes || puedeUsarQr);
+            (registraVisitas ||
+                configuraMedios ||
+                registraFrecuentes ||
+                puedeUsarQr);
 
         return visibles.length > 1 || conservaSubmenu
             ? [{ ...opcion, items: visibles }]
