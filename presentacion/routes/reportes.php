@@ -3,8 +3,10 @@
 use Illuminate\Support\Facades\Route;
 use Patronato\Negocio\Services\InformeFinancieroService;
 use Patronato\Negocio\Services\ReporteCobrosService;
+use Patronato\Negocio\Services\ReporteMorosidadService;
 use Patronato\Presentacion\Controllers\InformeFinancieroController;
 use Patronato\Presentacion\Controllers\ReporteCobrosController;
+use Patronato\Presentacion\Controllers\ReporteMorosidadController;
 
 Route::middleware(['auth', 'verified', "can:permiso,'reportes','ver'"])
     ->prefix('reportes')
@@ -21,6 +23,12 @@ Route::middleware(['auth', 'verified', "can:permiso,'reportes','ver'"])
             ->whereIn('formato', InformeFinancieroService::FORMATOS)
             ->middleware('throttle:20,1')
             ->name('financiero.exportar');
+
+        Route::get('morosidad', [ReporteMorosidadController::class, 'index'])->name('morosidad.index');
+        Route::get('morosidad/exportar/{formato}', [ReporteMorosidadController::class, 'exportar'])
+            ->whereIn('formato', ReporteMorosidadService::FORMATOS)
+            ->middleware('throttle:20,1')
+            ->name('morosidad.exportar');
 
         // Solo quien registra ingresos y egresos fija el saldo de apertura
         Route::post('financiero/apertura', [InformeFinancieroController::class, 'apertura'])
