@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Patronato\Presentacion\Controllers\PortalEstadoCuentaController;
 use Patronato\Presentacion\Controllers\PortalPreautorizacionController;
 use Patronato\Presentacion\Controllers\PortalQrController;
 use Patronato\Presentacion\Controllers\PortalTransferenciaController;
@@ -11,6 +12,14 @@ Route::middleware(['auth', 'verified'])
     ->name('portal.')
     ->group(function () {
         Route::middleware("can:permiso,'portal','ver'")->group(function () {
+            Route::get('estado-de-cuenta', [PortalEstadoCuentaController::class, 'index'])->name('estado-cuenta.index');
+            Route::get('estado-de-cuenta/{vivienda}', [PortalEstadoCuentaController::class, 'show'])
+                ->whereNumber('vivienda')
+                ->name('estado-cuenta.show');
+            Route::get('estado-de-cuenta/{vivienda}/pdf', [PortalEstadoCuentaController::class, 'pdf'])
+                ->whereNumber('vivienda')
+                ->middleware('throttle:20,1')
+                ->name('estado-cuenta.pdf');
             Route::get('transferencias', [PortalTransferenciaController::class, 'index'])->name('transferencias.index');
             Route::get('transferencias/{pago}/comprobante', [PortalTransferenciaController::class, 'comprobante'])
                 ->whereNumber('pago')
