@@ -59,6 +59,7 @@ import EscaneoQrController from '@/actions/Patronato/Presentacion/Controllers/Es
 import PortalTransferenciaController from '@/actions/Patronato/Presentacion/Controllers/PortalTransferenciaController';
 import PortalPreautorizacionController from '@/actions/Patronato/Presentacion/Controllers/PortalPreautorizacionController';
 import ReporteCobrosController from '@/actions/Patronato/Presentacion/Controllers/ReporteCobrosController';
+import ReporteMorosidadController from '@/actions/Patronato/Presentacion/Controllers/ReporteMorosidadController';
 import TransferenciaController from '@/actions/Patronato/Presentacion/Controllers/TransferenciaController';
 import TurnoController from '@/actions/Patronato/Presentacion/Controllers/TurnoController';
 import VerificacionTransferenciaController from '@/actions/Patronato/Presentacion/Controllers/VerificacionTransferenciaController';
@@ -232,6 +233,12 @@ export function AppSidebar() {
                     title: 'Reporte de cobros',
                     href: ReporteCobrosController.index(),
                     icon: ChartColumn,
+                    visible: permite('reportes.ver'),
+                },
+                {
+                    title: 'Morosidad',
+                    href: ReporteMorosidadController.index(),
+                    icon: TriangleAlert,
                     visible: permite('reportes.ver'),
                 },
                 {
