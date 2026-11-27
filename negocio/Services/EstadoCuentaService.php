@@ -237,6 +237,7 @@ class EstadoCuentaService
                 'fecha_pago' => $pago->fecha_pago->toDateString(),
                 'monto' => $pago->monto,
                 'forma_pago' => $pago->forma_pago,
+                'estado' => $pago->estado,
                 'referencia' => $this->referencia($pago),
                 'origen' => $pago->origen,
                 'dias_sin_verificar' => VerificacionTransferenciaService::diasSinVerificar($pago),

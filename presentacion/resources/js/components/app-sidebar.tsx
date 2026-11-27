@@ -53,6 +53,7 @@ import MedioEntradaController from '@/actions/Patronato/Presentacion/Controllers
 import PagoController from '@/actions/Patronato/Presentacion/Controllers/PagoController';
 import PresupuestoController from '@/actions/Patronato/Presentacion/Controllers/PresupuestoController';
 import ParametroCobroController from '@/actions/Patronato/Presentacion/Controllers/ParametroCobroController';
+import PortalEstadoCuentaController from '@/actions/Patronato/Presentacion/Controllers/PortalEstadoCuentaController';
 import PortalQrController from '@/actions/Patronato/Presentacion/Controllers/PortalQrController';
 import EscaneoQrController from '@/actions/Patronato/Presentacion/Controllers/EscaneoQrController';
 import PortalTransferenciaController from '@/actions/Patronato/Presentacion/Controllers/PortalTransferenciaController';
@@ -95,6 +96,12 @@ export function AppSidebar() {
     // Solo se muestran las opciones que el usuario puede usar, agrupadas por tema
     const opciones: (Opcion | Grupo)[] = [
         { title: 'Panel', href: dashboard(), icon: LayoutGrid, visible: true },
+        {
+            title: 'Mi estado de cuenta',
+            href: PortalEstadoCuentaController.index(),
+            icon: Wallet,
+            visible: auth.esResidente && permite('portal.ver'),
+        },
         {
             title: 'Mis reportes',
             href: PortalTransferenciaController.index(),
