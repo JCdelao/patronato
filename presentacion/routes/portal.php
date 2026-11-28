@@ -5,6 +5,7 @@ use Patronato\Presentacion\Controllers\PortalEstadoCuentaController;
 use Patronato\Presentacion\Controllers\PortalPreautorizacionController;
 use Patronato\Presentacion\Controllers\PortalQrController;
 use Patronato\Presentacion\Controllers\PortalTransferenciaController;
+use Patronato\Presentacion\Controllers\PortalVehiculoController;
 
 // Portal del residente; además del permiso, el servicio exige un residente activo vinculado
 Route::middleware(['auth', 'verified'])
@@ -24,6 +25,10 @@ Route::middleware(['auth', 'verified'])
             Route::get('transferencias/{pago}/comprobante', [PortalTransferenciaController::class, 'comprobante'])
                 ->whereNumber('pago')
                 ->name('transferencias.comprobante');
+            Route::get('mis-vehiculos', [PortalVehiculoController::class, 'index'])->name('vehiculos.index');
+            Route::get('mis-vehiculos/{vehiculo}/comprobante', [PortalVehiculoController::class, 'comprobante'])
+                ->whereNumber('vehiculo')
+                ->name('vehiculos.comprobante');
         });
 
         Route::middleware("can:permiso,'portal','registrar'")->group(function () {

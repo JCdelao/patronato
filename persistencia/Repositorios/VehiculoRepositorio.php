@@ -3,7 +3,10 @@
 namespace Patronato\Persistencia\Repositorios;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Patronato\Persistencia\Models\Sticker;
 use Patronato\Persistencia\Models\Vehiculo;
 use Patronato\Persistencia\Models\VehiculoConductor;
 
@@ -39,6 +42,27 @@ class VehiculoRepositorio extends Repositorio
             ->orderBy('comprobante_numero')
             ->paginate($porPagina)
             ->withQueryString();
+    }
+
+    /**
+     * Vehículos activos de las viviendas, con su sticker vigente y sus conductores, ordenados por placa
+     *
+     * @param  list<int>  $viviendaIds
+     * @return Collection<int, Vehiculo>
+     */
+    public function activosDeViviendas(array $viviendaIds): Collection
+    {
+        return Vehiculo::query()
+            ->where('activo', true)
+            ->whereIn('vivienda_id', $viviendaIds)
+            ->with([
+                'stickers' => fn (HasMany $query) => $query->whereIn('estado', Sticker::VIGENTES),
+                'conductores.residente:id,nombres,apellidos',
+            ])
+            ->orderByRaw('placa IS NULL')
+            ->orderBy('placa')
+            ->orderBy('comprobante_numero')
+            ->get();
     }
 
     /**

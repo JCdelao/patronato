@@ -89,4 +89,19 @@ class CarnetRepositorio extends Repositorio
     {
         return Carnet::query()->create($datos);
     }
+
+    /**
+     * Carnets que todavía pertenecen a los residentes: activos, suspendidos o vencidos
+     *
+     * @param  list<int>  $residenteIds
+     * @return Collection<int, Carnet>
+     */
+    public function vigentesDeResidentes(array $residenteIds): Collection
+    {
+        return Carnet::query()
+            ->whereIn('residente_id', $residenteIds)
+            ->whereIn('estado', Carnet::VIGENTES)
+            ->orderByDesc('id')
+            ->get();
+    }
 }
