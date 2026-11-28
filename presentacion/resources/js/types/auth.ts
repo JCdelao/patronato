@@ -18,6 +18,7 @@ export type Auth = {
     rol: string | null;
     anulacionesPendientes: number;
     transferenciasPorVerificar: number;
+    solicitudesRecibidas: number;
     esResidente: boolean;
     esGuardia: boolean;
 };

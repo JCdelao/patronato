@@ -152,5 +152,5 @@ test('each user gets the permission strategy of its role', function () {
         ->and($permisos->deUsuario($this->admin))->toHaveCount(count($permisos->catalogo()) - count(PermisoService::RESERVADOS) - count(PermisoService::FUERA_DE_ACCESO_TOTAL))
         ->and($permisos->deUsuario($this->admin))->not->toContain('ajustes.aprobar')
         ->and($permisos->deUsuario($this->admin))->not->toContain('estado_cuenta_pdf.ver')
-        ->and($permisos->deUsuario($this->secretario))->toBe(['carnets.anular', 'carnets.registrar', 'carnets.ver', 'estado_cuenta_pdf.ver', 'padron.anular', 'padron.registrar', 'padron.ver', 'vehiculos.anular', 'vehiculos.registrar', 'vehiculos.ver']);
+        ->and($permisos->deUsuario($this->secretario))->toBe(['carnets.anular', 'carnets.registrar', 'carnets.ver', 'estado_cuenta_pdf.ver', 'padron.anular', 'padron.registrar', 'padron.ver', 'solicitudes.registrar', 'solicitudes.ver', 'vehiculos.anular', 'vehiculos.registrar', 'vehiculos.ver']);
 });
