@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Patronato\Presentacion\Controllers\PortalEstadoCuentaController;
 use Patronato\Presentacion\Controllers\PortalPreautorizacionController;
 use Patronato\Presentacion\Controllers\PortalQrController;
+use Patronato\Presentacion\Controllers\PortalSolicitudController;
 use Patronato\Presentacion\Controllers\PortalTransferenciaController;
 use Patronato\Presentacion\Controllers\PortalVehiculoController;
 
@@ -29,6 +30,10 @@ Route::middleware(['auth', 'verified'])
             Route::get('mis-vehiculos/{vehiculo}/comprobante', [PortalVehiculoController::class, 'comprobante'])
                 ->whereNumber('vehiculo')
                 ->name('vehiculos.comprobante');
+            Route::get('solicitudes', [PortalSolicitudController::class, 'index'])->name('solicitudes.index');
+            Route::get('solicitudes/{solicitud}/adjunto', [PortalSolicitudController::class, 'adjunto'])
+                ->whereNumber('solicitud')
+                ->name('solicitudes.adjunto');
         });
 
         Route::middleware("can:permiso,'portal','registrar'")->group(function () {
@@ -41,6 +46,10 @@ Route::middleware(['auth', 'verified'])
                 Route::post('mi-qr', [PortalQrController::class, 'emitir'])->name('qr.emitir');
                 Route::post('mi-qr/regenerar', [PortalQrController::class, 'regenerar'])->name('qr.regenerar');
             });
+
+            Route::post('solicitudes', [PortalSolicitudController::class, 'store'])
+                ->middleware('throttle:10,1')
+                ->name('solicitudes.store');
 
             Route::get('transferencias/reportar', [PortalTransferenciaController::class, 'create'])->name('transferencias.create');
             Route::post('transferencias', [PortalTransferenciaController::class, 'store'])

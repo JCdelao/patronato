@@ -1,7 +1,8 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { FileDown } from 'lucide-react';
+import { FileDown, MessageSquareText } from 'lucide-react';
 import { useState } from 'react';
 import PortalEstadoCuentaController from '@/actions/Patronato/Presentacion/Controllers/PortalEstadoCuentaController';
+import PortalSolicitudController from '@/actions/Patronato/Presentacion/Controllers/PortalSolicitudController';
 import EstadoMora from '@/components/finanzas/estado-mora';
 import EstadoPago from '@/components/finanzas/estado-pago';
 import InputError from '@/components/input-error';
@@ -197,6 +198,8 @@ function EstadoDeVivienda({
     rango: Rango;
 }) {
     const { vivienda, totales } = estado;
+    const { auth } = usePage().props;
+    const puedeSolicitar = auth.permisos.includes('portal.registrar');
 
     const elegirAnio = (valor: string) =>
         router.get(
@@ -345,6 +348,24 @@ function EstadoDeVivienda({
                         ))}
                     </ul>
                 </Seccion>
+            )}
+
+            {puedeSolicitar && (
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-dashed p-4 text-sm">
+                    <p className="text-muted-foreground">
+                        ¿Hiciste un pago que no aparece aquí?
+                    </p>
+                    <Button variant="outline" size="sm" asChild>
+                        <Link
+                            href={PortalSolicitudController.index.url({
+                                query: { tipo: 'pago', vivienda: vivienda.id },
+                            })}
+                        >
+                            <MessageSquareText />
+                            Reportar un pago que no aparece
+                        </Link>
+                    </Button>
+                </div>
             )}
 
             <Seccion titulo="Historial">

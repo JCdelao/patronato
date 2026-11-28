@@ -1,8 +1,10 @@
-import { Head } from '@inertiajs/react';
-import { FileText, IdCard } from 'lucide-react';
+import { Head, Link, usePage } from '@inertiajs/react';
+import { FileText, IdCard, MessageSquareText } from 'lucide-react';
+import PortalSolicitudController from '@/actions/Patronato/Presentacion/Controllers/PortalSolicitudController';
 import PortalVehiculoController from '@/actions/Patronato/Presentacion/Controllers/PortalVehiculoController';
 import EstadoCredencial from '@/components/credenciales/estado-credencial';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import IconoVehiculo from '@/components/vehiculos/icono-vehiculo';
 import { formatoFecha } from '@/lib/formato';
 import type {
@@ -140,6 +142,34 @@ function FilaResidente({ residente }: { residente: ResidentePortal }) {
     );
 }
 
+// Abre Mis solicitudes con el tipo y la vivienda ya elegidos (HU-54)
+function SolicitarCorreccion({
+    tipo,
+    viviendaId,
+}: {
+    tipo: 'vehiculo' | 'carnet';
+    viviendaId: number;
+}) {
+    const { auth } = usePage().props;
+
+    if (!auth.permisos.includes('portal.registrar')) {
+        return null;
+    }
+
+    return (
+        <Button variant="outline" size="sm" asChild>
+            <Link
+                href={PortalSolicitudController.index.url({
+                    query: { tipo, vivienda: viviendaId },
+                })}
+            >
+                <MessageSquareText />
+                Solicitar corrección
+            </Link>
+        </Button>
+    );
+}
+
 function SeccionVivienda({ vivienda }: { vivienda: ViviendaPortal }) {
     return (
         <section className="space-y-6">
@@ -149,7 +179,13 @@ function SeccionVivienda({ vivienda }: { vivienda: ViviendaPortal }) {
             </h2>
 
             <div className="space-y-3">
-                <h3 className="font-semibold">Vehículos</h3>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                    <h3 className="font-semibold">Vehículos</h3>
+                    <SolicitarCorreccion
+                        tipo="vehiculo"
+                        viviendaId={vivienda.id}
+                    />
+                </div>
                 {vivienda.vehiculos.length === 0 ? (
                     <Vacio>No hay vehículos registrados.</Vacio>
                 ) : (
@@ -165,7 +201,13 @@ function SeccionVivienda({ vivienda }: { vivienda: ViviendaPortal }) {
             </div>
 
             <div className="space-y-3">
-                <h3 className="font-semibold">Carnets</h3>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                    <h3 className="font-semibold">Carnets</h3>
+                    <SolicitarCorreccion
+                        tipo="carnet"
+                        viviendaId={vivienda.id}
+                    />
+                </div>
                 {vivienda.residentes.length === 0 ? (
                     <Vacio>No hay residentes registrados.</Vacio>
                 ) : (
@@ -199,7 +241,7 @@ export default function MisVehiculos({
                     </h1>
                     <p className="mt-1 text-muted-foreground">
                         Revisa que los datos registrados en tu vivienda sean
-                        correctos. Si algo no coincide, avisa al patronato.
+                        correctos. Si algo no coincide, solicita una corrección.
                     </p>
                 </div>
 

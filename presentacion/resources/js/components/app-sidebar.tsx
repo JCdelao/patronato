@@ -17,8 +17,10 @@ import {
     HandCoins,
     Home,
     IdCard,
+    Inbox,
     Landmark,
     LayoutGrid,
+    MessageSquareText,
     PiggyBank,
     QrCode,
     Receipt,
@@ -57,9 +59,11 @@ import ParametroCobroController from '@/actions/Patronato/Presentacion/Controlle
 import PortalEstadoCuentaController from '@/actions/Patronato/Presentacion/Controllers/PortalEstadoCuentaController';
 import PortalQrController from '@/actions/Patronato/Presentacion/Controllers/PortalQrController';
 import EscaneoQrController from '@/actions/Patronato/Presentacion/Controllers/EscaneoQrController';
+import PortalSolicitudController from '@/actions/Patronato/Presentacion/Controllers/PortalSolicitudController';
 import PortalVehiculoController from '@/actions/Patronato/Presentacion/Controllers/PortalVehiculoController';
 import PortalTransferenciaController from '@/actions/Patronato/Presentacion/Controllers/PortalTransferenciaController';
 import PortalPreautorizacionController from '@/actions/Patronato/Presentacion/Controllers/PortalPreautorizacionController';
+import SolicitudCorreccionController from '@/actions/Patronato/Presentacion/Controllers/SolicitudCorreccionController';
 import ReporteCobrosController from '@/actions/Patronato/Presentacion/Controllers/ReporteCobrosController';
 import ReporteMorosidadController from '@/actions/Patronato/Presentacion/Controllers/ReporteMorosidadController';
 import ReporteRecaudacionController from '@/actions/Patronato/Presentacion/Controllers/ReporteRecaudacionController';
@@ -119,6 +123,12 @@ export function AppSidebar() {
             visible: auth.esResidente && permite('portal.ver'),
         },
         {
+            title: 'Mis solicitudes',
+            href: PortalSolicitudController.index(),
+            icon: MessageSquareText,
+            visible: auth.esResidente && permite('portal.ver'),
+        },
+        {
             title: 'Reportar transferencia',
             href: PortalTransferenciaController.create(),
             icon: Send,
@@ -141,6 +151,13 @@ export function AppSidebar() {
             href: ViviendaController.index(),
             icon: Home,
             visible: permite('padron.ver'),
+        },
+        {
+            title: 'Solicitudes de corrección',
+            href: SolicitudCorreccionController.index(),
+            icon: Inbox,
+            badge: auth.solicitudesRecibidas,
+            visible: permite('solicitudes.ver'),
         },
         {
             title: 'Cobranza',

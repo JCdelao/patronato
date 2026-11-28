@@ -46,6 +46,8 @@ class PermisoService
         'vehiculos' => ['etiqueta' => 'Vehículos', 'acciones' => ['ver', 'registrar', 'anular']],
         'carnets' => ['etiqueta' => 'Carnets', 'acciones' => ['ver', 'registrar', 'anular']],
         'reportes' => ['etiqueta' => 'Reportes', 'acciones' => ['ver']],
+        // 'registrar' atiende la bandeja: toma, resuelve o rechaza las solicitudes (HU-54)
+        'solicitudes' => ['etiqueta' => 'Solicitudes de corrección', 'acciones' => ['ver', 'registrar']],
         'auditoria' => ['etiqueta' => 'Auditoría', 'acciones' => ['ver']],
         // Además del permiso, el portal exige una cuenta vinculada a un residente activo
         'portal' => ['etiqueta' => 'Portal del residente', 'acciones' => ['ver', 'registrar']],
@@ -58,10 +60,10 @@ class PermisoService
      * el administrador técnico los activa desde la pantalla de permisos.
      */
     public const PREDETERMINADOS = [
-        Rol::PRESIDENTE => ['padron.ver', 'padron.registrar', 'padron.anular', 'auditoria.ver', 'parametros.ver', 'reportes.ver', 'cobros.aprobar', 'ajustes.aprobar', 'estado_cuenta_pdf.ver', 'mora.registrar', 'cajas.registrar', 'tesoreria.ver', 'transferencias.verificar', 'vehiculos.ver', 'carnets.ver', 'guardias.ver', 'guardias.registrar', 'turnos.ver', 'turnos.registrar', 'tipos_incidencia.registrar', 'incidencias.ver', 'medios_entrada.registrar', 'autorizados_frecuentes.registrar', 'bitacora.ver'],
-        Rol::SECRETARIO => ['padron.ver', 'padron.registrar', 'padron.anular', 'estado_cuenta_pdf.ver', 'vehiculos.ver', 'vehiculos.registrar', 'vehiculos.anular', 'carnets.ver', 'carnets.registrar', 'carnets.anular'],
-        'tesorero' => ['padron.ver', 'parametros.ver', 'parametros.registrar', 'cobros.ver', 'cobros.anular', 'ajustes.aprobar', 'estado_cuenta_pdf.ver', 'cajas.registrar', 'transferencias.registrar', 'transferencias.verificar', 'reportes.ver', 'mora.registrar', 'tesoreria.ver', 'tesoreria.registrar', 'tesoreria.anular'],
-        'fiscal' => ['padron.ver', 'auditoria.ver', 'parametros.ver', 'reportes.ver', 'cobros.aprobar', 'tesoreria.ver'],
+        Rol::PRESIDENTE => ['padron.ver', 'padron.registrar', 'padron.anular', 'auditoria.ver', 'parametros.ver', 'reportes.ver', 'cobros.aprobar', 'ajustes.aprobar', 'estado_cuenta_pdf.ver', 'mora.registrar', 'cajas.registrar', 'tesoreria.ver', 'transferencias.verificar', 'vehiculos.ver', 'carnets.ver', 'solicitudes.ver', 'solicitudes.registrar', 'guardias.ver', 'guardias.registrar', 'turnos.ver', 'turnos.registrar', 'tipos_incidencia.registrar', 'incidencias.ver', 'medios_entrada.registrar', 'autorizados_frecuentes.registrar', 'bitacora.ver'],
+        Rol::SECRETARIO => ['padron.ver', 'padron.registrar', 'padron.anular', 'estado_cuenta_pdf.ver', 'vehiculos.ver', 'vehiculos.registrar', 'vehiculos.anular', 'carnets.ver', 'carnets.registrar', 'carnets.anular', 'solicitudes.ver', 'solicitudes.registrar'],
+        'tesorero' => ['padron.ver', 'parametros.ver', 'parametros.registrar', 'cobros.ver', 'cobros.anular', 'ajustes.aprobar', 'estado_cuenta_pdf.ver', 'cajas.registrar', 'transferencias.registrar', 'transferencias.verificar', 'reportes.ver', 'mora.registrar', 'tesoreria.ver', 'tesoreria.registrar', 'tesoreria.anular', 'solicitudes.ver', 'solicitudes.registrar'],
+        'fiscal' => ['padron.ver', 'auditoria.ver', 'parametros.ver', 'reportes.ver', 'cobros.aprobar', 'tesoreria.ver', 'solicitudes.ver'],
         'vocal' => ['padron.ver'],
         'cobrador' => ['cobros.registrar'],
         Rol::GUARDIA => ['vehiculos.ver', 'carnets.ver', 'entrega_turnos.registrar', 'incidencias.registrar', 'visitas.registrar'],
