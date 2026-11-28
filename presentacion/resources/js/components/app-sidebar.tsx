@@ -56,6 +56,7 @@ import ParametroCobroController from '@/actions/Patronato/Presentacion/Controlle
 import PortalEstadoCuentaController from '@/actions/Patronato/Presentacion/Controllers/PortalEstadoCuentaController';
 import PortalQrController from '@/actions/Patronato/Presentacion/Controllers/PortalQrController';
 import EscaneoQrController from '@/actions/Patronato/Presentacion/Controllers/EscaneoQrController';
+import PortalVehiculoController from '@/actions/Patronato/Presentacion/Controllers/PortalVehiculoController';
 import PortalTransferenciaController from '@/actions/Patronato/Presentacion/Controllers/PortalTransferenciaController';
 import PortalPreautorizacionController from '@/actions/Patronato/Presentacion/Controllers/PortalPreautorizacionController';
 import ReporteCobrosController from '@/actions/Patronato/Presentacion/Controllers/ReporteCobrosController';
@@ -107,6 +108,12 @@ export function AppSidebar() {
             title: 'Mis reportes',
             href: PortalTransferenciaController.index(),
             icon: ReceiptText,
+            visible: auth.esResidente && permite('portal.ver'),
+        },
+        {
+            title: 'Mis vehículos y carnets',
+            href: PortalVehiculoController.index(),
+            icon: Car,
             visible: auth.esResidente && permite('portal.ver'),
         },
         {

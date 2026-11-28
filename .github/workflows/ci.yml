@@ -277,6 +277,10 @@ jobs:
         if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
         run: php artisan test tests/Feature/Portal/EstadoCuentaPortalTest.php
 
+      - name: Pruebas HU-53 · Consultar mis vehículos y carnets
+        if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
+        run: php artisan test tests/Feature/Portal/MisVehiculosPortalTest.php
+
       - name: Pruebas HU-56 · Consultar el reporte de morosidad
         if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
         run: php artisan test tests/Feature/Reportes/ReporteMorosidadTest.php
