@@ -281,6 +281,10 @@ jobs:
         if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
         run: php artisan test tests/Feature/Reportes/ReporteMorosidadTest.php
 
+      - name: Pruebas HU-57 · Consultar el reporte de recaudación
+        if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
+        run: php artisan test tests/Feature/Reportes/ReporteRecaudacionTest.php
+
       - name: Pruebas de los datos de demostración
         if: ${{ !cancelled() && steps.configurar.outcome == 'success' }}
         run: php artisan test tests/Feature/DemostracionSeederTest.php
