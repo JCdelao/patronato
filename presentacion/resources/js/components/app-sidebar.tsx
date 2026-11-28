@@ -29,6 +29,7 @@ import {
     Settings2,
     SlidersHorizontal,
     Target,
+    TrendingUp,
     TriangleAlert,
     UserCheck,
     Users,
@@ -60,6 +61,7 @@ import PortalTransferenciaController from '@/actions/Patronato/Presentacion/Cont
 import PortalPreautorizacionController from '@/actions/Patronato/Presentacion/Controllers/PortalPreautorizacionController';
 import ReporteCobrosController from '@/actions/Patronato/Presentacion/Controllers/ReporteCobrosController';
 import ReporteMorosidadController from '@/actions/Patronato/Presentacion/Controllers/ReporteMorosidadController';
+import ReporteRecaudacionController from '@/actions/Patronato/Presentacion/Controllers/ReporteRecaudacionController';
 import TransferenciaController from '@/actions/Patronato/Presentacion/Controllers/TransferenciaController';
 import TurnoController from '@/actions/Patronato/Presentacion/Controllers/TurnoController';
 import VerificacionTransferenciaController from '@/actions/Patronato/Presentacion/Controllers/VerificacionTransferenciaController';
@@ -239,6 +241,12 @@ export function AppSidebar() {
                     title: 'Morosidad',
                     href: ReporteMorosidadController.index(),
                     icon: TriangleAlert,
+                    visible: permite('reportes.ver'),
+                },
+                {
+                    title: 'Recaudación',
+                    href: ReporteRecaudacionController.index(),
+                    icon: TrendingUp,
                     visible: permite('reportes.ver'),
                 },
                 {
